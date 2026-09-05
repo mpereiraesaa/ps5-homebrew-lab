@@ -118,6 +118,10 @@ def stream_window() -> str:
 
 def start_stream(args: argparse.Namespace) -> None:
     chiaki = require_program("chiaki")
+    xdotool = require_program("xdotool")
+    previous_window = subprocess.check_output(
+        [xdotool, "getactivewindow"], text=True
+    ).strip()
     subprocess.Popen(
         [chiaki, "stream", args.nickname, args.host],
         stdin=subprocess.DEVNULL,
@@ -128,7 +132,15 @@ def start_stream(args: argparse.Namespace) -> None:
     deadline = time.monotonic() + args.wait
     while time.monotonic() < deadline:
         try:
-            print(stream_window())
+            window = stream_window()
+            # Chiaki grabs keyboard/controller input when its stream window is
+            # created. Keep the stream visible but immediately return keyboard
+            # focus to the developer's prior workspace.
+            subprocess.run(
+                [xdotool, "windowactivate", "--sync", previous_window],
+                check=True,
+            )
+            print(window)
             return
         except SystemExit:
             time.sleep(0.25)
