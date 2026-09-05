@@ -18,6 +18,9 @@
 - Remote Play captures belong under the ignored
   `research/gpu/captures/remoteplay/` tree unless the owner explicitly
   selects and audits one for publication.
+- Do not leave Chiaki as the active window after automation. The wrapper
+  restores the prior workspace focus; close only `Chiaki | Stream` if its
+  keyboard/controller grab must be released.
 - Pairing output contains a PIN and PSN Account ID. Never commit, archive,
   quote in logs or send those values to telemetry. Use
   `docs/REMOTEPLAY.md` for the pinned Headless LinkDev workflow.

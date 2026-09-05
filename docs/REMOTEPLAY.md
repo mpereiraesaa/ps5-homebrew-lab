@@ -52,5 +52,11 @@ Outputs default to the ignored
 audio capture is intentionally not enabled yet. Explicit `--output` paths are
 available when a particular evidence directory is required.
 
+The `stream` command restores focus to the previously active developer window
+after Chiaki appears. This prevents Chiaki's keyboard/controller grab from
+capturing the whole interactive development session. Click the stream only
+when direct PS5 input is intended; close the stream window to release an
+explicit grab without closing the PS5 application.
+
 Remote Play images are supporting visual evidence, not substitutes for the
 artifact hash, GPU fence, VideoOut token, guards or structured telemetry.
