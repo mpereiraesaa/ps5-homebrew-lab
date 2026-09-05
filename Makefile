@@ -2,7 +2,7 @@ PROJECT := projects/ps5-agc-gears
 LOGGER := projects/logging_server
 LEGACY_PROBES := $(wildcard legacy/probes/*)
 
-.PHONY: all check gears-check telemetry-check native native-release clean \
+.PHONY: all check gears-check telemetry-check sdk-check native native-release clean \
 	legacy-probes legacy-clean
 
 all: check
@@ -16,6 +16,9 @@ gears-check:
 
 telemetry-check:
 	$(MAKE) -C $(LOGGER) check
+
+sdk-check:
+	python3 sdk/agc/tests/verify_api.py
 
 native:
 	$(MAKE) -C $(PROJECT) native
