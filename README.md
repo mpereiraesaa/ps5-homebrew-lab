@@ -44,3 +44,11 @@ make native-release AMDLLPC=/ruta/a/amdllpc LLVM_READELF=/ruta/a/llvm-readelf
 Los stages A–I, `PPSA99998`, hbldr/elfldr y ShadowMountPlus permanecen sólo
 como historia reproducible bajo `legacy/` y `research/`. No son el flujo de
 desarrollo vigente.
+
+En un clon nuevo, inicializar el renderer público fijado antes de ejecutar los
+gates:
+
+```sh
+git submodule update --init
+make check
+```

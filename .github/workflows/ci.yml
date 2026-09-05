@@ -1,0 +1,27 @@
+name: lab-ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  host-lab-contracts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Canonical renderer and telemetry contracts
+        run: make check
+      - name: Historical observability contracts
+        run: |
+          PYTHONPATH=research/gpu/tools:tools python3 -m unittest \
+            research.gpu.tools.test_agc_observability \
+            research.gpu.tools.test_ps5log_evidence \
+            research.gpu.tools.test_stage_b_guard \
+            research.gpu.tools.test_close_verification
+      - name: Clean tree
+        run: git diff --check
