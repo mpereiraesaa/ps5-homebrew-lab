@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "capture_label": "",
+  "system_software": "",
+  "process_name": "",
+  "module_name": "",
+  "module_path": "",
+  "base": "0x0",
+  "end": "0x0",
+  "segments": [],
+  "dump_size": 0,
+  "sha256": "",
+  "source": "ps5debug-NG read-only dump",
+  "target_writes": 0,
+  "notes": ""
+}

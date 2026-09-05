@@ -1,0 +1,6 @@
+build/
+runs/
+__pycache__/
+*.elf
+*.o
+dev.conf

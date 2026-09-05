@@ -1,0 +1,26 @@
+{
+  "firmware_scope": "12.02",
+  "library": {
+    "libSceAgc": {
+      "sceAgcCbSetShRegisterRangeDirect": "n2fD4A+pb+g",
+      "sceAgcCreateShader": "f3dg2CSgRKY",
+      "sceAgcDcbDmaData": "WmAc2MEj6Io",
+      "sceAgcDcbDrawIndex": "q88lQ+GP5Yk",
+      "sceAgcDcbDrawIndexAuto": "Yw0jKSqop+E",
+      "sceAgcDcbSetCxRegistersIndirect": "ZvwO9euwYzc",
+      "sceAgcDcbSetFlip": "YUeqkyT7mEQ",
+      "sceAgcDcbSetShRegistersIndirect": "-HOOCn0JY48",
+      "sceAgcDcbSetUcRegistersIndirect": "hvUfkUIQcOE",
+      "sceAgcGetRegisterDefaults": "Wi82ArQtAwg",
+      "sceAgcInit": "kW3GLb7QfPg",
+      "sceAgcLinkShaders": "MqAdbRMdNz4",
+      "sceAgcSuspendPoint": "h9z6+0hEydk"
+    },
+    "libSceAgcDriver": {
+      "sceAgcDriverGetWaitRenderingPacketSizeInDwords": "0MtUJ3BpGhE",
+      "sceAgcDriverSubmitDcb": "UglJIZjGssM",
+      "sceAgcDriverWaitUntilSafeForRendering": "u8BkdHb1+Po"
+    }
+  },
+  "policy": "Only ABI-confirmed declarations are exposed; NID-only candidates stay in research docs."
+}

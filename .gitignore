@@ -1,0 +1,33 @@
+# Private evidence and local configuration
+dev.conf
+**/dev.conf
+.env
+**/.env
+research/gpu/captures/
+research/gpu/dumps/
+research/gpu/ghidra/
+research/gpu/sessions/
+research/gpu/experiments/hbldr-early-dmem/payload.inc
+projects/logging_server/runs/
+
+# Public project and external repositories have independent history
+projects/ps5-agc-gears/
+third_party/
+
+# Generated products
+**/build/
+**/dist/
+**/release/
+**/__pycache__/
+*.o
+*.elf
+*.self
+*.prx
+*.bin
+*.log
+*.pyc
+
+# Editor and OS state
+.DS_Store
+*.swp
+*~

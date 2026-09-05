@@ -1,0 +1,29 @@
+# dev.conf — development log destination for PS5 homebrew (ps5log client).
+#
+# Copy to `dev.conf` and edit. The real file is git-ignored on purpose:
+# binaries and repositories must never embed a LAN address.
+#
+# Where the client looks, in order (first readable file wins):
+#   /app0/dev.conf             native title, packaged with the app (dist/<TITLE>/dev.conf)
+#   /data/homebrew/dev.conf    elfldr payloads
+#   ./dev.conf                 host tests / current directory
+# The PS5LOG_CONF environment variable overrides the whole list when set.
+
+# IPv4 address of the PC running `make serve` (ps5logd). Required.
+DEV_SERVER=192.168.0.10
+
+# TCP/UDP port of ps5logd (default 9300).
+DEV_PORT=9300
+
+# 1 = send UDP datagrams (fire-and-forget), 0 = TCP stream (default, ordered, lossless while connected).
+DEV_UDP=0
+
+# Set to 0 to disable network logging without removing the file.
+DEV_ENABLED=1
+
+# Upper bounds so a missing PC can never stall the homebrew.
+DEV_CONNECT_TIMEOUT_MS=500
+DEV_SEND_TIMEOUT_MS=200
+
+# Free-form tag included in the HELLO line (build name, stage, operator...).
+DEV_TAG=

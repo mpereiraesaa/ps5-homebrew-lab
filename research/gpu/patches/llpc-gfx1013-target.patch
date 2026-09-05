@@ -1,0 +1,11 @@
+diff --git a/lgc/state/TargetInfo.cpp b/lgc/state/TargetInfo.cpp
+--- a/lgc/state/TargetInfo.cpp
++++ b/lgc/state/TargetInfo.cpp
+@@
++// gfx1013 (Cyan Skillfish / PS5-class GFX10.1). LLVM supplies the exact
++// GFX10 A instruction encoding; conservatively reuse gfx1010 PAL properties.
++static void setGfx1013Info(TargetInfo *targetInfo) {
++  setGfx1010Info(targetInfo);
++}
+@@
++    {"gfx1013", "Cyan Skillfish", &setGfx1013Info}, // gfx1013

@@ -1,0 +1,8 @@
+dumps/**
+captures/**
+ghidra/**
+sessions/**
+!dumps/.gitkeep
+!captures/.gitkeep
+!ghidra/.gitkeep
+!sessions/.gitkeep

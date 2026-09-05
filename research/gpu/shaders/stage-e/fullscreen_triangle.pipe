@@ -1,0 +1,53 @@
+[Version]
+version = 65
+
+[VsGlsl]
+#version 450
+
+void main()
+{
+    // A deliberately small centered triangle makes shader rasterization
+    // visually distinct from the solid-color DMA bootstrap.
+    float x = gl_VertexIndex == 0 ? -0.55 :
+              (gl_VertexIndex == 1 ? 0.55 : 0.0);
+    float y = gl_VertexIndex == 2 ? 0.55 : -0.45;
+    gl_Position = vec4(x, y, 0.0, 1.0);
+}
+
+[VsInfo]
+entryPoint = main
+
+[FsGlsl]
+#version 450
+
+layout(location = 0) out vec4 color;
+
+void main()
+{
+    color = vec4(0.0, 1.0, 0.0, 1.0);
+}
+
+[FsInfo]
+entryPoint = main
+
+[GraphicsPipelineState]
+topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP
+nggState.enableNgg = 1
+nggState.enableGsUse = 0
+nggState.forceCullingMode = 0
+nggState.compactMode = NggCompactDisable
+nggState.enableVertexReuse = 1
+nggState.enableBackfaceCulling = 0
+nggState.enableFrustumCulling = 0
+nggState.enableBoxFilterCulling = 0
+nggState.enableSphereCulling = 0
+nggState.enableSmallPrimFilter = 0
+nggState.enableCullDistanceCulling = 0
+nggState.backfaceExponent = 0
+nggState.subgroupSizing = Auto
+nggState.primsPerSubgroup = 0
+nggState.vertsPerSubgroup = 0
+colorBuffer[0].format = VK_FORMAT_B8G8R8A8_UNORM
+colorBuffer[0].channelWriteMask = 15
+colorBuffer[0].blendEnable = 0
+colorBuffer[0].blendSrcAlphaToColor = 0

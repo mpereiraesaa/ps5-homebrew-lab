@@ -1,0 +1,57 @@
+#include <cstddef>
+#include <cstdint>
+#include "agc_create_shader_contract.h"
+#include "agc_link_shaders_contract.h"
+
+/* CPU-only direct-memory variant.  The 64 KiB arena layout mirrors the
+ * authorized ProsperoTV shader arena, but no queue, DCB or GPU submission is
+ * created. Every caller-owned byte remains live until LinkShaders returns. */
+extern "C" {
+int open(const char*,int,...); long write(int,const void*,std::size_t); int fsync(int); int close(int);
+void *memcpy(void*,const void*,std::size_t); void *memset(void*,int,std::size_t); int memcmp(const void*,const void*,std::size_t);
+int sceKernelUsleep(std::uint32_t); std::int64_t sceKernelGetDirectMemorySize(void);
+int sceKernelAllocateDirectMemory(std::int64_t,std::int64_t,std::size_t,std::size_t,int,std::int64_t*);
+int sceKernelMapDirectMemory(void**,std::size_t,int,int,std::int64_t,std::size_t);
+int sceKernelMunmap(void*,std::size_t); int sceKernelReleaseDirectMemory(std::int64_t,std::size_t);
+int sceSysmoduleLoadModuleInternal(unsigned,...); int sceSysmoduleUnloadModuleInternal(unsigned,...);
+std::int32_t sceAgcInit(void*,std::uint32_t); std::int32_t sceAgcCreateShader(void**,void*,void*);
+std::int32_t sceAgcLinkShaders(void*,void*,void*,void*,void*,std::uint32_t);
+extern const std::uint8_t agc_geometry_header_start[],agc_geometry_header_end[],agc_geometry_code_start[],agc_geometry_code_end[];
+extern const std::uint8_t agc_pixel_header_start[],agc_pixel_header_end[],agc_pixel_code_start[],agc_pixel_code_end[];
+}
+
+namespace {
+constexpr int W=1,C=0x200,T=0x400; constexpr unsigned AGC=0x80000094U;
+constexpr std::size_t ARENA=0x10000,ALIGN=0x4000,GH=376,GC=736,PH=384,PC=2304,GUARD=32;
+constexpr std::size_t O_GH=0,O_PH=0x1000,O_PC=0x2000,O_GC=0x3700,O_CX=0x5000,O_UC=0x6000,O_GS=0x7000,O_PS=0x8000;
+constexpr char LOG[]="/download0/agc-native-sce-phase0.log";
+constexpr char ECX[]="31e91809f4db88374370d53fb0e7806d602db9ccdbed16c647f4bfa498b2c1d1",EUC[]="38558bc0496f75ff9f399b8f1f52ba6883259c89e2fa0bf7f756d62dcb090685";
+struct Sha{std::uint32_t h[8];std::uint64_t bytes;std::uint8_t b[64];std::size_t used;};
+constexpr std::uint32_t K[64]={0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2};
+std::uint32_t rr(std::uint32_t x,unsigned n){return(x>>n)|(x<<(32-n));}
+void block(Sha&s,const std::uint8_t*p){std::uint32_t w[64];for(unsigned i=0;i<16;i++)w[i]=(std::uint32_t(p[i*4])<<24)|(std::uint32_t(p[i*4+1])<<16)|(std::uint32_t(p[i*4+2])<<8)|p[i*4+3];for(unsigned i=16;i<64;i++)w[i]=w[i-16]+(rr(w[i-15],7)^rr(w[i-15],18)^(w[i-15]>>3))+w[i-7]+(rr(w[i-2],17)^rr(w[i-2],19)^(w[i-2]>>10));auto a=s.h[0],b=s.h[1],c=s.h[2],d=s.h[3],e=s.h[4],f=s.h[5],g=s.h[6],h=s.h[7];for(unsigned i=0;i<64;i++){auto q=h+(rr(e,6)^rr(e,11)^rr(e,25))+((e&f)^((~e)&g))+K[i]+w[i];auto z=(rr(a,2)^rr(a,13)^rr(a,22))+((a&b)^(a&c)^(b&c));h=g;g=f;f=e;e=d+q;d=c;c=b;b=a;a=q+z;}s.h[0]+=a;s.h[1]+=b;s.h[2]+=c;s.h[3]+=d;s.h[4]+=e;s.h[5]+=f;s.h[6]+=g;s.h[7]+=h;}
+void hash(const void*data,std::size_t n,char out[65]){Sha s{{0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19},0,{},0};auto p=static_cast<const std::uint8_t*>(data);s.bytes=n;while(n){auto q=64-s.used;if(q>n)q=n;memcpy(s.b+s.used,p,q);s.used+=q;p+=q;n-=q;if(s.used==64){block(s,s.b);s.used=0;}}auto bits=s.bytes*8;s.b[s.used++]=0x80;if(s.used>56){memset(s.b+s.used,0,64-s.used);block(s,s.b);s.used=0;}memset(s.b+s.used,0,56-s.used);for(unsigned i=0;i<8;i++)s.b[63-i]=std::uint8_t(bits>>(8*i));block(s,s.b);static constexpr char x[]="0123456789abcdef";for(unsigned i=0;i<32;i++){auto v=s.h[i/4]>>(24-8*(i%4));out[2*i]=x[(v>>4)&15];out[2*i+1]=x[v&15];}out[64]=0;}
+std::size_t len(const char*s){std::size_t n=0;while(s[n])n++;return n;}void txt(int f,const char*s){(void)write(f,s,len(s));}void res(int f,const char*l,int r){static constexpr char x[]="0123456789abcdef";char b[11]="0x00000000";auto v=std::uint32_t(r);for(int i=9;i>=2;i--){b[i]=x[v&15];v>>=4;}txt(f,l);write(f,b,10);txt(f,"\n");fsync(f);}void yes(int f,const char*l,bool v){txt(f,l);txt(f,v?"true\n":"false\n");fsync(f);}void hs(int f,const char*l,const char*h){txt(f,l);txt(f,h);txt(f,"\n");}[[noreturn]]void park(){for(;;)sceKernelUsleep(1000000);}
+std::uint32_t u32(const std::uint8_t*p){return std::uint32_t(p[0])|(std::uint32_t(p[1])<<8)|(std::uint32_t(p[2])<<16)|(std::uint32_t(p[3])<<24);}std::uint64_t u64(const std::uint8_t*p){return u32(p)|(std::uint64_t(u32(p+4))<<32);}bool span(std::size_t b,std::size_t n,std::size_t s,std::size_t z){return s&&n<=z/s&&b<=z&&n*s<=z-b;}bool rel(const std::uint8_t*h,std::size_t z,std::size_t f,std::size_t n,std::size_t s){auto r=u64(h+f);if(!n)return !r||f+r<=z;return r&&r<=0xffffffffULL&&span(f+std::size_t(r),n,s,z);}
+bool valid(const std::uint8_t*h,std::size_t z,std::size_t code,std::uint8_t type){if(z<0x60||u32(h)!=0x34333231||u32(h+4)!=0x18||u64(h+0x10)||u32(h+0x40)!=z||u32(h+0x44)!=code||u32(h+0x4c)!=6||h[0x5a]!=type)return false;if(!rel(h,z,0x18,h[0x5b],8)||!rel(h,z,0x20,h[0x5c],8)||!rel(h,z,0x28,std::uint16_t(h[0x58])|(std::uint16_t(h[0x59])<<8),1)||!rel(h,z,0x30,u32(h+0x50),4)||!rel(h,z,0x38,std::uint16_t(h[0x56])|(std::uint16_t(h[0x57])<<8),4))return false;auto r=u64(h+8);if(!r||r>0xffffffffULL||!span(8+std::size_t(r),1,0x38,z))return false;auto b=8+std::size_t(r);std::size_t fs[5]={0,8,16,24,32},ns[5]={std::uint16_t(h[b+0x2c])|(std::size_t(h[b+0x2d])<<8),std::uint16_t(h[b+0x2e])|(std::size_t(h[b+0x2f])<<8),std::uint16_t(h[b+0x30])|(std::size_t(h[b+0x31])<<8),std::uint16_t(h[b+0x32])|(std::size_t(h[b+0x33])<<8),std::uint16_t(h[b+0x34])|(std::size_t(h[b+0x35])<<8)};for(unsigned i=0;i<5;i++){auto q=u64(h+b+fs[i]);if(ns[i]&&(!q||q>0xffffffffULL||!span(b+fs[i]+std::size_t(q),ns[i],2,z)))return false;}return true;}
+bool layout(){struct R{std::size_t b,n;};constexpr R r[]={{O_GH,GH},{O_PH,PH},{O_PC,PC},{O_GC,GC},{O_CX-GUARD,GUARD+sizeof(AgcLinkedCx1202)+GUARD},{O_UC-GUARD,GUARD+sizeof(AgcLinkedUc1202)+GUARD},{O_GS,GH},{O_PS,PH}};for(auto&a:r)if(!span(a.b,1,a.n,ARENA))return false;for(unsigned i=0;i<sizeof(r)/sizeof(r[0]);i++)for(unsigned j=i+1;j<sizeof(r)/sizeof(r[0]);j++)if(r[i].b<r[j].b+r[j].n&&r[j].b<r[i].b+r[i].n)return false;return O_PC%0x100==0&&O_GC%0x100==0&&O_CX%8==0&&O_UC%8==0;}
+bool canary(const std::uint8_t*p,std::size_t n){for(std::size_t i=0;i<GUARD;i++)if(p[-std::ptrdiff_t(GUARD)+i]!=0xc3||p[n+i]!=0x3c)return false;return true;}
+}
+
+int main(){
+ int f=open(LOG,W|C|T,0644);if(f<0)park();txt(f,"AGC CPU direct-memory link probe v2; no GPU queue, context, DCB, submit, draw, or VideoOut\n");
+ bool sizes=std::size_t(agc_geometry_header_end-agc_geometry_header_start)==GH&&std::size_t(agc_geometry_code_end-agc_geometry_code_start)==GC&&std::size_t(agc_pixel_header_end-agc_pixel_header_start)==PH&&std::size_t(agc_pixel_code_end-agc_pixel_code_start)==PC;
+ yes(f,"preflight_embedded_sizes=",sizes);yes(f,"preflight_arena_layout=",layout());if(!sizes||!layout()){txt(f,"fail_closed; parked-safe; close exact title PPSA99998\n");close(f);park();}
+ std::int64_t limit=sceKernelGetDirectMemorySize(),phys=-1;void*map=nullptr;int alloc=-1,mapping=-1,load=-1,init=-1,rg=-1,rp=-1,link=-1,unload=-1,unmap=-1,release=-1;bool allocated=false,mapped=false;
+ if(limit>0){alloc=sceKernelAllocateDirectMemory(0,limit,ARENA,ALIGN,12,&phys);allocated=alloc==0;}res(f,"direct_allocate=",alloc);
+ if(allocated){mapping=sceKernelMapDirectMemory(&map,ARENA,0x33,0,phys,ALIGN);mapped=mapping==0&&map!=nullptr;}res(f,"direct_map=",mapping);
+ if(!mapped){if(allocated)release=sceKernelReleaseDirectMemory(phys,ARENA);res(f,"direct_release=",release);txt(f,"cleanup complete; parked-safe; close exact title PPSA99998\n");fsync(f);close(f);park();}
+ auto base=static_cast<std::uint8_t*>(map);memset(base,0,ARENA);auto gh=base+O_GH;auto ph=base+O_PH;auto pc=base+O_PC;auto gc=base+O_GC;auto cx=base+O_CX;auto uc=base+O_UC;auto gs=base+O_GS;auto ps=base+O_PS;
+ memcpy(gh,agc_geometry_header_start,GH);memcpy(gc,agc_geometry_code_start,GC);memcpy(ph,agc_pixel_header_start,PH);memcpy(pc,agc_pixel_code_start,PC);char a[65],b[65],c[65],d[65];hash(gh,GH,a);hash(gc,GC,b);hash(ph,PH,c);hash(pc,PC,d);
+ bool hashes=!memcmp(a,"13d2949bdc764703179a7ab77873930e987f3676a0dec9246a144fca1984fcd4",64)&&!memcmp(b,"7e4af7b5daf3926467a32684334c8e4d5bc7b1aab919eb67b86e799587637a77",64)&&!memcmp(c,"1384eb79521959aaaa2799ac1e0caba1bb3489e508a963b13d5c4fb8e9f24b52",64)&&!memcmp(d,"2ab90cd91412acf6102b6f158ff1d430c02849454d6c86a89a7cf464e143b91c",64);
+ bool ranges=valid(gh,GH,GC,2)&&valid(ph,PH,PC,1),aligned=!(reinterpret_cast<std::uintptr_t>(base)&(ALIGN-1))&&!(reinterpret_cast<std::uintptr_t>(gc)&255)&&!(reinterpret_cast<std::uintptr_t>(pc)&255);
+ yes(f,"preflight_asset_hashes=",hashes);yes(f,"preflight_ranges=",ranges);yes(f,"preflight_mapping_alignment=",aligned);
+ if(hashes&&ranges&&aligned){load=sceSysmoduleLoadModuleInternal(AGC);res(f,"agc_load=",load);std::uint64_t state=0;if(!load){init=sceAgcInit(&state,sizeof(state));res(f,"agc_init=",init);}void*vg=nullptr,*px=nullptr;if(!init){rg=sceAgcCreateShader(&vg,gh,gc);res(f,"create_pre_raster=",rg);}if(!rg){rp=sceAgcCreateShader(&px,ph,pc);res(f,"create_pixel=",rp);}if(!rg)memcpy(gs,gh,GH);if(!rp)memcpy(ps,ph,PH);memset(cx-GUARD,0xc3,GUARD);memset(cx,0xa5,sizeof(AgcLinkedCx1202));memset(cx+sizeof(AgcLinkedCx1202),0x3c,GUARD);memset(uc-GUARD,0xc3,GUARD);memset(uc,0x5a,sizeof(AgcLinkedUc1202));memset(uc+sizeof(AgcLinkedUc1202),0x3c,GUARD);if(!rg&&!rp){link=sceAgcLinkShaders(cx,uc,nullptr,vg,px,6);res(f,"link=",link);}char ch[65],uh[65];hash(cx,sizeof(AgcLinkedCx1202),ch);hash(uc,sizeof(AgcLinkedUc1202),uh);hs(f,"cx_sha256=",ch);hs(f,"uc_sha256=",uh);bool guards=canary(cx,sizeof(AgcLinkedCx1202))&&canary(uc,sizeof(AgcLinkedUc1202)),headers=!rg&&!rp&&!memcmp(gs,gh,GH)&&!memcmp(ps,ph,PH);char cg[65],cp[65];hash(gc,GC,cg);hash(pc,PC,cp);bool codes=!memcmp(cg,b,64)&&!memcmp(cp,d,64),cm=!link&&!memcmp(ch,ECX,64),um=!link&&!memcmp(uh,EUC,64);yes(f,"canaries_intact=",guards);yes(f,"headers_unchanged_after_link=",headers);yes(f,"code_unchanged=",codes);yes(f,"cx_matches_host_and_static=",cm);yes(f,"uc_matches_host_and_static=",um);yes(f,"transform_complete=",!load&&!init&&!rg&&!rp&&!link&&guards&&headers&&codes&&cm&&um);}
+ memset(base,0,ARENA);bool scrubbed=true;for(std::size_t i=0;i<ARENA;i++)if(base[i]){scrubbed=false;break;}yes(f,"direct_arena_scrubbed=",scrubbed);if(load==0)unload=sceSysmoduleUnloadModuleInternal(AGC);res(f,"agc_unload=",unload);unmap=sceKernelMunmap(map,ARENA);mapped=false;res(f,"direct_unmap=",unmap);release=sceKernelReleaseDirectMemory(phys,ARENA);allocated=false;res(f,"direct_release=",release);
+ bool done=hashes&&ranges&&aligned&&!load&&!init&&!rg&&!rp&&!link&&scrubbed&&!unload&&!unmap&&!release;yes(f,"probe_complete=",done);txt(f,"cleanup complete; parked-safe; close exact title PPSA99998\n");fsync(f);close(f);park();
+}

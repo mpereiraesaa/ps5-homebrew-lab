@@ -1,0 +1,14 @@
+{
+  "applicationCategoryType": 0,
+  "attribute": 1,
+  "attribute2": 0,
+  "attribute3": 4,
+  "titleId": "FAKE00000",
+  "contentId": "IV9999-FAKE00000_00-HOMEBREWLOADER00",
+  "localizedParameters": {
+    "defaultLanguage": "en-US",
+    "en-US": {
+      "titleName": "Homebrew Loader"
+    }
+  }
+}

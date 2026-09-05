@@ -1,0 +1,395 @@
+# Hallazgos confirmados
+
+Este archivo distingue resultados observados de hipótesis. No convertir una
+prueba mínima en una afirmación general sin añadir evidencia.
+
+## Rechazo pre-entry por origen RELRO incorrecto
+
+Una integración de `libSceNet` amplió el fSELF de `PPSA99998` y produjo
+`0x80aa001a` antes de `main()`. El control sin logging arrancó y presentó un
+frame, mientras el smoke con red fallaba aunque sus doce NIDs, SONAME, módulo y
+biblioteca coincidían con `libSceNet.sprx` de FW 12.02.
+
+La causa estaba en `sce_module_writer.cpp`: usaba `got.file_offset` para el
+segmento RELRO, pero `relro_start` corresponde a `.data.rel.ro`. `.got` está
+dentro de la región, no necesariamente al comienzo. El layout más grande hizo
+visible la incongruencia entre file offset y virtual address para páginas de
+16 KiB.
+
+El arreglo ancla ambos lados en `.data.rel.ro` y valida para cada `PT_LOAD`
+mapeado que `p_offset % 0x4000 == p_vaddr % 0x4000`. Tras reconstruir también
+el binario host `ps5-native-tool`, el smoke arrancó, conectó a `ps5logd` y
+entregó HELLO, ocho registros secuenciados y BYE limpio. Cambiar sólo el source
+sin reconstruir la herramienta conserva el fallo.
+
+La corrección y su test viven en el fork local publicable de
+`third_party/ps5-native-app-boilerplate`; no dependen de dumps ni constantes
+propietarias.
+
+## WebKit
+
+El probe visual confirmó:
+
+- Canvas 2D, `requestAnimationFrame`, `fetch`, WebSocket y localStorage.
+- Sin WebAssembly, WebGL 1/2, Web Audio, AudioWorklet, Gamepad API ni IndexedDB.
+
+Decisión: WebKit puede servir como menú o panel de control, pero no es una base
+adecuada para ports exigentes o emulación en este entorno.
+
+## Host de homebrew nativo
+
+Ejecutar el ELF directamente con `elfldr` no proporcionó presupuesto de memoria
+directa: los allocators devolvieron `0x80020023`. Ejecutarlo mediante `hbldr`
+dentro de `FAKE00000` sí habilitó la memoria y las APIs multimedia.
+
+VideoOut observado:
+
+- Resolución: 3840x2160.
+- Pitch registrado: 3840x2176.
+- Doble buffer y eventos de flip funcionando.
+
+También se comprobaron ScePad, SceAudioOut y salida del BigApp mediante
+`sceSystemServiceGetAppIdOfRunningBigApp()` + `sceSystemServiceKillApp()`.
+
+## JIT: qué está demostrado
+
+El probe escribió código máquina `mov eax, imm32; ret` en memoria anónima y lo
+invocó como función:
+
+- `RW -> RX`: devolvió 42.
+- `RX -> RW -> RX`: tras reescribirlo devolvió 43.
+- Mapeo RWX: devolvió 99.
+
+El stress probe escribió y ejecutó una función distinta en cada página de 16
+KiB:
+
+| Tamaño | Páginas comprobadas | Resultado |
+| ---: | ---: | --- |
+| 1 MiB | 64 | correcto |
+| 16 MiB | 1.024 | correcto |
+| 64 MiB | 4.096 | correcto |
+| 128 MiB | 8.192 | correcto |
+
+Esto prueba ejecución dinámica asistida por el jailbreak/SDK, no una API JIT
+oficial de Sony ni compatibilidad automática con cualquier runtime.
+
+### Concurrencia
+
+- Cuatro hilos alternando `RW/RX` sin sincronización: fallo `rc=-2`.
+- Cambios de permisos protegidos por mutex: también apareció `rc=-2`.
+
+Hipótesis pendiente: el wrapper privilegiado modifica entradas completas del
+mapa virtual y regiones vecinas pueden compartir una entrada. Hace falta
+inspeccionar el mapa y probar guard pages, RWX concurrente y/o doble mapeo.
+
+### Doble mapeo `jitshm`
+
+Se creó un objeto JIT de 16 MiB y un alias con las APIs `sceKernelJit*`. Los
+handles se mapearon en dos direcciones virtuales distintas que apuntan a las
+mismas páginas físicas:
+
+- Vista de escritura: RW, nunca ejecutable.
+- Vista de ejecución: RX, nunca escribible.
+
+Escribir por RW y ejecutar por RX devolvió correctamente 1234 en la primera
+página y 5678 en la última. Después se ejecutaron 100.000 ciclos por worker:
+
+| Workers | Verificaciones | Errores | Millones de ciclos/s |
+| ---: | ---: | ---: | ---: |
+| 1 | 100.000 | 0 | 24,07 |
+| 4 | 400.000 | 0 | 42,47 |
+| 8 | 800.000 | 0 | 77,34 |
+| 12 | 1.200.000 | 0 | 108,57 |
+| 16 | 1.600.000 | 0 | 118,43 |
+
+Decisión provisional: usar doble mapeo `jitshm` para un allocator JIT. Evita
+RWX y elimina transiciones de permisos durante el funcionamiento. Las tasas son
+de un microbenchmark y no predicen directamente el rendimiento de un emulador.
+
+## CPU e hilos
+
+`sysconf()` informó 16 CPUs configuradas y online. Una carga aritmética
+independiente por worker produjo aproximadamente 1x, 2x, 4x, 6x, 8x y 12x hasta
+12 workers. Con 16 workers el rendimiento agregado cayó a aproximadamente 8x.
+
+`pthread_getaffinity_np()` falló en todos los workers, así que la máscara real
+no fue obtenida. No se ha determinado todavía si el comportamiento a 16 se debe
+a presupuesto del BigApp, scheduling, SMT o interferencia del sistema.
+
+La interfaz más directa `cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_TID,
+-1, ...)` también devolvió `ERANGE` con buffers de 32, 64, 128 y 256 bytes.
+La syscall está presente, pero su ABI o parámetros para PS5 todavía no están
+resueltos. No confundir este resultado con una denegación de permisos.
+
+## Presupuestos de memoria
+
+El BigApp reportó estos límites:
+
+- Apertura total de Direct Memory: 12 GiB.
+- `RLIMIT_DATA`: 32 GiB.
+- Stack: 2 MiB.
+- Espacio virtual: ilimitado (`INT64_MAX`).
+
+Los límites POSIX no equivalen al presupuesto realmente asignable. La prueba
+escribió y leyó una vez cada página de 16 KiB para evitar falsos positivos por
+reservas virtuales sin respaldo.
+
+### Heap/flexible anónimo
+
+- 128, 256, 320, 384, 400, 416 y 432 MiB: correctos.
+- 448 y 512 MiB: fallo inmediato con `ENOMEM`.
+
+El máximo observado está entre 432 y 448 MiB en este host. Recomendación
+provisional: presupuestar 320 MiB normalmente o hasta 384 MiB para aplicaciones
+exigentes, conservando margen para librerías, stacks y fragmentación.
+
+### Main Direct Memory
+
+- 128, 256, 512 MiB, 1 GiB y 2 GiB: asignados, mapeados y verificados.
+- `sceKernelGetDirectMemorySize()` reportó 12 GiB.
+
+### Carga combinada
+
+Se mantuvieron simultáneamente 320 MiB de heap tocado, 64 MiB de `jitshm` con
+doble mapeo y una arena Main Direct Memory. Se verificaron todas las páginas,
+se reescribió y ejecutó código JIT bajo carga y se mantuvo el conjunto 15 s:
+
+| Main Direct | Total combinado | Resultado |
+| ---: | ---: | --- |
+| 3 GiB | 3.375 GiB | correcto |
+| 4 GiB | 4.375 GiB | correcto |
+
+Después se ejecutó un soak multimedia de 179 s con todos estos recursos activos
+simultáneamente:
+
+- 3 GiB de Main Direct Memory, tocados y muestreados durante la prueba.
+- 320 MiB de heap anónimo.
+- 64 MiB de `jitshm`, reescribiendo por RW y ejecutando por RX.
+- 128 MiB de memoria directa reservada para doble buffer 3840x2160.
+- VideoOut, AudioOut, DualSense y 8 workers de cómputo.
+
+El total contabilizado por el probe fue 3.5 GiB y terminó con `rc=0`. La
+apertura de 12 GiB no constituye un presupuesto seguro. Recomendación actual:
+diseñar inicialmente para hasta 3 GiB directos de aplicación. Los 4 GiB están
+demostrados sólo en la prueba combinada corta de 15 s y siguen siendo un modo
+experimental hasta repetir el soak multimedia con ese tamaño.
+
+## Ports nativos frente a emulación
+
+Un juego con fuentes portables normalmente se compila AOT a x86-64 y no necesita
+JIT. Quake y source ports semejantes requieren adaptar vídeo, audio, entrada,
+archivos, red y build. Los datos comerciales del juego siguen siendo necesarios.
+
+El JIT resulta relevante para recompiladores dinámicos de emuladores y algunos
+runtimes. Un emulador también puede usar un intérprete, con menor rendimiento.
+
+## Experiencia previa relevante para GPU
+
+El workspace contiene resultados de mods gráficos que el usuario confirmó en
+la misma PS5: conversiones de texturas y modelos procedentes de PC para títulos
+de Capcom (incluidos RE2 y RE4 Remake) y GTA San Andreas basado en Unreal
+Engine. Hay reportes de build y herramientas de inspección live asociados.
+
+Esto demuestra experiencia y compatibilidad en la capa de assets —formatos,
+swizzles/layouts, empaquetado y requisitos del motor—. Esa experiencia no fue
+por sí sola prueba de ejecución GPU propia; la prueba independiente llegó
+después con Native Label v5: un ELF nativo inicializó AGC, sometió un DCB y
+obtuvo escritura `DMA_DATA` más completion `RELEASE_MEM`. Stage E completó
+después la etapa separada de shaders, draw y presentación visible.
+
+## Inventario GPU inicial
+
+Una captura read-only del menú enumeró 93 procesos. No había aplicación en
+foreground. `AgcCompositor.elf` tenía mapeados `libSceAgcDriver.sprx`,
+`libSceAgcVsh.sprx`, una región `SceAgcDriver` y otra
+`GpuClearStateGuardData`. SceShellUI y varios servicios también cargaban
+`libSceAgcVsh.sprx`. No apareció `libSceGnmDriver` en los nombres de mapas.
+
+Evidencia: AGC está activo en el camino gráfico del sistema PS5 observado.
+Inferencia provisional: debemos investigar AGC antes de GNM. Esto no prueba aún
+qué API está disponible para BigApp ni que GNM sea inutilizable.
+
+El inventario del host `FAKE00000` durante el probe VideoOut mostró el proceso
+runtime `SceCloudClientApp`. Cargaba VideoOut, AudioOut, Pad y soporte del
+sistema, pero ningún mapping nombrado AGC, GNM o GPU. Por tanto, registrar y
+presentar un buffer no carga automáticamente el driver de render.
+
+Una captura posterior de un juego PS5 nativo mostró `libSceAgc` y
+`libSceAgcDriver` en su `eboot.bin`, junto con memoria dedicada para traps, EOP,
+CWSR, ACQRB, ding-dong, register shadow y diagnósticos. Ésta es la primera
+diferencia estructural confirmada respecto a `FAKE00000` y define AGC como el
+objetivo primario de ingeniería inversa.
+
+### AGC dentro de `FAKE00000`
+
+El sysmodule AGC `0x80000094` carga y descarga con retorno cero mediante
+`hbldr -> FAKE00000`. Sin embargo, durante su constructor registra
+`FS Table offset has shifted. This is not survivable.` La rama que genera ese
+mensaje compara una dirección derivada de la DMEM de AGCDriver con el valor fijo
+`0xfe0040000`. Esa dirección sí pertenece al mapping `SceAgcDriver` de los dos
+juegos nativos estudiados.
+
+Por tanto, el loader acepta AGC pero su layout interno no queda validado para
+uso en este host. No se deben interpretar los retornos cero como permiso para
+submit. Las pruebas fase 0/0B no llamaron APIs AGC ni enviaron trabajo GPU y
+terminaron con descarga del módulo y cierre limpio/verificado de `FAKE00000`.
+
+## Stage E: draw acelerado confirmado
+
+`PPSA99998` creó y enlazó shaders propios compilados para `gfx1013`, construyó
+un pipeline `84/12/3` y sometió un DCB de 122 DWORD. El resultado fue un
+triángulo verde centrado sobre fondo morado, confirmado visualmente y por
+lectura CPU de exactamente 285.120 píxeles modificados. Fence, evento VideoOut,
+guardas, buffer de recuperación y teardown pasaron.
+
+El fallo anterior no era ausencia de GPU ni incompatibilidad del shader: el
+compositor manual suponía indirectos CX/UC/SH de cuatro DWORD, mientras los
+builders nativos de FW 12.02 emiten cinco. La ruta vigente usa exclusivamente
+los builders nativos para esos paquetes y para `DrawIndexAuto`.
+
+Evidencia canónica:
+`research/gpu/captures/agc-stage-e-centered-triangle-runtime.json`.
+
+## G/21: procedencia de tablas indirectas
+
+El primer G/21 con telemetría alcanzó `SubmitDcb=0` y terminó antes de emitir
+fence, evento, watchdog o BYE. La revisión del compositor encontró una
+diferencia respecto al Stage E demostrado: `depth_registers[22]` era una
+variable automática de `main()`. El builder `SetCxRegistersIndirect` no copia
+sus pares al DCB; codifica count y dirección de la tabla para que el command
+processor la lea después. Un puntero válido para CPU no implica visibilidad
+GPU, y el stack no pertenece a las arenas directas declaradas.
+
+La corrección candidata reserva los pares en `shader + 0x3e00`, un span de
+`0xb0` bytes que no solapa los dos pipelines Stage I ni la geometría que inicia
+en `0x4000`. `stage_gpu_span_visible()` valida containment completo y overflow,
+y el adapter lo exige para CX/UC/SH indirectos. Hay una regresión host que
+acepta los límites exactos y rechaza stack simulado, cruces y wraparound.
+
+`make agc-check` y las builds G/I pasan con esta corrección. La repetición G/21
+en PS5 obtuvo submit cero, fence cero, 1.013.074 palabras del target cambiadas,
+guardas/recovery intactos, evento VideoOut exacto, BYE y teardown completo. El
+run anterior idéntico salvo la procedencia de la tabla terminaba después del
+submit; por tanto el defecto de visibilidad del stack queda confirmado como la
+causa del bloqueo G/21.
+
+El operador identificó inequívocamente un cubo 3D centrado sobre un fondo
+uniforme durante los cinco segundos de presentación.
+
+Evidencia:
+`research/gpu/captures/runtime/20260905T105717802Z_PPSA99998_agc-native-sce_0x989598b55e8.capture.json`.
+
+## Lifecycle después de completion
+
+El requisito histórico de usar Close Game no provenía de AGC ni de
+ShadowMountPlus. El runtime liberaba correctamente VideoOut, memoria directa,
+command mapping y módulo AGC, cerraba `ps5log/1`, y después se detenía a
+propósito en `for (;;) pause()`. Sustituirlo por `return 0` conservó el contrato
+GPU y retiró `PPSA99998`, pero el shell mostró después “Something went wrong
+with this game or app”. Usar `_exit(0)` después del teardown explícito omitió la
+ruta `atexit` del CRT y volvió al menú sin diálogo; el estado externo confirmó
+que no quedaba BigApp. Éste es el patrón de éxito en FW 12.02. Los caminos
+`park()` se mantienen exclusivamente para ownership/completion ambiguos.
+
+## G/22: primer consumo depth confirmado
+
+El sucesor de una sola variable de G/21 elevó
+`stage_g_depth_register_count` de 21 a 22 y consumió
+`DB_DEPTH_CONTROL=0xb6`. La captura conservó submit cero, fence cero, evento
+VideoOut exacto, guardas/recovery intactos, scrub, teardown y salida limpia. El
+operador vio el cubo con tres caras y oclusión coherente. Esto confirma que la
+ruta completa no falla al habilitar depth; un litmus adversarial on/off sigue
+siendo necesario para atribuir inequívocamente el resultado visual al test de
+profundidad y no al orden actual de los triángulos.
+
+## G/23: semántica LESS_EQUAL demostrada
+
+El litmus usa dos quads exactamente solapados. Dibuja primero el cercano con
+normal iluminada y luego el lejano con normal opuesta. En OFF, los 21 pares
+mantienen depth desactivado y el segundo quad deja el centro oscuro. En ON, el
+par 22 activa lectura/escritura `LESS_EQUAL`; el lejano falla y permanece el
+centro brillante. Las entradas de build difieren únicamente por
+`STAGE_G_DEPTH_ENABLE_TEST`, verificado por regresión host. La comparación se
+repitió con holds de 10 segundos y el operador confirmó una diferencia fuerte.
+Esto cierra tanto consumo como comportamiento del depth test D32 no-HTILE en
+FW 12.02.
+
+## Stage H: primera escena Gears
+
+Stage H confirmó tres draws con shaders Gears propios. La geometría vigente,
+derivada de `es2gears.c`, contiene 2.400 vértices totales (1.200/600/600).
+El compositor emitió 90 DWORD: tres actualizaciones SH directas de 27 DWORD y
+tres `DrawIndexAuto` de 3 DWORD. La antigua cifra 7 pertenecía a `DMA_DATA` y
+era una atribución falsa; el builder de FW 12.02 fue verificado por su avance
+de cursor de 12 bytes y el paquete `0xc0012d00`. También se corrigió la
+selección de metadata para usar Gears 384/160 bytes en vez de Cube 264/140.
+
+La ejecución final consumió los 22 pares depth, presentó 10 segundos, modificó
+255.083 palabras, mantuvo guardas/recovery y completó teardown. El operador
+confirmó inequívocamente las tres gears 3D y destacó la calidad visual.
+
+## Stage I: animación y ownership por frame
+
+Stage I completó 300 frames animados alternando dos backbuffers. Cada frame
+usó un token positivo monotónico y no reutilizó su slot hasta observar tanto
+el fence GPU como el evento VideoOut con el token exacto. Los 300 frames, los
+guards de color/depth y el teardown terminaron sin errores.
+
+La primera implementación privilegiaba corrección y serializaba GPU fence y espera
+VideoOut dentro de cada frame. Esto explica 291 misses del presupuesto estricto
+de 16,666667 ms aunque los promedios individuales fueran ~1,10 ms GPU y
+~15,55 ms VideoOut. No implica un fallo AGC; identifica el siguiente trabajo:
+Ese dato es histórico: la revisión vigente permite dos frames en vuelo y retira
+cada slot sólo al completar sus dos condiciones de ownership.
+
+La primera escena Stage I colocaba las mallas por criterio visual. Una revisión
+intermedia probó distancias de radio primitivo, pero la referencia visual exigía
+el perfil original. La versión vigente adapta el `es2gears.c` MIT de Mesa en la
+revisión `649baedafcb90313ade69909fdef1ee156ab5f8d`: sus siete strips por diente
+se expanden a 20 triángulos AGC sin degenerados, y conserva parámetros,
+colocación relativa y fases 20:10:10. La ejecución previa completó 300/300
+frames sin errores; captura intermedia:
+`research/gpu/captures/runtime/20260905T121438262Z_PPSA99998_agc-native-sce_0xdc1c6afd099.capture.json`.
+
+El port `es2gears` ejecutado contiene 1.200/600/600 vértices y también completó
+300/300, guardas, fence/evento exactos y teardown limpio. fSELF
+`ba5a862097bbd6aa13428f0050537ef5a91daaae4bc1d86c243bd8aef5497be8`;
+captura
+`research/gpu/captures/runtime/20260905T122247659Z_PPSA99998_agc-native-sce_0xe33b89e3f2d.capture.json`.
+
+## Stage I: soaks 1K/10K
+
+Los gates parametrizados exigen igualdad entre frames solicitados, completados
+y verificados; una terminación parcial clasifica fail-closed. En hardware, los
+soaks de 1.000 y 10.000 frames completaron exactamente sus conteos, sin errores
+y con todas las condiciones de ownership y teardown satisfechas. En 10.000
+frames los promedios permanecieron estables (~2,24 us compose, ~1,10 ms GPU y
+~15,56 ms VideoOut). Los 9.671 misses de 16,666667 ms reproducen el overhead
+serial histórico; no fueron errores de render.
+
+## Stage I: pipelining 2-deep
+
+El runner vigente somete dos frames antes de retirar el más antiguo y mantiene
+command buffer y fence independientes por backbuffer. El soak hardware final
+completó 10.000/10.000, reportó `max_frames_in_flight=2`, cero errores, guardas
+intactas, fences finales cero, token VideoOut exacto y teardown limpio. El loop
+midió 166.829.047.957 ns: 16.682.904 ns/frame, o 59,9416 fps. Los 9.999
+`deadline_misses` miden latencia submit-a-retiro de cada frame bajo profundidad
+dos; el intervalo global es la métrica correcta de throughput.
+
+fSELF `f05759892259dc0087273d4e2038722a0f2eb2ec17f132118a0fd887e0472234`;
+captura `research/gpu/captures/runtime/20260905T124347472Z_PPSA99998_agc-native-sce_0xf590a3bdbe1.capture.json`.
+
+## Stage I: clear de color por pipeline
+
+El color DMA fue sustituido por un triángulo fullscreen situado en el plano
+lejano y emitido antes de las tres gears. El compositor publicable exige un
+bloque SH de 27 DWORD y `DrawIndexAuto(3)` de 3 DWORD; capacidad insuficiente
+falla antes de submit. Una variante verde completó 300/300 como prueba visual,
+y la variante final negra completó 300/300 y después 10.000/10.000 con
+`color_dma=false`, dos frames en vuelo, cero errores, guardas intactas, fences
+cero, token exacto y teardown limpio. El soak midió 166.831.421.365 ns,
+16.683.142 ns/frame (59,9407 fps).
+
+fSELF `7b24d5f152f82584e5af1a9d906699b75f5527764db469189346f6017b284dc2`;
+captura `research/gpu/captures/runtime/20260905T125654862Z_PPSA99998_agc-native-sce_0x10105db257eb.capture.json`.

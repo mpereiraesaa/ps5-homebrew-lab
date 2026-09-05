@@ -1,0 +1,14 @@
+#define STAGE_I_ANIMATED 1
+#define STAGE_I_PIPELINE_CLEAR 1
+#ifndef STAGE_I_FRAME_COUNT
+#define STAGE_I_FRAME_COUNT 300
+#endif
+#ifndef STAGE_I_VISIBLE_HOLD_SECONDS
+#define STAGE_I_VISIBLE_HOLD_SECONDS 10
+#endif
+#define STAGE_H_GEARS 1
+#define STAGE_G_DEPTH_ENABLE_TEST 1
+#define STAGE_G_DEPTH 1
+#define STAGE_F_CUBE 1
+#define STAGE_E_TRIANGLE 1
+#include "stage_b_main.cpp"

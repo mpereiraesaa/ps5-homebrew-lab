@@ -1,0 +1,49 @@
+[Version]
+version = 65
+
+[VsGlsl]
+#version 450
+void main() {
+    float x = gl_VertexIndex == 0 ? -1.0 : 3.0;
+    float y = gl_VertexIndex == 2 ? 3.0 : -1.0;
+    gl_Position = vec4(x, y, 0.0, 1.0);
+}
+
+[VsInfo]
+entryPoint = main
+
+[FsGlsl]
+#version 450
+layout(push_constant, std430) uniform Params {
+    float time;
+    float inv_width;
+    float inv_height;
+    float phase;
+} params;
+layout(location = 0) out vec4 color;
+void main() {
+    vec2 uv = gl_FragCoord.xy * vec2(params.inv_width, params.inv_height);
+    float wave = sin(uv.x * 20.0 + params.time) +
+                 sin(uv.y * 17.0 - params.time * 1.3 + params.phase);
+    color = vec4(0.1, 0.5 + 0.25 * wave, 0.8 - 0.2 * wave, 1.0);
+}
+
+[FsInfo]
+entryPoint = main
+
+[ResourceMapping]
+userDataNode[0].visibility = 66
+userDataNode[0].type = PushConst
+userDataNode[0].offsetInDwords = 0
+userDataNode[0].sizeInDwords = 4
+userDataNode[0].set = 0xFFFFFFFF
+userDataNode[0].binding = 0
+userDataNode[0].strideInDwords = 0
+
+[GraphicsPipelineState]
+topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
+nggState.enableNgg = 1
+nggState.enableGsUse = 0
+colorBuffer[0].format = VK_FORMAT_B8G8R8A8_UNORM
+colorBuffer[0].channelWriteMask = 15
+colorBuffer[0].blendEnable = 0
