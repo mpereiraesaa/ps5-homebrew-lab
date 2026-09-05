@@ -16,10 +16,16 @@ El repo público construye sin depender de dumps, Ghidra, juegos ni rutas
 privadas del laboratorio. `main` está protegida; todo desarrollo nuevo ocurre
 en branches/worktrees y entra mediante pull request.
 
+El laboratorio también puede observar la consola directamente mediante Remote
+Play: `headless-linkdev` realiza el pairing por `elfldr`, Chiaki muestra el
+stream y `tools/ps5_remoteplay.py` toma capturas o grabaciones sin depender de
+la cámara del operador.
+
 ## Estructura
 
 - `projects/ps5-agc-gears/`: producto gráfico canónico y publicable.
 - `projects/logging_server/`: infraestructura de telemetría `ps5log/1`.
+- `tools/ps5_remoteplay.py`: streaming y captura visual mediante Chiaki.
 - `legacy/`: apps por stages y probes históricos; evidencia opt-in, nunca base
   para una nueva implementación.
 - `research/gpu/`: análisis, capturas y dumps privados; jamás se publica.
