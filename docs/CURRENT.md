@@ -24,6 +24,20 @@ errors and intact guards. Exact evidence and its limitations are documented in
 - `make check` is the root host gate.
 - Native changes require a fresh artifact hash and matching TCP telemetry;
   synchronization, memory or command changes additionally require a soak.
+- Visual checks, screenshots and bounded video recordings use the canonical
+  `tools/ps5_remoteplay.py` workflow. Remote Play complements telemetry and
+  never replaces its ownership/completion evidence.
+
+## Canonical tooling
+
+- `projects/logging_server`: structured `ps5log/1` telemetry.
+- `tools/ps5_remoteplay.py`: pinned Headless LinkDev build/pairing plus
+  Chiaki stream, screenshot and MP4 capture.
+- `tools/night_supervisor.py`: exact launch/close and guarded operational
+  workflows.
+
+Remote Play pairing and capture were validated on FW 12.02. Details and
+credential-handling rules are in `docs/REMOTEPLAY.md`.
 
 ## Historical boundary
 
