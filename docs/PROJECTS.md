@@ -15,6 +15,13 @@ facades de enlace para `libSceAgc`/`libSceAgcDriver`, manifiesto de NIDs y test
 host. Los builds del laboratorio consumen esa capa en vez de depender del stub
 copiado desde un proyecto tercero.
 
+## Observabilidad Remote Play — activa
+
+`tools/ps5_remoteplay.py` integra Headless LinkDev y Chiaki como tooling del
+laboratorio. El pairing, stream, captura PNG y grabación MP4 están validados en
+FW 12.02. La evidencia visual se conserva en el árbol privado ignorado y
+complementa, pero no reemplaza, la telemetría `ps5log/1`.
+
 ## Capability lab — archivo histórico
 
 Objetivo: conocer de forma empírica los límites del entorno nativo antes de
