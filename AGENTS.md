@@ -11,16 +11,26 @@
   ```sh
   python3 tools/ps5_remoteplay.py build
   python3 tools/ps5_remoteplay.py stream --host "$PS5_HOST" --nickname PS5-054
+  python3 tools/ps5_remoteplay.py status
   python3 tools/ps5_remoteplay.py screenshot
   python3 tools/ps5_remoteplay.py record --seconds 30
+  python3 tools/ps5_remoteplay.py focus
   ```
 
 - Remote Play captures belong under the ignored
   `research/gpu/captures/remoteplay/` tree unless the owner explicitly
   selects and audits one for publication.
-- Do not leave Chiaki as the active window after automation. The wrapper
-  restores the prior workspace focus; close only `Chiaki | Stream` if its
-  keyboard/controller grab must be released.
+- Do not use raw `xdotool`, `wmctrl` or ImageMagick window searches for routine
+  Remote Play automation. The wrapper resolves the visible Chiaki client
+  surface afresh. Capture commands never change focus; `focus` changes it only
+  when explicitly invoked. After launch, the wrapper restores the prior window
+  only if Chiaki still owns focus, and never overrides a window the owner chose
+  meanwhile.
+- Taking over with the physical DualSense ends only the `Chiaki | Stream`
+  session/window. The main client and its registered console entry remain; do
+  not pair or initialize Chiaki again. Restart only the stream when another
+  capture is needed. See `docs/REMOTEPLAY.md` for the sequential capture and
+  physical-input workflow.
 - Pairing output contains a PIN and PSN Account ID. Never commit, archive,
   quote in logs or send those values to telemetry. Use
   `docs/REMOTEPLAY.md` for the pinned Headless LinkDev workflow.

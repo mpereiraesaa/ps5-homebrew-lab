@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Build/pair Headless LinkDev and capture an active Chiaki X11 stream."""
+"""Build/pair Headless LinkDev and safely operate an active Chiaki X11 stream."""
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -22,6 +23,8 @@ READY_RE = re.compile(
     r"READY \| PIN: (?P<pin>[0-9]{8}) \| "
     r"Account ID: (?P<account>[A-Za-z0-9+/]+=*) \| Timeout: (?P<timeout>[0-9]+)s"
 )
+STREAM_TITLE_RE = r"^Chiaki \| Stream$"
+CHIAKI_WM_CLASS = "chiaki"
 
 
 def require_program(name: str) -> str:
@@ -104,24 +107,105 @@ def pair(args: argparse.Namespace) -> None:
     raise SystemExit("elfldr connection closed before pairing completed")
 
 
-def stream_window() -> str:
-    require_program("xdotool")
+def stream_window_ids() -> list[str]:
+    xdotool = require_program("xdotool")
     result = subprocess.run(
-        ["xdotool", "search", "--name", r"^Chiaki \| Stream$"],
+        [xdotool, "search", "--onlyvisible", "--name", STREAM_TITLE_RE],
         text=True, capture_output=True, check=False,
     )
-    ids = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def window_classes(window_id: str) -> tuple[str, ...]:
+    result = subprocess.run(
+        [require_program("xprop"), "-id", window_id, "WM_CLASS"],
+        text=True, capture_output=True, check=False,
+    )
+    if result.returncode != 0:
+        return ()
+    return tuple(re.findall(r'"([^"]+)"', result.stdout))
+
+
+def select_stream_window(
+    candidates: list[tuple[str, tuple[str, ...]]],
+) -> str:
+    clients = [
+        window_id for window_id, classes in candidates
+        if any(value.casefold() == CHIAKI_WM_CLASS for value in classes)
+    ]
+    if len(clients) == 1:
+        return clients[0]
+    details = ", ".join(
+        f"{window_id}:{'/'.join(classes) or 'unknown'}"
+        for window_id, classes in candidates
+    )
+    if not clients:
+        raise SystemExit(
+            "no visible Chiaki client surface named 'Chiaki | Stream'"
+            + (f"; candidates: {details}" if details else "")
+        )
+    raise SystemExit(
+        "multiple visible Chiaki client surfaces named 'Chiaki | Stream'; "
+        f"refusing an ambiguous action: {details}"
+    )
+
+
+def stream_window() -> str:
+    ids = stream_window_ids()
     if not ids:
-        raise SystemExit("no active 'Chiaki | Stream' X11 window")
-    return ids[-1]
+        raise SystemExit("no visible 'Chiaki | Stream' X11 window")
+    return select_stream_window([
+        (window_id, window_classes(window_id)) for window_id in ids
+    ])
+
+
+def active_window() -> str | None:
+    result = subprocess.run(
+        [require_program("xdotool"), "getactivewindow"],
+        text=True, capture_output=True, check=False,
+    )
+    value = result.stdout.strip()
+    return value if result.returncode == 0 and value else None
+
+
+def window_exists(window_id: str) -> bool:
+    result = subprocess.run(
+        [require_program("xdotool"), "getwindowname", window_id],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+    )
+    return result.returncode == 0
+
+
+def restore_focus_if_chiaki_stole_it(
+    previous_window: str | None, stream_ids: list[str],
+) -> bool:
+    """Restore focus only if Chiaki still owns it at the decision point."""
+    current_window = active_window()
+    if (
+        previous_window is None
+        or current_window not in stream_ids
+        or current_window == previous_window
+        or not window_exists(previous_window)
+    ):
+        return False
+    subprocess.run(
+        [require_program("xdotool"), "windowactivate", "--sync", previous_window],
+        check=True,
+    )
+    return True
 
 
 def start_stream(args: argparse.Namespace) -> None:
     chiaki = require_program("chiaki")
-    xdotool = require_program("xdotool")
-    previous_window = subprocess.check_output(
-        [xdotool, "getactivewindow"], text=True
-    ).strip()
+    existing_ids = stream_window_ids()
+    if existing_ids:
+        print(select_stream_window([
+            (window_id, window_classes(window_id))
+            for window_id in existing_ids
+        ]))
+        return
+
+    previous_window = active_window()
     subprocess.Popen(
         [chiaki, "stream", args.nickname, args.host],
         stdin=subprocess.DEVNULL,
@@ -131,20 +215,55 @@ def start_stream(args: argparse.Namespace) -> None:
     )
     deadline = time.monotonic() + args.wait
     while time.monotonic() < deadline:
-        try:
-            window = stream_window()
-            # Chiaki grabs keyboard/controller input when its stream window is
-            # created. Keep the stream visible but immediately return keyboard
-            # focus to the developer's prior workspace.
-            subprocess.run(
-                [xdotool, "windowactivate", "--sync", previous_window],
-                check=True,
-            )
+        ids = stream_window_ids()
+        if ids:
+            window = select_stream_window([
+                (window_id, window_classes(window_id)) for window_id in ids
+            ])
+            restored = restore_focus_if_chiaki_stole_it(previous_window, ids)
             print(window)
+            print(
+                "focus=restored" if restored else "focus=unchanged",
+                file=sys.stderr,
+            )
             return
-        except SystemExit:
-            time.sleep(0.25)
+        time.sleep(0.25)
     raise SystemExit("Chiaki stream window did not appear")
+
+
+def focus_stream(_args: argparse.Namespace) -> None:
+    """Focus the currently visible stream only after explicit invocation."""
+    window = stream_window()
+    subprocess.run(
+        [require_program("xdotool"), "windowactivate", "--sync", window],
+        check=True,
+    )
+    if active_window() != window:
+        raise SystemExit("Chiaki stream did not retain focus")
+    print(window)
+
+
+def status(_args: argparse.Namespace) -> None:
+    """Report a fresh X11 inventory without changing focus."""
+    ids = stream_window_ids()
+    candidates = [
+        (window_id, window_classes(window_id)) for window_id in ids
+    ]
+    selected = None
+    error = None
+    try:
+        selected = select_stream_window(candidates)
+    except SystemExit as exc:
+        error = str(exc)
+    print(json.dumps({
+        "active_window": active_window(),
+        "capture_window": selected,
+        "error": error,
+        "stream_windows": [
+            {"id": window_id, "wm_class": list(classes)}
+            for window_id, classes in candidates
+        ],
+    }, sort_keys=True))
 
 
 def output_path(value: str | None, suffix: str) -> Path:
@@ -200,6 +319,10 @@ def parser() -> argparse.ArgumentParser:
     stream_cmd.add_argument("--nickname", required=True)
     stream_cmd.add_argument("--wait", type=int, default=20)
     stream_cmd.set_defaults(func=start_stream)
+    status_cmd = commands.add_parser("status")
+    status_cmd.set_defaults(func=status)
+    focus_cmd = commands.add_parser("focus")
+    focus_cmd.set_defaults(func=focus_stream)
     shot_cmd = commands.add_parser("screenshot")
     shot_cmd.add_argument("--output")
     shot_cmd.set_defaults(func=screenshot)
