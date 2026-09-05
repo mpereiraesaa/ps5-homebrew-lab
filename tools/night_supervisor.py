@@ -25,7 +25,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "rehd_mods"))
 sys.path.insert(0, str(ROOT / "homebrew_ps5" / "research" / "gpu" / "tools"))
-from ps5debug import PS5Debug  # noqa: E402
+try:
+    from ps5debug import PS5Debug  # noqa: E402
+except ModuleNotFoundError:  # Host-only contract tests do not need live CUA.
+    PS5Debug = None
 from phase0m_guard import classify as classify_phase0m_log  # noqa: E402
 from phase0q_guard import classify as classify_phase0q_log  # noqa: E402
 from phase0r_guard import classify as classify_phase0r_log  # noqa: E402
@@ -41,63 +44,63 @@ ALLOWED_TITLES = {"FAKE00000", "PPSA03524", "AGCP12002", "AGCP12003",
 REQUIRED_PORTS = {"ps5debug": 744, "ftp": 2121, "shsrv": 2323,
                   "elfldr": 9021}
 HELPERS = Path(__file__).resolve().parent / "bigapp-control"
-AGC_APP = ROOT / "homebrew_ps5" / "apps" / "agc-phase0-native"
-AGC_NATIVE_APP = ROOT / "homebrew_ps5" / "apps" / "agc-native-sce"
-DMA_BUILDONLY = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+AGC_APP = ROOT / "homebrew_ps5" / "legacy" / "apps" / "agc-phase0-native"
+AGC_NATIVE_APP = ROOT / "homebrew_ps5" / "legacy" / "apps" / "agc-native-sce"
+DMA_BUILDONLY = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
                  "ps5-agc-phase0d-dma-buildonly.elf")
 DMA_BUILDONLY_REMOTE = "/data/homebrew/bin/ps5-agc-phase0d-dma-buildonly"
 DMA_BUILDONLY_LOG = "/data/ps5-agc-phase0d-dma-buildonly.log"
-QUEUE_STATE = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+QUEUE_STATE = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
                "ps5-agc-phase0e-driver-queue-state.elf")
 QUEUE_STATE_REMOTE = "/data/homebrew/bin/ps5-agc-phase0e-driver-queue-state"
 QUEUE_STATE_LOG = "/data/ps5-agc-phase0e-driver-queue-state.log"
-QUEUE_HOLD = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+QUEUE_HOLD = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
               "ps5-agc-phase0f-driver-queue-hold.elf")
 QUEUE_HOLD_REMOTE = "/data/homebrew/bin/ps5-agc-phase0f-driver-queue-hold"
 QUEUE_HOLD_LOG = "/data/ps5-agc-phase0f-driver-queue-hold.log"
-MEMORY_POLICY = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+MEMORY_POLICY = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
                  "ps5-agc-phase0n-memory-policy.elf")
 MEMORY_POLICY_REMOTE = "/data/homebrew/bin/ps5-agc-phase0n-memory-policy"
 MEMORY_POLICY_LOG = "/data/ps5-agc-phase0n-memory-policy.log"
-FIXED_MAPPING = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+FIXED_MAPPING = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
                  "ps5-agc-phase0o-fixed-mapping.elf")
 FIXED_MAPPING_REMOTE = "/data/homebrew/bin/ps5-agc-phase0o-fixed-mapping"
 FIXED_MAPPING_LOG = "/data/ps5-agc-phase0o-fixed-mapping.log"
-BACKEND_STATE = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+BACKEND_STATE = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
                  "ps5-agc-phase0p-backend-state.elf")
 BACKEND_STATE_REMOTE = "/data/homebrew/bin/ps5-agc-phase0p-backend-state"
 BACKEND_STATE_LOG = "/data/ps5-agc-phase0p-backend-state.log"
-PHASE0Q = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+PHASE0Q = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
            "ps5-agc-phase0q-batch-mapping.elf")
 PHASE0Q_REMOTE = "/data/homebrew/bin/ps5-agc-phase0q-batch-mapping"
 PHASE0Q_LOG = "/data/ps5-agc-phase0q-batch-mapping.log"
 PHASE0Q_SHA256 = "8786fb7657574108d25a770a9c0984e48453d2cb47015cad1ca4963fdf6f6829"
-PHASE0R = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+PHASE0R = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
            "ps5-agc-phase0r-batch-first-submit.elf")
 PHASE0R_REMOTE = "/data/homebrew/bin/ps5-agc-phase0r-batch-first-submit"
 PHASE0R_LOG = "/data/ps5-agc-phase0r-batch-first-submit.log"
 PHASE0R_SHA256 = "0f01bd8ba3fa9bfc84121ec6104572ecb744841202827253f5ba52984f5d8c44"
-PHASE0S = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+PHASE0S = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
            "ps5-agc-phase0s-batch-fence-submit.elf")
 PHASE0S_REMOTE = "/data/homebrew/bin/ps5-agc-phase0s-batch-fence-submit"
 PHASE0S_LOG = "/data/ps5-agc-phase0s-batch-fence-submit.log"
 PHASE0S_SHA256 = "a6f20997c1f15f3f37f4747d8439211228fefd5b4d5a7a2fc925eaffd8f98af2"
-PHASE0T = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+PHASE0T = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
            "ps5-agc-phase0t-libagc-load-queue.elf")
 PHASE0T_REMOTE = "/data/homebrew/bin/ps5-agc-phase0t-libagc-load-queue"
 PHASE0T_LOG = "/data/ps5-agc-phase0t-libagc-load-queue.log"
 PHASE0T_SHA256 = "daa6977e037745b0020826247ad369e9d048bbb2fe4addc2437d14e0941de774"
-PHASE0U = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+PHASE0U = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
            "ps5-agc-phase0u-context-bootstrap.elf")
 PHASE0U_REMOTE = "/data/homebrew/bin/ps5-agc-phase0u-context-bootstrap"
 PHASE0U_LOG = "/data/ps5-agc-phase0u-context-bootstrap.log"
 PHASE0U_SHA256 = "e47af8a81f90ecf75d529b14e89ac1b6d72249e2147971b3fec887388666fff7"
-PHASE0V = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+PHASE0V = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
            "ps5-agc-phase0v-fs-table-va.elf")
 PHASE0V_REMOTE = "/data/homebrew/bin/ps5-agc-phase0v-fs-table-va"
 PHASE0V_LOG = "/data/ps5-agc-phase0v-fs-table-va.log"
 PHASE0V_SHA256 = "5728f916abc8909d065d68db4e655eac0f91c142dca17ab7ba4e0df310801794"
-PHASE0W = (ROOT / "homebrew_ps5" / "probes" / "ps5-agc-phase0" /
+PHASE0W = (ROOT / "homebrew_ps5" / "legacy" / "probes" / "ps5-agc-phase0" /
            "ps5-agc-phase0w-fixed-fs-bootstrap.elf")
 PHASE0W_REMOTE = "/data/homebrew/bin/ps5-agc-phase0w-fixed-fs-bootstrap"
 PHASE0W_LOG = "/data/ps5-agc-phase0w-fixed-fs-bootstrap.log"
