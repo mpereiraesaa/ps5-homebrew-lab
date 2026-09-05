@@ -2,20 +2,23 @@ PROJECT := projects/ps5-agc-gears
 LOGGER := projects/logging_server
 LEGACY_PROBES := $(wildcard legacy/probes/*)
 
-.PHONY: all check gears-check telemetry-check sdk-check native native-release clean \
+.PHONY: all check gears-check telemetry-check remoteplay-check sdk-check native native-release clean \
 	legacy-probes legacy-clean
 
 all: check
 
 # Canonical laboratory gate. Renderer contracts come from the publishable repo;
 # telemetry retains its own independent test suite.
-check: gears-check telemetry-check
+check: gears-check telemetry-check remoteplay-check
 
 gears-check:
 	$(MAKE) -C $(PROJECT) all
 
 telemetry-check:
 	$(MAKE) -C $(LOGGER) check
+
+remoteplay-check:
+	python3 tests/test_ps5_remoteplay.py
 
 sdk-check:
 	python3 sdk/agc/tests/verify_api.py

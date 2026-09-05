@@ -13,6 +13,8 @@ link to private captures or firmware-derived material.
 - `OPERATIONS.md` — build, validation, deployment and safe cleanup procedures.
 - `OBSERVABILITY.md` — contrato TCP `ps5log/1`, estado del bloqueo nativo,
   manifiestos y clasificación.
+- `REMOTEPLAY.md` — pairing, streaming, screenshots and video capture through
+  Headless LinkDev and Chiaki.
 - `../research/gpu/LEGACY_FILESYSTEM_TELEMETRY.md` — frontera explícita entre
   evidencia histórica y el flujo de red objetivo.
 
