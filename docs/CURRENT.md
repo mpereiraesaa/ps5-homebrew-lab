@@ -17,10 +17,10 @@ errors and intact guards. Exact evidence and its limitations are documented in
 ## Xash3D checkpoint
 
 The active engineering target is now Xash3D on PS5. Phases 0, 1 and 2 of
-`XASH3D_PS5_PLAN.html` are complete on the development branch. The consolidated
-implementation is `feature/resource-foundation` in the public Gears repository
-and is under review as `mpereiraesaa/ps5-agc-gears#8`; it is not yet merged to
-the canonical submodule on this branch.
+`XASH3D_PS5_PLAN.html` are complete on the canonical public branch. The
+consolidated resource-foundation implementation was merged through
+`mpereiraesaa/ps5-agc-gears#8` as commit `642d348`, and this laboratory pins its
+Gears submodule to that exact commit.
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.

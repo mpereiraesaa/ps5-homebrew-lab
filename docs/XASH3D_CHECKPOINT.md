@@ -15,11 +15,10 @@ Reconciled: 2026-09-06. Hardware boundary: one PS5 on firmware 12.02.
 | 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
-The Phase 1/2 implementation is in
-`mpereiraesaa/ps5-agc-gears#8`. All host and security checks are green; the PR
-is open and intentionally not merged by automation. Phase 3 should branch from
-the resulting protected `main`, or explicitly declare that PR as its dependency
-if work begins before merge.
+The Phase 1/2 implementation was merged through
+`mpereiraesaa/ps5-agc-gears#8` as commit `642d348` after all host and security
+checks passed. The laboratory submodule pins that commit. Phase 3 can now branch
+from the protected public `main` without a cross-PR dependency.
 
 ## Evidence closing Phase 2
 

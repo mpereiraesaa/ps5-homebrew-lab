@@ -468,7 +468,7 @@ en memoria transitoria, genera las cuatro posiciones desde `gl_VertexIndex` y
 alimenta el color pulsante por el V# de constant buffer ya probado. La escritura
 de user data también queda separada por etapa: GS en `0x8d`, PS en `0x0d`.
 
-La implementación consolidada y la evidencia pública están en la rama
-`feature/resource-foundation`, PR `mpereiraesaa/ps5-agc-gears#8`. Mapas,
-binarios, logs completos y capturas permanecen privados; sólo se publican
-contratos, conteos y hashes sanitizados.
+La implementación consolidada y la evidencia pública se fusionaron mediante
+`mpereiraesaa/ps5-agc-gears#8` como commit `642d348`. Mapas, binarios, logs
+completos y capturas permanecen privados; sólo se publican contratos, conteos y
+hashes sanitizados.

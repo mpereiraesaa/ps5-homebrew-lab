@@ -43,9 +43,9 @@ make agc-sdk-check
 The public-facing demo has its independent documentation under
 `projects/ps5-agc-gears/docs/`.
 
-The Xash3D Phase 1/2 implementation currently lives in the public Gears PR #8
-until review and merge; the checked-in Gears submodule therefore remains the
-earlier canonical `main` boundary.
+The Xash3D Phase 1/2 implementation was merged through public Gears PR #8 as
+commit `642d348`; the checked-in Gears submodule pins that exact canonical
+boundary.
 
 `STATUS.md`, `ROADMAP.md`, `FINDINGS.md`, `GPU_RESEARCH.md` and
 `RELEASE_STATE.md` retain the chronological Stage A–I record. Where their

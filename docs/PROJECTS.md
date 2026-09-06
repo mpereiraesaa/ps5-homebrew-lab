@@ -9,9 +9,10 @@ nuevo; `GPU_RESEARCH.md` conserva la progresión experimental.
 Estado: además de los tres engranajes 3D, la rama de Xash3D ya renderiza
 `c1a0` con texturas base y lightmaps, cámara noclip, constantes por frame y un
 overlay pulsante desde recursos transitorios. Las Fases 1 y 2 pasaron gates de
-60.000 frames con cero errores. La implementación consolidada está en el PR
-`mpereiraesaa/ps5-agc-gears#8`, todavía sin fusionar. Los antiguos Stages A–I y
-`PPSA99998` están archivados bajo `legacy/`.
+60.000 frames con cero errores. La implementación consolidada se fusionó
+mediante `mpereiraesaa/ps5-agc-gears#8` como `642d348`, commit que fija ahora el
+submódulo canónico. Los antiguos Stages A–I y `PPSA99998` están archivados bajo
+`legacy/`.
 
 La primera capa reutilizable ya existe en `sdk/agc`: headers sanitizados,
 facades de enlace para `libSceAgc`/`libSceAgcDriver`, manifiesto de NIDs y test

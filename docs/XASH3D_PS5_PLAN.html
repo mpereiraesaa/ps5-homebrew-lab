@@ -151,7 +151,7 @@
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-06</div>
   <h2 id="checkpoint-title">Resource ownership is proven; texture mutation is next</h2>
-  <p><code>c1a0</code> renders with base textures and lightmaps, a moving noclip camera, per-frame constant buffers and a visibly pulsing transient overlay. The Phase 2 implementation and its evidence are in <a href="https://github.com/mpereiraesaa/ps5-agc-gears/pull/8">ps5-agc-gears PR #8</a>; host contracts and security checks are green, but the PR is intentionally not merged yet.</p>
+  <p><code>c1a0</code> renders with base textures and lightmaps, a moving noclip camera, per-frame constant buffers and a visibly pulsing transient overlay. The Phase 2 implementation and its evidence were merged through <a href="https://github.com/mpereiraesaa/ps5-agc-gears/pull/8">ps5-agc-gears PR #8</a> as commit <code>642d348</code> after all host and security checks passed.</p>
   <div class="grid">
     <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
     <div class="item"><div class="k">Phase 2 proof</div><div class="v">2 transient slots · 4 allocations reclaimed</div></div>
@@ -261,7 +261,7 @@
     </div>
     <div class="visible"><b>Visible result.</b> Mipmapped, filtered world textures; sky drawn; <code>{</code> grates alpha-tested; a lightmap patch updating every frame without tearing.</div>
     <h3>Immediate slice</h3>
-    <p>After Phase 2 PR #8 merges, branch <code>feature/texture-path</code> from the protected <code>main</code>. Change one capability first: update a bounded lightmap region every frame through the proven CPU flush plus AcquireMem contract. Require alternating GPU-visible readbacks, exact transient retirement and a clean 10,000-frame soak before adding mip levels, filtering, alpha test or sky.</p>
+    <p>Branch <code>feature/texture-path</code> from the now-updated protected <code>main</code>. Change one capability first: update a bounded lightmap region every frame through the proven CPU flush plus AcquireMem contract. Require alternating GPU-visible readbacks, exact transient retirement and a clean 10,000-frame soak before adding mip levels, filtering, alpha test or sky.</p>
     <ol class="steps">
       <li>Dynamic upload every frame through the acquire barrier. This is the lightstyle and dynamic-light path.<span class="gate"><b>Gate:</b> readback of the updated region, 10k-frame soak.</span></li>
       <li>Mipmap chain generation in the baker and mip-aware T#. Trilinear and anisotropic S# variants.</li>
