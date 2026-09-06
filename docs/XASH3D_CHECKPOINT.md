@@ -141,8 +141,31 @@ are `b7b2ef1e9cf4679bbe5edea37a8511aecdac3352252c7d48ffea0d6e70ac3dde`,
 `12c94237d1aa4fb5e762372549e7e803f2df7781468b862af5a70a513237ac39`
 and `7102eadff45ee1b3c8598d02e5480fba1bc736494a0f80dfd7dbe46b936ee383`.
 The exact CLI stream and title were closed, independent status found no
-BigApp, and all four services remained healthy. The next ordered Phase 4 gate
-is lightstyles plus dynamic lights on the Phase 3 lightmap upload path.
+BigApp, and all four services remained healthy.
+
+Run `20260906T233103794Z_PPSA99996_ps5-xash3d_0x813f7d9b54cf` then closed
+Phase 4's fourth gate. The compatible version-3 bundle preserved every source
+lightstyle plane from privately owned `c1a0e.bsp`: 3,052 lightmapped faces,
+734,229 source-sample bytes, 528 styled faces and 1,084 style layers. The
+runtime selected wall face 203 (draw 379, styles 0/33/35) and alternated base,
+animated lightstyle, a face-local radial dynamic light and their combined
+result every 600 frames. After each slot's initial full upload, the existing
+Phase 3 path uploaded only the 704-byte 11×16 atlas patch.
+
+The 10,000-frame FW 12.02 run produced exactly eight post-retirement
+framebuffer readbacks, covered all four modes on both slots and kept every
+same-slot result distinct. Fence and VideoOut ownership were exact, guards were
+intact, six allocations were reclaimed, all 266 records were gap-free and
+renderer errors stayed at zero. Its ELF/fSELF/bundle/transcript/manifest hashes
+are `7cf6d6b7c0e4ace01781de5f8c63f18b8a7be09b2b5113cdd0c1bf215f0f62dd`,
+`dd66e6c4659b8bc4453720c003c549683c884d40d9906c3b7e9859f6fff14506`,
+`0e6396cf2dbec287c4e2bc28f90a90e8f5cb26b98f43ebcd539dba7d9c171105`,
+`f1c69e8d1825275da6716aeff6f0620c516f8fb4e708a45b18f8e19cd00e620b`
+and `197c0086ac8e72e91ff01465c513a029d95c39e690e2d611231a35c12cd10060`.
+Chiaki reused the registered entry through the isolated CLI helper; no pairing,
+client window or focus assumption was involved. Exact PID/title closure left
+no BigApp, all services healthy and `PPSA99998` absent. The next ordered gate
+is transient sprites plus particles.
 
 ## Parallel work that is now de-risked
 
