@@ -26,6 +26,7 @@ class FakeSupervisor(MODULE.Supervisor):
         self.events.append(("precondition", expected))
 
     def run_elfldr(self, helper):
+        self.events.append(("helper", helper.name))
         return self.output
 
     def bigapp(self):
@@ -39,6 +40,21 @@ class FakeSupervisor(MODULE.Supervisor):
 
 
 class CloseVerificationTests(unittest.TestCase):
+    def test_xash3d_uses_dedicated_exact_title_helper(self):
+        helper_makefile = (ROOT / "tools/bigapp-control/Makefile").read_text()
+        self.assertIn("launch-xash3d.elf", helper_makefile)
+        self.assertIn("close-xash3d.elf", helper_makefile)
+        self.assertIn("PPSA99996", helper_makefile)
+
+        sup = FakeSupervisor(
+            "bigapp-control action=close target=PPSA99996 "
+            "app_id=57368 identify_rc=0 running=PPSA99996\n",
+            [{"app_id": -1, "title_id": ""}],
+        )
+        sup.checked_close("PPSA99996")
+        self.assertIn(("precondition", "PPSA99996"), sup.events)
+        self.assertIn(("helper", "close-xash3d.elf"), sup.events)
+
     def test_native_close_requires_valid_network_manifest(self):
         class NativeSupervisor(FakeSupervisor):
             def __init__(self):

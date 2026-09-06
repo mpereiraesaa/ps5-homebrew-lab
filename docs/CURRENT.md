@@ -27,8 +27,8 @@ completed all six hardware gates before merging through
 `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264`. The
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
-history of `projects/ps5-xash3d`, which this laboratory pins at its first own
-commit `8865b3f` on top of `cbff264`.
+history of `projects/ps5-xash3d`, which this laboratory now pins at merged
+dedicated-title commit `c09318f` on top of `8865b3f` and `cbff264`.
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -47,6 +47,13 @@ The `ps5-xash3d` submodule pins that complete Phase 3 tree. The next
 implementation phase is Phase 4, GoldSrc render states, and it lands in
 `ps5-xash3d`. See
 `XASH3D_CHECKPOINT.md` for the evidence boundary and executable order.
+
+The package-identity prerequisite is also closed. Xash3D is installed and
+hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
+available as `PPSA99997`. `night_supervisor.py` has distinct exact-title
+launch/close helpers for both. The obsolete historical host `PPSA99998` is not
+installed: its homebrew, mount, application and metadata paths are absent and
+the live application database contains no matching row.
 
 The engine symbol probe is also complete. The client has only three genuine
 SDK gaps (`__assert`, `getpwuid`, `dladdr`), and `mainui` plus both hlsdk

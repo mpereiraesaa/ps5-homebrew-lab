@@ -96,12 +96,23 @@ and
 The exact title was closed after validation and all four console services
 remained stable. Phase 3 is complete; Phase 4 render states are next.
 
-Before the first Phase 4 hardware package, `ps5-xash3d` must stop sharing the
-local development identity `PPSA99997` with the frozen Gears demo. Assign a
-distinct Title ID, add a matching exact-title close helper to
-`tools/night_supervisor.py`, and pass an identity/launch/close gate on the
-console. Until that gate closes, the two packages must never be installed or
-launched interchangeably.
+The pre-Phase 4 identity gate is complete. `ps5-xash3d` now owns the dedicated
+local development identity `PPSA99996`; the frozen Gears demo remains installed
+as `PPSA99997`. Separate exact-title launch/close helpers are wired through
+`tools/night_supervisor.py`. Run
+`20260906T205728904Z_PPSA99996_ps5-xash3d_0x78de031d5d51` presented 1,440
+frames at 59.94 fps with zero renderer errors, reproduced the accepted Phase 3
+122-chain and 2,915/137/158 draw shape, and was then removed by the exact
+`PPSA99996` helper. Independent status observed no BigApp and all four console
+services remained healthy. This was an identity smoke gate, so its external
+close intentionally produced a gap-free EOF without BYE rather than repeating
+the already accepted 60,000-frame completion gate.
+
+The historical native host `PPSA99998` was uninstalled from the console: its
+four possible installation/mount paths are absent and the live `app.db` has no
+matching cells. Its source remains archived under `legacy/` and its exact
+pre-removal files have a private recoverable laboratory backup; it is not an
+installed application or an active workflow.
 
 ## Parallel work that is now de-risked
 
