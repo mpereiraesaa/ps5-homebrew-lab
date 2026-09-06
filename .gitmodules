@@ -1,3 +1,6 @@
 [submodule "projects/ps5-agc-gears"]
 	path = projects/ps5-agc-gears
 	url = https://github.com/mpereiraesaa/ps5-agc-gears.git
+[submodule "projects/ps5-xash3d"]
+	path = projects/ps5-xash3d
+	url = https://github.com/mpereiraesaa/ps5-xash3d.git

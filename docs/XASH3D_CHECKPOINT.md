@@ -18,8 +18,10 @@ Reconciled: 2026-09-06. Hardware boundary: one PS5 on firmware 12.02.
 The Phase 1/2 implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
-all host and security checks passed. The laboratory submodule now pins the
-Phase 3 commit.
+all host and security checks passed. On 2026-09-06 the port moved to its own
+repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
+the laboratory submodule `projects/ps5-xash3d` pins it and Phase 4 lands there.
+`ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
 
@@ -93,6 +95,13 @@ and
 `b977861bf0d6ebe08883176c0843ef52674a5a25cd2da40eab5d49e049c87c0d`.
 The exact title was closed after validation and all four console services
 remained stable. Phase 3 is complete; Phase 4 render states are next.
+
+Before the first Phase 4 hardware package, `ps5-xash3d` must stop sharing the
+local development identity `PPSA99997` with the frozen Gears demo. Assign a
+distinct Title ID, add a matching exact-title close helper to
+`tools/night_supervisor.py`, and pass an identity/launch/close gate on the
+console. Until that gate closes, the two packages must never be installed or
+launched interchangeably.
 
 ## Parallel work that is now de-risked
 
