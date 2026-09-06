@@ -27,8 +27,8 @@ completed all six hardware gates before merging through
 `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264`. The
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
-history of `projects/ps5-xash3d`, which this laboratory now pins at dedicated-
-title commit `6ede0e3` on top of `8865b3f` and `cbff264`.
+history of `projects/ps5-xash3d`, which this laboratory now pins at merged
+dedicated-title commit `c09318f` on top of `8865b3f` and `cbff264`.
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
