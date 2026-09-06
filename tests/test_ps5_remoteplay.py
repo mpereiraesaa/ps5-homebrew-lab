@@ -32,6 +32,7 @@ def main() -> int:
         ("200", ("chiaki", "Chiaki")),
     ]
     assert MODULE.select_stream_window(candidates) == "200"
+    assert MODULE.chiaki_client_ids(candidates) == ["200"]
     try:
         MODULE.select_stream_window([
             ("200", ("chiaki", "Chiaki")),
@@ -56,6 +57,17 @@ def main() -> int:
         run.assert_called_once_with(
             ["xdotool", "windowactivate", "--sync", "100"], check=True
         )
+
+    with mock.patch.object(MODULE, "require_program", return_value="chiaki"), \
+            mock.patch.object(MODULE, "quit_dialog_candidates", return_value=[
+                ("400", ("chiaki", "Chiaki")),
+            ]):
+        try:
+            MODULE.start_stream(mock.Mock())
+        except SystemExit as exc:
+            assert "must click OK" in str(exc)
+        else:
+            raise AssertionError("a pending quit dialog must block stream restart")
     print("Remote Play host contracts passed")
     return 0
 

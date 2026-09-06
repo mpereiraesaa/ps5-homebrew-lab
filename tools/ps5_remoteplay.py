@@ -24,6 +24,7 @@ READY_RE = re.compile(
     r"Account ID: (?P<account>[A-Za-z0-9+/]+=*) \| Timeout: (?P<timeout>[0-9]+)s"
 )
 STREAM_TITLE_RE = r"^Chiaki \| Stream$"
+QUIT_DIALOG_TITLE_RE = r"^Session has quit$"
 CHIAKI_WM_CLASS = "chiaki"
 
 
@@ -107,13 +108,33 @@ def pair(args: argparse.Namespace) -> None:
     raise SystemExit("elfldr connection closed before pairing completed")
 
 
-def stream_window_ids() -> list[str]:
+def visible_window_ids(title_pattern: str) -> list[str]:
     xdotool = require_program("xdotool")
     result = subprocess.run(
-        [xdotool, "search", "--onlyvisible", "--name", STREAM_TITLE_RE],
+        [xdotool, "search", "--onlyvisible", "--name", title_pattern],
         text=True, capture_output=True, check=False,
     )
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def stream_window_ids() -> list[str]:
+    return visible_window_ids(STREAM_TITLE_RE)
+
+
+def quit_dialog_candidates() -> list[tuple[str, tuple[str, ...]]]:
+    return [
+        (window_id, window_classes(window_id))
+        for window_id in visible_window_ids(QUIT_DIALOG_TITLE_RE)
+    ]
+
+
+def chiaki_client_ids(
+    candidates: list[tuple[str, tuple[str, ...]]],
+) -> list[str]:
+    return [
+        window_id for window_id, classes in candidates
+        if any(value.casefold() == CHIAKI_WM_CLASS for value in classes)
+    ]
 
 
 def window_classes(window_id: str) -> tuple[str, ...]:
@@ -129,10 +150,7 @@ def window_classes(window_id: str) -> tuple[str, ...]:
 def select_stream_window(
     candidates: list[tuple[str, tuple[str, ...]]],
 ) -> str:
-    clients = [
-        window_id for window_id, classes in candidates
-        if any(value.casefold() == CHIAKI_WM_CLASS for value in classes)
-    ]
+    clients = chiaki_client_ids(candidates)
     if len(clients) == 1:
         return clients[0]
     details = ", ".join(
@@ -197,6 +215,13 @@ def restore_focus_if_chiaki_stole_it(
 
 def start_stream(args: argparse.Namespace) -> None:
     chiaki = require_program("chiaki")
+    quit_dialogs = chiaki_client_ids(quit_dialog_candidates())
+    if quit_dialogs:
+        raise SystemExit(
+            "Chiaki Remote Play is disconnected but its 'Session has quit' "
+            "dialog is still open; the owner must click OK before restarting "
+            "the existing registered stream"
+        )
     existing_ids = stream_window_ids()
     if existing_ids:
         print(select_stream_window([
@@ -249,6 +274,7 @@ def status(_args: argparse.Namespace) -> None:
     candidates = [
         (window_id, window_classes(window_id)) for window_id in ids
     ]
+    quit_candidates = quit_dialog_candidates()
     selected = None
     error = None
     try:
@@ -259,6 +285,11 @@ def status(_args: argparse.Namespace) -> None:
         "active_window": active_window(),
         "capture_window": selected,
         "error": error,
+        "session_quit_dialogs": [
+            {"id": window_id, "wm_class": list(classes)}
+            for window_id, classes in quit_candidates
+            if window_id in chiaki_client_ids(quit_candidates)
+        ],
         "stream_windows": [
             {"id": window_id, "wm_class": list(classes)}
             for window_id, classes in candidates

@@ -83,16 +83,21 @@ registration step.
 While `Chiaki | Stream` is open, Chiaki owns the Remote Play session and a
 focused stream can send keyboard input to the PS5. When the owner takes the
 physical DualSense and begins playing directly on the PS5, the Remote Play
-stream session/window closes. The main Chiaki client remains open with its
-registered console entry; Chiaki itself has not died and the stream can be
-started again from that entry without pairing.
+session disconnects, but the stream window does not close immediately. It
+remains black with a `Session has quit` dialog reporting that the remote
+disconnected. The owner must click `OK`; that acknowledgement closes the
+stream window. The main Chiaki client remains open with its registered console
+entry; Chiaki itself has not died and a new stream can be started from that
+entry without pairing.
 
 For runs that require physical controller movement and visual evidence, capture
 the initial view first, let the owner take the DualSense, and keep structured
-telemetry running after the stream window closes. Once the run completes,
-restart only the stream from the existing entry and capture the final view.
-This makes Remote Play capture and physical input sequential rather than
-concurrent.
+telemetry running after the session disconnects. Once the owner acknowledges
+the quit dialog and the run completes, restart only the stream from the
+existing entry and capture the final view. `status` reports the quit dialog and
+`stream` refuses to misclassify its still-open parent as a usable session. The
+helper never dismisses this operator-visible dialog automatically. This makes
+Remote Play capture and physical input sequential rather than concurrent.
 
 Remote Play images are supporting visual evidence, not substitutes for the
 artifact hash, GPU fence, VideoOut token, guards or structured telemetry.

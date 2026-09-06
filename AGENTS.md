@@ -26,11 +26,12 @@
   when explicitly invoked. After launch, the wrapper restores the prior window
   only if Chiaki still owns focus, and never overrides a window the owner chose
   meanwhile.
-- Taking over with the physical DualSense ends only the `Chiaki | Stream`
-  session/window. The main client and its registered console entry remain; do
-  not pair or initialize Chiaki again. Restart only the stream when another
-  capture is needed. See `docs/REMOTEPLAY.md` for the sequential capture and
-  physical-input workflow.
+- Taking over with the physical DualSense disconnects the Remote Play session,
+  but leaves `Chiaki | Stream` open with a `Session has quit` dialog. The owner
+  must acknowledge `OK` before that window closes. The main client and its
+  registered console entry remain; do not pair or initialize Chiaki again.
+  Restart only the stream when another capture is needed. See
+  `docs/REMOTEPLAY.md` for the sequential capture and physical-input workflow.
 - Pairing output contains a PIN and PSN Account ID. Never commit, archive,
   quote in logs or send those values to telemetry. Use
   `docs/REMOTEPLAY.md` for the pinned Headless LinkDev workflow.
