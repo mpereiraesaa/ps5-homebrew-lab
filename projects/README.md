@@ -8,7 +8,7 @@ publica en bloque.
 
 | Directorio | Estado | Futuro repositorio |
 | --- | --- | --- |
-| `ps5-xash3d/` | Activo: port Xash3D sobre AGC, Fases 0–3 validadas en hardware; privado hasta publicarse | [mpereiraesaa/ps5-xash3d](https://github.com/mpereiraesaa/ps5-xash3d) |
+| `ps5-xash3d/` | Activo: port Xash3D sobre AGC, Fases 0–3 validadas en hardware; público, `main` protegida pendiente | [mpereiraesaa/ps5-xash3d](https://github.com/mpereiraesaa/ps5-xash3d) |
 | `ps5-agc-gears/` | Público, standalone y validado en hardware; congelado como demo Gears | [mpereiraesaa/ps5-agc-gears](https://github.com/mpereiraesaa/ps5-agc-gears) |
 | `logging_server/` | Componente privado reutilizable; suite host activa | Telemetría TCP `ps5log/1` |
 

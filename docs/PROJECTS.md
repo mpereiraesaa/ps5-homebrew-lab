@@ -3,7 +3,7 @@
 ## Port Xash3D sobre AGC — activo
 
 Implementación canónica: `projects/ps5-xash3d` (`mpereiraesaa/ps5-xash3d`,
-privado hasta que el propietario lo publique), bifurcado de `ps5-agc-gears` en
+repositorio público), bifurcado de `ps5-agc-gears` en
 `cbff264` con toda la historia el 2026-09-06. Ahí vive el renderer AGC, el
 visor BSP de las Fases 1–3 y todas las fases siguientes del port. Su README
 gobierna el desarrollo nuevo; `GPU_RESEARCH.md` conserva la progresión

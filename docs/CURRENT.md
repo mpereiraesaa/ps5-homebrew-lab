@@ -4,8 +4,8 @@ Last reconciled: 2026-09-06. Tested console firmware: PS5 12.02.
 
 ## Canonical implementation
 
-`projects/ps5-xash3d` (`mpereiraesaa/ps5-xash3d`, private until the owner
-publishes it) is the only active AGC renderer and the home of the Xash3D port.
+`projects/ps5-xash3d` (`mpereiraesaa/ps5-xash3d`, public) is the only active
+AGC renderer and the home of the Xash3D port.
 It was forked from `ps5-agc-gears` at `cbff264` with full history on
 2026-09-06, so it carries the Gears renderer foundation plus the Phase 1-3 BSP
 viewer, resource foundation and texture path. Its `make all` is the root host
