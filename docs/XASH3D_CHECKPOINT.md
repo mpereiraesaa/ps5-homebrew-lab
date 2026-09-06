@@ -9,16 +9,17 @@ Reconciled: 2026-09-06. Hardware boundary: one PS5 on firmware 12.02.
 | 0 — Close the ledger | Complete | Public renderer, protected `main`, CI, reproducible GFX1013 compiler and evidence rules. |
 | 1 — BSP viewer with noclip | Complete | `c1a0`, 3,611 draws, 164 base textures plus lightmap, physical DualSense movement and a clean 60,000-frame textured gate. |
 | 2 — Resource foundation | Complete | Fence-retired pool, two-slot transient ring, V#/T#/S#, per-frame constants, two pipeline permutations, cache contract and a clean 60,000-frame gate. |
-| 3 — Texture path | Active next | First isolate dynamic lightmap mutation; then mipmaps/filtering, alpha test, sky and texture-budget telemetry. |
-| 4 — GoldSrc render states | Later | Blend/additive/alpha-test permutations, 2D, sprites, particles, studio/brush entities and culling. |
+| 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
+| 4 — GoldSrc render states | Next | Blend/additive permutations, 2D, sprites, particles, studio/brush entities and culling. |
 | 5 — Platform layer | Sized, later/parallel | ScePad, AudioOut, filesystem, direct-memory engine allocator, time/threads and three measured libc shims. |
 | 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
 The Phase 1/2 implementation was merged through
-`mpereiraesaa/ps5-agc-gears#8` as commit `642d348` after all host and security
-checks passed. The laboratory submodule pins that commit. Phase 3 can now branch
-from the protected public `main` without a cross-PR dependency.
+`mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
+path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
+all host and security checks passed. The laboratory submodule now pins the
+Phase 3 commit.
 
 ## Evidence closing Phase 2
 
@@ -71,10 +72,27 @@ connected/read-error continuity is sufficient unless input code changes.
 
 ### 3.3 GoldSrc texture semantics
 
-1. Add alpha test for `{` textures as its own pipeline permutation.
-2. Add the sky as a separate pass.
-3. Emit resident bytes and per-frame upload bytes in structured telemetry.
-4. Finish with a 60,000-frame Phase 3 soak before declaring the phase complete.
+1. Alpha test for `{` textures as its own pipeline permutation — complete.
+2. Sky as a separate pass — complete in run
+   `20260906T165427904Z_PPSA99997_ps5-agc-gears_0x6b9b27deac05` with 158 sky
+   draws, distinct skip/pass GPU readbacks and 10,000 clean frames.
+3. Emit consolidated resident bytes and per-frame upload bytes in structured
+   telemetry — complete in the 10,000-frame accounting gate.
+4. Finish with a 60,000-frame Phase 3 soak before declaring the phase complete
+   — complete in run
+   `20260906T182418688Z_PPSA99997_ps5-agc-gears_0x70824724af5d`.
+
+The final run completed 60,000/60,000 frames with zero renderer errors, no
+presentation intervals over 17 ms, exact fence/VideoOut ownership and intact
+guards. It proved 122 mip chains; 2,915 opaque, 137 alpha-tested and 158 sky
+draws; 68,731,904 pool-resident bytes; 781,471,872 total uploaded bytes; and a
+gap-free accounting digest `b4f0d5a0fa607141`. Its transcript/manifest hashes
+are
+`b69d5a9cd514d4ef94d3b706fc9005340f054add33c1e4ff8f941649ff4e39f4`
+and
+`b977861bf0d6ebe08883176c0843ef52674a5a25cd2da40eab5d49e049c87c0d`.
+The exact title was closed after validation and all four console services
+remained stable. Phase 3 is complete; Phase 4 render states are next.
 
 ## Parallel work that is now de-risked
 
@@ -96,6 +114,8 @@ normal test. When the owner takes the physical DualSense, the Remote Play
 session disconnects but the stream window remains black behind a
 `Session has quit` dialog. Clicking `OK` closes only that stream window; the
 main Chiaki client remains available to restart streaming from the existing
-entry. The open lab PR `mpereiraesaa/ps5-homebrew-lab#8` adds fail-closed state
-detection and an explicit `acknowledge-quit` command. Automation must not assume
-focus, synthesize movement or dismiss the dialog without authorization.
+entry. The helper also supports direct console-mode startup, so the discovery
+client window is not required. It works around Chiaki 2.1.1's second-entry CLI
+bug with a private temporary copy of the existing PS5 registration; no pairing,
+re-registration or credential logging occurs. Automation must not assume focus
+or synthesize movement.
