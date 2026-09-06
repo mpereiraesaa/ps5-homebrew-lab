@@ -125,12 +125,12 @@
 
 <div class="page">
 <header>
-  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-06 · rev 7</div>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-06 · rev 8</div>
   <h1>Xash3D on PS5</h1>
-  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. The BSP viewer, reusable resource layer, bounded lightmap, mip/sampler, alpha-test and separate sky gates are closed; consolidated texture accounting is next.</p>
+  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. The complete Phase 3 texture path—bounded lightmap, deterministic mips, anisotropic sampling, alpha test, sky and exact accounting—has passed its final 60,000-frame hardware gate.</p>
   <div class="facts">
-    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 3 · 4 gates done</div></div>
-    <div class="fact"><div class="k">Latest gate</div><div class="v">10,000 frames · 0 errors</div></div>
+    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 3 · 6 gates done</div></div>
+    <div class="fact"><div class="k">Latest gate</div><div class="v">60,000 frames · 0 errors</div></div>
     <div class="fact"><div class="k">Cadence</div><div class="v">59.94 fps · 2 in flight</div></div>
     <div class="fact"><div class="k">GPU target</div><div class="v">gfx1013 · AGC</div></div>
   </div>
@@ -140,8 +140,8 @@
   <a class="done" href="#p0"><span class="n">0</span><span class="t">Close the ledger</span></a>
   <a class="done" href="#p1"><span class="n">1</span><span class="t">BSP viewer, noclip</span></a>
   <a class="done" href="#p2"><span class="n">2</span><span class="t">Resource foundation</span></a>
-  <a class="active" href="#p3"><span class="n">3</span><span class="t">Texture path</span></a>
-  <a href="#p4"><span class="n">4</span><span class="t">GoldSrc render states</span></a>
+  <a class="done" href="#p3"><span class="n">3</span><span class="t">Texture path</span></a>
+  <a class="active" href="#p4"><span class="n">4</span><span class="t">GoldSrc render states</span></a>
   <a href="#p5"><span class="n">5</span><span class="t">Platform layer</span></a>
   <a href="#p6"><span class="n">6</span><span class="t">Engine integration</span></a>
   <a href="#p7"><span class="n">7</span><span class="t">Playable and release</span></a>
@@ -150,8 +150,8 @@
 
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-06</div>
-  <h2 id="checkpoint-title">GoldSrc sky is proven as a distinct fourth hardware pass</h2>
-  <p><code>c1a0</code> now renders deterministic mip chains, a bounded dynamic lightmap, separate opaque and <code>{</code> alpha-test classes, and an unlit sky pass. Run <code>20260906T165427904Z</code> completed 10,000 frames with 158 sky draws and distinct skip-control/sky-pass GPU readbacks. The Phase 2 foundation remains merged through <a href="https://github.com/mpereiraesaa/ps5-agc-gears/pull/8">ps5-agc-gears PR #8</a> at commit <code>642d348</code>; Phase 3 remains isolated on <code>feature/texture-path</code> until accounting and the final 60,000-frame soak close.</p>
+  <h2 id="checkpoint-title">The complete GoldSrc texture path passed 60,000 frames</h2>
+  <p><code>c1a0</code> now renders deterministic mip chains, a bounded dynamic lightmap, separate opaque and <code>{</code> alpha-test classes, and an unlit sky pass with exact residency/upload accounting. Run <code>20260906T182418688Z</code> completed 60,000 frames with zero errors, no presentation intervals over 17 ms, exact fence/VideoOut ownership, intact guards and a gap-free teardown. It accounted 68,731,904 resident bytes and 781,471,872 uploaded bytes across 122 mip chains and 2,915/137/158 opaque/alpha/sky draws. The Phase 2 foundation remains merged through <a href="https://github.com/mpereiraesaa/ps5-agc-gears/pull/8">ps5-agc-gears PR #8</a> at commit <code>642d348</code>; Phase 3 is hardware-complete on <code>feature/texture-path</code> and ready for publication.</p>
   <div class="grid">
     <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
     <div class="item"><div class="k">Dynamic proof</div><div class="v">8×8 patch/frame · guards stable · 10k</div></div>
@@ -159,7 +159,9 @@
     <div class="item"><div class="k">Mip proof</div><div class="v">164 chains · 5–9 levels · tri/aniso readback</div></div>
     <div class="item"><div class="k">Alpha proof</div><div class="v">1 texture · 42 draws · distinct control/readback</div></div>
     <div class="item"><div class="k">Sky proof</div><div class="v">1 texture · 158 draws · distinct control/readback</div></div>
-    <div class="item"><div class="k">Next gate</div><div class="v">Resident/upload accounting</div></div>
+    <div class="item"><div class="k">Accounting</div><div class="v">68.7 MB resident · 781.5 MB uploaded</div></div>
+    <div class="item"><div class="k">Final proof</div><div class="v">60k · exact tokens · guards intact · 0 errors</div></div>
+    <div class="item"><div class="k">Next step</div><div class="v">Publish Phase 3 PR · begin render states</div></div>
   </div>
 </section>
 
@@ -255,29 +257,29 @@
 </section>
 
 <!-- PHASE 3 -->
-<section class="phase active" id="p3">
+<section class="phase done" id="p3">
   <div class="num">3</div>
   <div class="body">
     <div class="head">
       <h2>Texture path</h2>
-    <div class="meta"><span class="pill active">4 gates complete</span><span>≈ 1 week</span><span>Everything GoldSrc does to a texture after it is bound.</span></div>
+    <div class="meta"><span class="pill done">done · 6 gates</span><span>≈ 1 week</span><span>Everything GoldSrc does to a texture after it is bound.</span></div>
     </div>
     <div class="visible"><b>Visible result.</b> Mipmapped, filtered world textures; sky drawn; <code>{</code> grates alpha-tested; a lightmap patch updating every frame without tearing.</div>
     <h3>Ordered hardware checkpoint</h3>
-    <p>Branch <code>feature/texture-path</code> first closed a bounded lightmap update through the proven CPU flush plus AcquireMem contract. Run <code>20260906T150442704Z</code> completed 10,000 frames with alternating GPU-visible patch readbacks, stable surrounding bytes and exact retirement. Run <code>20260906T153443296Z</code> then isolated deterministic mip chains and trilinear versus 4:1 anisotropic filtering. Run <code>20260906T160249452Z</code> split opaque from <code>{</code> alpha-tested draws. Run <code>20260906T165427904Z</code> added a fourth compiled pipeline and isolated 158 unlit sky draws with distinct paired-state skip/pass GPU readbacks over 10,000 clean frames.</p>
+    <p>Branch <code>feature/texture-path</code> first closed a bounded lightmap update through the proven CPU flush plus AcquireMem contract. Run <code>20260906T150442704Z</code> completed 10,000 frames with alternating GPU-visible patch readbacks, stable surrounding bytes and exact retirement. Run <code>20260906T153443296Z</code> then isolated deterministic mip chains and trilinear versus 4:1 anisotropic filtering. Run <code>20260906T160249452Z</code> split opaque from <code>{</code> alpha-tested draws. Run <code>20260906T165427904Z</code> added a fourth compiled pipeline and isolated 158 unlit sky draws. Run <code>20260906T181828532Z</code> closed exact resident/upload accounting, then <code>20260906T182418688Z</code> carried the complete path through 60,000 clean frames and a gap-free teardown. Its compositor-visible Chiaki capture was taken while the exact final artifact was still presenting; Chiaki reused its registered entry through the direct CLI helper without opening the main client or pairing.</p>
     <ol class="steps">
       <li>Dynamic upload every frame through the acquire barrier. This is the lightstyle and dynamic-light path.<span class="gate"><b>Passed:</b> bounded GPU readback and 10k-frame soak.</span></li>
       <li>Mipmap chain generation in the baker and mip-aware T#. Trilinear and anisotropic S# variants.<span class="gate"><b>Passed:</b> deterministic ABI v3, paired-lightmap readbacks and 10k-frame soak.</span></li>
       <li>Swizzled layout only if linear proves too slow. Linear stays the reference until a measured frametime says otherwise.</li>
       <li>Alpha test for <code>{</code> textures as its own pipeline permutation.<span class="gate"><b>Passed:</b> compiled kill-bit delta, separate draw class, visual cutout and 10k-frame paired-state readback.</span></li>
       <li>Sky as a separate pass after alpha test closes.<span class="gate"><b>Passed:</b> explicit sky class, unlit pipeline, visual result and 10k-frame paired skip/pass readback.</span></li>
-      <li>Texture budget accounting: bytes resident, bytes per frame uploaded, surfaced in telemetry.<span class="gate"><b>Next:</b> consolidate allocation and upload accounting without changing rendering.</span></li>
+      <li>Texture budget accounting: bytes resident, bytes per frame uploaded, surfaced in telemetry.<span class="gate"><b>Passed:</b> checked 64-bit ledger, gap-free digest, 10k accounting gate and consolidated 60k final soak.</span></li>
     </ol>
   </div>
 </section>
 
 <!-- PHASE 4 -->
-<section class="phase" id="p4">
+<section class="phase active" id="p4">
   <div class="num">4</div>
   <div class="body">
     <div class="head">
@@ -391,7 +393,7 @@
   </div>
 </section>
 
-<footer>Revision 7 records the 2026-09-06 Phase 3 dynamic-lightmap, mip/sampler, alpha-test and separate sky hardware checkpoints. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
+<footer>Revision 8 records completion of all six 2026-09-06 Phase 3 texture-path hardware checkpoints, including exact residency/upload accounting and the final 60,000-frame soak. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
 </div>
 </body>
 </html>

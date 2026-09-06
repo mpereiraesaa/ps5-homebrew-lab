@@ -17,7 +17,8 @@ errors and intact guards. Exact evidence and its limitations are documented in
 ## Xash3D checkpoint
 
 The active engineering target is now Xash3D on PS5. Phases 0, 1 and 2 of
-`XASH3D_PS5_PLAN.html` are complete on the canonical public branch. The
+`XASH3D_PS5_PLAN.html` are complete on the canonical public branch, and Phase 3
+has completed all six hardware gates on `feature/texture-path`. The
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`, and this laboratory pins its
 Gears submodule to that exact commit.
@@ -31,11 +32,12 @@ Its 60,000-frame FW 12.02 run completed with zero errors, exact fence/VideoOut
 retirement, both transient slots reusable and all four persistent allocations
 reclaimed. The operator confirmed the transient overlay pulse live.
 
-The next implementation phase is Phase 3, texture mutation and sampling. Its
-first isolated gate is a bounded lightmap patch updated every frame through the
-Phase 2 flush/AcquireMem path, proved by alternating GPU-visible readback and a
-clean 10,000-frame soak. Mip chains, filtering, alpha test and sky follow only
-after that gate. See `XASH3D_CHECKPOINT.md` for the executable order.
+Phase 3 adds a bounded dynamic-lightmap path, deterministic mip chains,
+trilinear/anisotropic sampling, separate opaque/alpha-test/sky passes and exact
+resident/upload accounting. Its final FW 12.02 run completed 60,000 frames with
+zero errors, exact fence/VideoOut ownership, intact guards and a gap-free BYE.
+The next implementation phase is Phase 4, GoldSrc render states. See
+`XASH3D_CHECKPOINT.md` for the evidence boundary and executable order.
 
 The engine symbol probe is also complete. The client has only three genuine
 SDK gaps (`__assert`, `getpwuid`, `dladdr`), and `mainui` plus both hlsdk
@@ -68,10 +70,11 @@ Remote Play pairing and capture were validated on FW 12.02. Details and
 credential-handling rules are in `docs/REMOTEPLAY.md`.
 
 The already registered Chiaki entry must be reused; pairing is not part of
-normal capture. Physical DualSense takeover disconnects the Remote Play
-session, leaves the stream window behind a `Session has quit` dialog, and
-requires `OK` before that stream window closes. Safe status detection and
-explicit acknowledgement are implemented in the open lab PR
+normal capture. The helper can launch that entry directly from the terminal,
+without the discovery client window. Physical DualSense takeover disconnects
+the Remote Play session, leaves the stream window behind a `Session has quit`
+dialog, and requires `OK` before that stream window closes. Safe status
+detection and explicit acknowledgement are implemented in the open lab PR
 `mpereiraesaa/ps5-homebrew-lab#8`; automation must not infer focus or silently
 dismiss the dialog.
 
