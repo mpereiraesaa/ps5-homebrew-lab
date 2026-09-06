@@ -56,25 +56,25 @@ the requested, already registered PS5 entry. The real configuration is never
 modified, no credential is printed or placed on the command line, and the
 temporary copy is removed when the confined stream process exits.
 
-Taking control with the physical DualSense ends the Remote Play session but
-does not close the Chiaki client. The stream window remains behind a
-`Session has quit` dialog until its selected `OK` action is acknowledged; only
-then do the dialog and ended stream window close. Handle that transition with:
+The normal workflow never handles Chiaki's client UI. If Remote Play ends—for
+example, because the operator takes the physical DualSense—the CLI-owned stream
+process may remain behind a `Session has quit` dialog. Clean that exact process
+from the terminal with:
 
 ```sh
-python3 tools/ps5_remoteplay.py acknowledge-quit
+python3 tools/ps5_remoteplay.py stop-stream
 ```
 
-The command targets the exact Chiaki client dialog (not Mutter's decoration),
-activates it only long enough to send the normal selected `OK` action, and
-verifies that both the dialog and ended stream disappear. It restores the
-previous workspace only while Chiaki still owns focus; a newer non-Chiaki
-operator focus is preserved. Qt versions that reject the synthetic `Return`
-receive a fallback click derived from the dialog's own client geometry; the
-pointer is restored afterwards. The command is idempotent.
-`stream` performs the same acknowledgement automatically before reusing the
-already registered console entry. Neither action pairs or re-registers the
-console.
+`stop-stream` resolves the dialog's owning PID, proves that it belongs to the
+isolated CLI stream, terminates only that confined process and verifies that
+its windows disappear. It never activates the dialog, clicks `OK`, moves the
+pointer or depends on focus. `stream` performs the same stale-process cleanup
+automatically before reusing the registered console entry. Neither action
+pairs or re-registers the console.
+
+`acknowledge-quit` remains available only as an explicit compatibility tool for
+an operator who deliberately wants the Qt dialog's normal `OK` action. It is
+not part of the automated capture or restart path.
 
 `stop-stream` closes only a stream process started through this isolated CLI
 path. It first requests a normal window close and verifies the process exit;

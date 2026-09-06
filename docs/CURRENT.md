@@ -72,13 +72,11 @@ Remote Play pairing and capture were validated on FW 12.02. Details and
 credential-handling rules are in `docs/REMOTEPLAY.md`.
 
 The already registered Chiaki entry must be reused; pairing is not part of
-normal capture. The helper can launch that entry directly from the terminal,
-without the discovery client window. Physical DualSense takeover disconnects
-the Remote Play session, leaves the stream window behind a `Session has quit`
-dialog, and requires `OK` before that stream window closes. Safe status
-detection and explicit acknowledgement are implemented in the open lab PR
-`mpereiraesaa/ps5-homebrew-lab#8`; automation must not infer focus or silently
-dismiss the dialog.
+normal capture. The helper launches it directly from the terminal without the
+discovery client window. After a Remote Play disconnect, `stop-stream` cleans
+the exact CLI-owned process by PID and `stream` does the same automatically
+before restart. The normal workflow does not focus, acknowledge or click the
+`Session has quit` dialog. Automation must not infer focus or synthesize input.
 
 ## Application-owned modules
 

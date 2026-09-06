@@ -31,10 +31,10 @@ y grabación MP4 están validados en FW 12.02. La evidencia visual se conserva e
 el árbol privado ignorado y complementa, pero no reemplaza, la telemetría
 `ps5log/1`.
 
-La entrada de consola ya registrada se reutiliza. Tomar el DualSense físico
-desconecta la sesión de streaming y deja un diálogo `Session has quit`; el PR
-abierto `mpereiraesaa/ps5-homebrew-lab#8` añade detección de estado y
-`acknowledge-quit` explícito sin asumir el foco de la ventana.
+La entrada de consola ya registrada se reutiliza. El flujo normal abre y cierra
+el stream directo desde CLI. Tras una desconexión, `stop-stream` termina por PID
+únicamente el proceso CLI aislado y `stream` hace la misma limpieza antes de
+reiniciar; no se enfoca, confirma ni pulsa el diálogo `Session has quit`.
 
 ## Capability lab — archivo histórico
 

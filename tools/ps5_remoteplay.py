@@ -261,6 +261,21 @@ def acknowledge(args: argparse.Namespace) -> None:
     acknowledge_quit_dialog(args.wait)
 
 
+def ended_cli_stream_pid() -> int | None:
+    """Return the exact isolated CLI process behind an ended stream dialog."""
+    dialogs = chiaki_windows("Session has quit")
+    if not dialogs:
+        return None
+    if len(dialogs) != 1:
+        raise SystemExit("multiple Chiaki 'Session has quit' client dialogs")
+    pid = window_pid(dialogs[0])
+    if not is_cli_chiaki_stream_process(pid):
+        raise SystemExit(
+            "ended stream was not launched by the isolated Chiaki CLI helper"
+        )
+    return pid
+
+
 def isolate_registered_host_config(
     source: Path, nickname: str, destination: Path
 ) -> None:
@@ -387,7 +402,7 @@ def isolated_chiaki_stream_process(
 
 def start_stream(args: argparse.Namespace) -> None:
     xdotool = require_program("xdotool")
-    acknowledge_quit_dialog(args.ack_wait)
+    stop_ended_cli_stream(args.cleanup_wait)
     previous_window = subprocess.check_output(
         [xdotool, "getactivewindow"], text=True
     ).strip()
@@ -438,9 +453,44 @@ def snap_signal(pid: int, signal_name: str) -> None:
         raise SystemExit(f"could not send SIG{signal_name} to Chiaki stream")
 
 
+def terminate_cli_stream_process(pid: int, wait: float) -> None:
+    """Terminate one verified isolated CLI stream without UI interaction."""
+    if not is_cli_chiaki_stream_process(pid):
+        raise SystemExit("refusing to terminate a non-CLI Chiaki process")
+    snap_signal(pid, "TERM")
+    term_deadline = time.monotonic() + max(wait, 0.1)
+    while time.monotonic() < term_deadline and \
+            is_cli_chiaki_stream_process(pid):
+        time.sleep(0.1)
+    if is_cli_chiaki_stream_process(pid):
+        snap_signal(pid, "KILL")
+    deadline = time.monotonic() + 2.0
+    while time.monotonic() < deadline:
+        if not is_cli_chiaki_stream_process(pid):
+            return
+        time.sleep(0.1)
+    raise SystemExit("Chiaki CLI stream process did not exit")
+
+
+def stop_ended_cli_stream(wait: float) -> bool:
+    """Clean an ended isolated stream by PID, never by dialog interaction."""
+    pid = ended_cli_stream_pid()
+    if pid is None:
+        return False
+    terminate_cli_stream_process(pid, wait)
+    deadline = time.monotonic() + 2.0
+    while time.monotonic() < deadline:
+        if not chiaki_windows("Session has quit") and \
+                not chiaki_windows("Chiaki | Stream"):
+            print(f"closed ended Chiaki CLI stream pid={pid}")
+            return True
+        time.sleep(0.1)
+    raise SystemExit("ended Chiaki CLI stream windows did not disappear")
+
+
 def stop_stream(args: argparse.Namespace) -> None:
     """Close the exact CLI stream and verify its confined process exits."""
-    if acknowledge_quit_dialog(args.wait):
+    if stop_ended_cli_stream(args.wait):
         return
     window = stream_window()
     pid = window_pid(window)
@@ -456,20 +506,8 @@ def stop_stream(args: argparse.Namespace) -> None:
             is_cli_chiaki_stream_process(pid):
         time.sleep(0.1)
     if is_cli_chiaki_stream_process(pid):
-        snap_signal(pid, "TERM")
-        term_deadline = time.monotonic() + 1.0
-        while time.monotonic() < term_deadline and \
-                is_cli_chiaki_stream_process(pid):
-            time.sleep(0.1)
-    if is_cli_chiaki_stream_process(pid):
-        snap_signal(pid, "KILL")
-    deadline = time.monotonic() + 2.0
-    while time.monotonic() < deadline:
-        if not is_cli_chiaki_stream_process(pid):
-            print(f"closed Chiaki CLI stream window={window} pid={pid}")
-            return
-        time.sleep(0.1)
-    raise SystemExit("Chiaki CLI stream process did not exit")
+        terminate_cli_stream_process(pid, 1.0)
+    print(f"closed Chiaki CLI stream window={window} pid={pid}")
 
 
 def output_path(value: str | None, suffix: str) -> Path:
@@ -524,7 +562,7 @@ def parser() -> argparse.ArgumentParser:
     stream_cmd.add_argument("--host", required=True)
     stream_cmd.add_argument("--nickname", required=True)
     stream_cmd.add_argument("--wait", type=int, default=20)
-    stream_cmd.add_argument("--ack-wait", type=float, default=5.0)
+    stream_cmd.add_argument("--cleanup-wait", type=float, default=2.0)
     stream_cmd.add_argument(
         "--chiaki-config", default=str(DEFAULT_CHIAKI_CONFIG),
         help=argparse.SUPPRESS,
