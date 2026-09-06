@@ -1,6 +1,6 @@
 # Current development boundary
 
-Last reconciled: 2026-09-05. Tested console firmware: PS5 12.02.
+Last reconciled: 2026-09-06. Tested console firmware: PS5 12.02.
 
 ## Canonical implementation
 
@@ -13,6 +13,34 @@ exact GPU/VideoOut ownership.
 The strict reference soak completed 60,000/60,000 frames with zero renderer
 errors and intact guards. Exact evidence and its limitations are documented in
 `projects/ps5-agc-gears/docs/HARDWARE_VALIDATION.md`.
+
+## Xash3D checkpoint
+
+The active engineering target is now Xash3D on PS5. Phases 0, 1 and 2 of
+`XASH3D_PS5_PLAN.html` are complete on the development branch. The consolidated
+implementation is `feature/resource-foundation` in the public Gears repository
+and is under review as `mpereiraesaa/ps5-agc-gears#8`; it is not yet merged to
+the canonical submodule on this branch.
+
+Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
+physical DualSense noclip movement and passes a 60,000-frame textured gate.
+Phase 2 replaces fixed resource placement with a fence-retired direct-memory
+pool, two-slot transient ring, named GFX10.3 V#/T#/S# builders, per-frame
+constant buffers, generated pipeline permutations and a tested cache contract.
+Its 60,000-frame FW 12.02 run completed with zero errors, exact fence/VideoOut
+retirement, both transient slots reusable and all four persistent allocations
+reclaimed. The operator confirmed the transient overlay pulse live.
+
+The next implementation phase is Phase 3, texture mutation and sampling. Its
+first isolated gate is a bounded lightmap patch updated every frame through the
+Phase 2 flush/AcquireMem path, proved by alternating GPU-visible readback and a
+clean 10,000-frame soak. Mip chains, filtering, alpha test and sky follow only
+after that gate. See `XASH3D_CHECKPOINT.md` for the executable order.
+
+The engine symbol probe is also complete. The client has only three genuine
+SDK gaps (`__assert`, `getpwuid`, `dladdr`), and `mainui` plus both hlsdk
+modules have no missing C++ runtime provider. Raw lists and reproduction scripts
+live under `research/xash3d/`.
 
 ## Development policy
 
@@ -38,6 +66,24 @@ errors and intact guards. Exact evidence and its limitations are documented in
 
 Remote Play pairing and capture were validated on FW 12.02. Details and
 credential-handling rules are in `docs/REMOTEPLAY.md`.
+
+The already registered Chiaki entry must be reused; pairing is not part of
+normal capture. Physical DualSense takeover disconnects the Remote Play
+session, leaves the stream window behind a `Session has quit` dialog, and
+requires `OK` before that stream window closes. Safe status detection and
+explicit acknowledgement are implemented in the open lab PR
+`mpereiraesaa/ps5-homebrew-lab#8`; automation must not infer focus or silently
+dismiss the dialog.
+
+## Application-owned modules
+
+Runtime loading of application-owned PRX modules is validated on FW 12.02
+(see `FINDINGS.md`, "Módulos PRX propios"). The tooling lives in the
+native-foundation fork, branch `exp/prx-module`: `ps5-native-tool link
+--module`, `tools/build-module.sh` and `modules/prx_loader.h`. The hardware
+gate lives in the Gears repository branch `exp/prx-gate`. Load-time
+`DT_NEEDED` binding and `sceKernelDlsym` are not available for these modules;
+symbol resolution goes through the module's export descriptor.
 
 ## Historical boundary
 

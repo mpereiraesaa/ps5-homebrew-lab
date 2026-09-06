@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xash3D on PS5</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --ink: #1c1f24;
+    --ink-2: #4a505a;
+    --ink-3: #7a808a;
+    --rule: #d9d8d2;
+    --rule-2: #e9e8e2;
+    --accent: #d9731a;          /* lambda orange */
+    --accent-ink: #9c4f0b;
+    --done: #2b8a6e;
+    --done-bg: #e3f2ec;
+    --active: #d9731a;
+    --active-bg: #fbeadb;
+    --later: #6b7280;
+    --later-bg: #ecedef;
+    --mono-bg: #eeede8;
+    --sans: "IBM Plex Sans", "Segoe UI", Roboto, system-ui, sans-serif;
+    --cond: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171b; --surface: #1d2025; --ink: #e8e6e0; --ink-2: #b4b2ab;
+      --ink-3: #7f7d77; --rule: #2f333a; --rule-2: #262a30;
+      --accent: #f08a2c; --accent-ink: #f4a45c;
+      --done: #4fc29d; --done-bg: #16302a; --active: #f08a2c; --active-bg: #3a2712;
+      --later: #9aa0a8; --later-bg: #262a30; --mono-bg: #23262c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b; --surface: #1d2025; --ink: #e8e6e0; --ink-2: #b4b2ab;
+    --ink-3: #7f7d77; --rule: #2f333a; --rule-2: #262a30;
+    --accent: #f08a2c; --accent-ink: #f4a45c;
+    --done: #4fc29d; --done-bg: #16302a; --active: #f08a2c; --active-bg: #3a2712;
+    --later: #9aa0a8; --later-bg: #262a30; --mono-bg: #23262c;
+  }
+  body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.55; }
+  .page { max-width: 76ch; margin: 0 auto; padding: 40px 24px 80px; }
+  h1, h2, h3 { font-family: var(--cond); text-wrap: balance; margin: 0; letter-spacing: 0.005em; }
+  h1 { font-size: 52px; font-weight: 700; line-height: 1; }
+  h2 { font-size: 30px; font-weight: 600; line-height: 1.1; }
+  h3 { font-size: 17px; font-weight: 600; font-family: var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+  p { margin: 0; max-width: 68ch; }
+  a { color: var(--accent-ink); }
+  code, .mono { font-family: var(--mono); font-size: 0.92em; }
+  code { background: var(--mono-bg); padding: 1px 5px; border-radius: 3px; }
+  .eyebrow { font-family: var(--sans); font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); font-weight: 600; }
+
+  header { display: grid; gap: 14px; padding-bottom: 28px; border-bottom: 2px solid var(--ink); }
+  header .lede { font-size: 18px; color: var(--ink-2); max-width: 62ch; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0; margin-top: 8px; border-top: 1px solid var(--rule); }
+  .fact { padding: 12px 14px 12px 0; border-bottom: 1px solid var(--rule); }
+  .fact .k { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
+  .fact .v { font-family: var(--mono); font-size: 15px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+
+  /* timeline strip */
+  .strip { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; margin: 28px 0 8px; }
+  .strip a { text-decoration: none; color: inherit; display: grid; gap: 6px; padding: 10px 8px 8px; border-top: 3px solid var(--later); background: var(--surface); border-radius: 0 0 4px 4px; min-width: 0; }
+  .strip a .n { font-family: var(--cond); font-size: 22px; font-weight: 700; line-height: 1; }
+  .strip a .t { font-size: 12px; line-height: 1.25; color: var(--ink-2); }
+  .strip a.done { border-top-color: var(--done); }
+  .strip a.active { border-top-color: var(--active); }
+  .strip a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .legend { display: flex; gap: 18px; font-size: 12px; color: var(--ink-3); margin-bottom: 36px; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .legend .l-done::before { background: var(--done); } .legend .l-active::before { background: var(--active); } .legend .l-later::before { background: var(--later); }
+
+  .checkpoint { margin: 30px 0 36px; padding: 20px; border: 1px solid var(--rule); border-left: 4px solid var(--active); background: var(--surface); display: grid; gap: 14px; }
+  .checkpoint .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .checkpoint .item { border-top: 1px solid var(--rule); padding-top: 8px; }
+  .checkpoint .item .k { color: var(--ink-3); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+  .checkpoint .item .v { margin-top: 2px; font-size: 14px; }
+
+  /* phases */
+  section.phase { padding: 30px 0 34px; border-top: 1px solid var(--rule); display: grid; grid-template-columns: 64px 1fr; column-gap: 20px; }
+  .phase .num { font-family: var(--cond); font-size: 44px; font-weight: 700; line-height: 0.9; color: var(--ink-3); }
+  .phase.done .num { color: var(--done); } .phase.active .num { color: var(--active); }
+  .phase .body { display: grid; gap: 16px; min-width: 0; }
+  .phase .head { display: grid; gap: 6px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--ink-2); align-items: center; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 3px; }
+  .pill.done { color: var(--done); background: var(--done-bg); }
+  .pill.active { color: var(--accent-ink); background: var(--active-bg); }
+  .pill.later { color: var(--later); background: var(--later-bg); }
+  .visible { border-left: 3px solid var(--accent); padding: 6px 14px; color: var(--ink); background: var(--surface); }
+  .visible b { font-weight: 600; }
+
+  ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 10px; }
+  ol.steps li { counter-increment: step; display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: baseline; }
+  ol.steps li::before { content: counter(step); font-family: var(--mono); font-size: 13px; color: var(--ink-3); text-align: right; font-variant-numeric: tabular-nums; }
+  ol.steps li .gate { display: block; font-size: 13.5px; color: var(--ink-2); margin-top: 2px; }
+  ol.steps li .gate b { font-weight: 600; color: var(--ink-2); }
+  ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+  ul.plain li { max-width: 66ch; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 640px) {
+    .two { grid-template-columns: 1fr; }
+    section.phase { grid-template-columns: 1fr; }
+    .phase .num { font-size: 30px; }
+    .strip { grid-template-columns: repeat(4, 1fr); }
+    h1 { font-size: 40px; }
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .tablewrap { overflow-x: auto; }
+  th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); font-weight: 600; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--ink); }
+  td { padding: 9px 10px 9px 0; border-bottom: 1px solid var(--rule-2); vertical-align: top; }
+  td:first-child { font-weight: 500; white-space: nowrap; }
+
+  section.rules { padding: 30px 0 0; border-top: 2px solid var(--ink); display: grid; gap: 16px; }
+  footer { margin-top: 40px; font-size: 13px; color: var(--ink-3); border-top: 1px solid var(--rule); padding-top: 14px; }
+</style>
+</head>
+<body style="margin:0">
+
+<div class="page">
+<header>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-06 · rev 4</div>
+  <h1>Xash3D on PS5</h1>
+  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. The BSP viewer and its reusable resource layer are now closed; the active checkpoint is the dynamic and mipmapped texture path.</p>
+  <div class="facts">
+    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phases 0–2 done</div></div>
+    <div class="fact"><div class="k">Resource soak</div><div class="v">60,000 frames · 0 errors</div></div>
+    <div class="fact"><div class="k">Cadence</div><div class="v">59.94 fps · 2 in flight</div></div>
+    <div class="fact"><div class="k">GPU target</div><div class="v">gfx1013 · AGC</div></div>
+  </div>
+</header>
+
+<nav class="strip" aria-label="Phases">
+  <a class="done" href="#p0"><span class="n">0</span><span class="t">Close the ledger</span></a>
+  <a class="done" href="#p1"><span class="n">1</span><span class="t">BSP viewer, noclip</span></a>
+  <a class="done" href="#p2"><span class="n">2</span><span class="t">Resource foundation</span></a>
+  <a class="active" href="#p3"><span class="n">3</span><span class="t">Texture path</span></a>
+  <a href="#p4"><span class="n">4</span><span class="t">GoldSrc render states</span></a>
+  <a href="#p5"><span class="n">5</span><span class="t">Platform layer</span></a>
+  <a href="#p6"><span class="n">6</span><span class="t">Engine integration</span></a>
+  <a href="#p7"><span class="n">7</span><span class="t">Playable and release</span></a>
+</nav>
+<div class="legend"><span class="l-done">done</span><span class="l-active">in progress</span><span class="l-later">next</span></div>
+
+<section class="checkpoint" aria-labelledby="checkpoint-title">
+  <div class="eyebrow">Current checkpoint · 2026-09-06</div>
+  <h2 id="checkpoint-title">Resource ownership is proven; texture mutation is next</h2>
+  <p><code>c1a0</code> renders with base textures and lightmaps, a moving noclip camera, per-frame constant buffers and a visibly pulsing transient overlay. The Phase 2 implementation and its evidence are in <a href="https://github.com/mpereiraesaa/ps5-agc-gears/pull/8">ps5-agc-gears PR #8</a>; host contracts and security checks are green, but the PR is intentionally not merged yet.</p>
+  <div class="grid">
+    <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
+    <div class="item"><div class="k">Phase 2 proof</div><div class="v">2 transient slots · 4 allocations reclaimed</div></div>
+    <div class="item"><div class="k">Engine sizing</div><div class="v">3 real C gaps · 0 C++ runtime gaps</div></div>
+    <div class="item"><div class="k">Next gate</div><div class="v">Dynamic lightmap patch · readback · 10k soak</div></div>
+  </div>
+</section>
+
+<!-- PHASE 0 -->
+<section class="phase done" id="p0">
+  <div class="num">0</div>
+  <div class="body">
+    <div class="head">
+      <h2>Close the ledger</h2>
+      <div class="meta"><span class="pill done">done</span><span>Public repo, CI gate, evidence archive, LLPC fork, fresh-clone reproduction.</span></div>
+    </div>
+    <p>README no longer claims the repo is unpublished. Continuous-mode runs are archived and the release-mode run that stopped without BYE is classified. CI is a required status check on <code>main</code>. The LLPC gfx1013 fork is public with pinned LLVM and LLPC commits, and a fresh clone reproduces the release hash.</p>
+  </div>
+</section>
+
+<!-- PHASE 1 -->
+<section class="phase done" id="p1">
+  <div class="num">1</div>
+  <div class="body">
+    <div class="head">
+      <h2>BSP viewer with noclip</h2>
+      <div class="meta"><span class="pill done">done · 2026-09-06</span><span>Validated the renderer against a real map instead of a checkerboard.</span></div>
+    </div>
+    <div class="visible"><b>Result.</b> <code>c1a0</code> renders with base textures and lightmaps and can be flown through with the physical DualSense. Gate 2 recorded 2,018 translating frames and 678 looking frames; Gate 5 completed an unattended 60,000-frame textured soak with zero errors.</div>
+
+    <h3>Bake offline, upload on console</h3>
+    <p>A host tool parses BSP v30 and emits one binary bundle: vertex buffer, index buffer, draw table sorted by texture, RGBA8 texture set, lightmap atlas, spawn point from the entities lump. The runtime only uploads and draws. Parsing bugs stay on the PC, the baker is host-tested against a tiny map you compile yourself, and commercial map data is read from a private path exactly like <code>dev.conf</code>.</p>
+    <ul class="plain">
+      <li>Faces are convex polygons via surfedges. Fan-triangulate into an index list.</li>
+      <li>Texture coordinates come from the texinfo <code>s</code>/<code>t</code> vectors divided by miptex size.</li>
+      <li>Miptex are 8-bit paletted, embedded or from WAD3. Convert to RGBA8; index 255 is transparent only for <code>{</code> names.</li>
+      <li>Lightmaps are RGB at 16 units per luxel, sized from face extents. Pack style 0 into one atlas and emit atlas UVs per vertex.</li>
+      <li>Convert Quake Z-up to the camera convention once, in the baker.</li>
+    </ul>
+
+    <h3>Renderer work this pulls forward</h3>
+    <ul class="plain">
+      <li>Bump allocator over direct memory for the bundle. Fence-retired pooling waits, the map is static.</li>
+      <li>Command buffers far larger than the current 4 KiB per slot. A map is hundreds of draws at about 30 DWORDs each.</li>
+      <li>Vertex layout of position plus two UV sets, replacing position plus normal.</li>
+      <li>T# and S# builders and a per-draw descriptor table (base texture, lightmap) pointed to by the same 32-bit user-data slot used today for the vertex SRD table.</li>
+      <li>Indexed draws. Fan-triangulated BSP geometry is the first consumer that needs them.</li>
+      <li>One pixel shader: base × lightmap × 2 for GoldSrc overbright.</li>
+    </ul>
+
+    <h3>Iteration order</h3>
+    <ol class="steps">
+      <li>Flat-shaded map, color from face index, fixed camera at spawn. Proves baker, upload, indexed draw, depth.<span class="gate"><b>Gate:</b> exact readback hash.</span></li>
+      <li>Noclip camera on DualSense, reusing the legacy ScePad probe.<span class="gate"><b>Gate:</b> 10k-frame soak while moving.</span></li>
+      <li>Lightmap atlas as the only texture, grayscale look. This is the first texture.<span class="gate"><b>Gate:</b> readback hash, acquire barrier per the memory model.</span></li>
+      <li>Base textures through per-draw descriptor tables.<span class="gate"><b>Gate:</b> draw count and DWORD total asserted by a host test before submit.</span></li>
+      <li>Combined base × lightmap. The screenshot moment.<span class="gate"><b>Gate:</b> 60k-frame soak, archived.</span></li>
+    </ol>
+
+    <h3>Background symbol sizing — closed 2026-09-06</h3>
+    <p>The reproducible host probes compile 156 of 162 client C files before a PS5 platform/ref backend exists. Of 304 external symbols, only <code>__assert</code>, <code>getpwuid</code> and <code>dladdr</code> are genuinely absent from the SDK; the rest are supplied by PS5 libraries, vendored third parties or the backends still to be written. <code>mainui</code> and both hlsdk modules have zero missing C++ runtime providers. Full lists and reproduction scripts live in <code>research/xash3d/PS5_SYMBOL_GAP.md</code>.</p>
+
+    <h3>Parallel spike: own PRX modules — closed 2026-09-06</h3>
+    <div class="visible"><b>Result.</b> Runtime loading of an application-owned PRX works on FW 12.02. Run <code>20260906T085730845Z</code> on title <code>PPSA99999</code>: <code>sceKernelLoadStartModule</code>, four exports resolved and called, a kernel import executed from module code, <code>sceKernelStopUnloadModule</code>, gap-free BYE. Evidence archived under <code>research/gpu/captures/runtime/</code>.</div>
+    <p>The converter (<code>ps5-native-tool link --module</code>, branch <code>exp/prx-module</code> of the boilerplate fork) produces the module from an lld shared object. Two loader contracts were established by bisection over about twenty launches, one variable each, and are enforced by the converter with host tests:</p>
+    <ul class="plain">
+      <li><code>DT_PLTGOT</code> must be a three-entry table: the loader writes entries 1 and 2 even without a PLT. A one-entry GOT with the module parameters behind it is corrupted before validation and rejected with <code>0x80020063</code>.</li>
+      <li><code>e_entry</code> is executed as the start routine and must return 0. The converter turns the layout filler into <code>xor eax,eax; ret</code> and points the entry at <code>module_start</code> when exported.</li>
+    </ul>
+    <p>Two platform facts change the design rather than the tooling:</p>
+    <ul class="plain">
+      <li>The process loader does not bind a <code>DT_NEEDED</code> application module at start; only platform-known <code>sce_module</code> entries such as <code>libc.prx</code> load that way. Application modules load at runtime.</li>
+      <li><code>sceKernelDlsym</code> returns <code>0x80020003</code> for every application module, including the boilerplate's <code>libc.prx</code>, whatever the hash table holds, and the loader does not invoke <code>module_start</code> by lookup. Each module therefore carries a static, relocated export descriptor (magic <code>PRXDESC1</code>) that the host finds by scanning the segments from <code>sceKernelGetModuleInfo</code>. This is the validated resolution path.</li>
+    </ul>
+    <p>Static linking is no longer the fallback for the engine's own libraries. The open question left for later is Sony's own <code>DT_HASH</code> key, which is not SysV over any obvious string; it only matters if kernel <code>dlsym</code> is ever needed.</p>
+  </div>
+</section>
+
+<!-- PHASE 2 -->
+<section class="phase done" id="p2">
+  <div class="num">2</div>
+  <div class="body">
+    <div class="head">
+      <h2>Resource foundation</h2>
+      <div class="meta"><span class="pill done">done · 2026-09-06</span><span>Generalized the Phase 1 renderer into reusable resource contracts.</span></div>
+    </div>
+    <div class="visible"><b>Result.</b> The same map streams camera constants every frame and displays a pulsing green debug overlay. Run <code>20260906T130036578Z</code> completed 60,000 frames with exact fence plus VideoOut retirement, intact guards, two reusable transient slots, four persistent allocations reclaimed and zero errors. The operator confirmed the pulse live.</div>
+    <ol class="steps">
+      <li>Fence-retired pool allocator over direct memory, replacing bump allocation and every hard-coded arena offset.</li>
+      <li>Per-frame transient ring for dynamic vertices, indices and constants, retired by the same fence and token pair as the frame slots.</li>
+      <li>Descriptor layer: V#, T#, S# builders host-tested against public PAL layouts; descriptor tables allocated from the ring and checked by the GPU-span guard.</li>
+      <li>Constant buffers via V# for anything beyond the 24 direct user-data DWORDs.</li>
+      <li>Shader permutation build: one table, N pipelines, metadata per pipeline. Start with two entries so the tooling is proven before Phase 4 needs a dozen.</li>
+      <li>Memory model written once: CPU write then GPU read needs cache flush plus an acquire that invalidates texture and GL2 caches; GPU write then CPU read uses the existing release path. Every later phase cites this page.<span class="gate"><b>Gate:</b> a host test encodes the barrier sequence.</span></li>
+    </ol>
+    <p>The final overlay keeps its six indices and color constant in transient memory but generates four screen-space positions from <code>gl_VertexIndex</code>. An isolated hardware pass showed zero-filled structured vertex fetch for this pipeline combination; the constant-buffer V# path is the hardware-proven fallback, not an undocumented assumption.</p>
+  </div>
+</section>
+
+<!-- PHASE 3 -->
+<section class="phase active" id="p3">
+  <div class="num">3</div>
+  <div class="body">
+    <div class="head">
+      <h2>Texture path</h2>
+      <div class="meta"><span class="pill active">current checkpoint</span><span>≈ 1 week</span><span>Everything GoldSrc does to a texture after it is bound.</span></div>
+    </div>
+    <div class="visible"><b>Visible result.</b> Mipmapped, filtered world textures; sky drawn; <code>{</code> grates alpha-tested; a lightmap patch updating every frame without tearing.</div>
+    <h3>Immediate slice</h3>
+    <p>After Phase 2 PR #8 merges, branch <code>feature/texture-path</code> from the protected <code>main</code>. Change one capability first: update a bounded lightmap region every frame through the proven CPU flush plus AcquireMem contract. Require alternating GPU-visible readbacks, exact transient retirement and a clean 10,000-frame soak before adding mip levels, filtering, alpha test or sky.</p>
+    <ol class="steps">
+      <li>Dynamic upload every frame through the acquire barrier. This is the lightstyle and dynamic-light path.<span class="gate"><b>Gate:</b> readback of the updated region, 10k-frame soak.</span></li>
+      <li>Mipmap chain generation in the baker and mip-aware T#. Trilinear and anisotropic S# variants.</li>
+      <li>Swizzled layout only if linear proves too slow. Linear stays the reference until a measured frametime says otherwise.</li>
+      <li>Alpha test for <code>{</code> textures in the pixel shader; sky as a separate pass.</li>
+      <li>Texture budget accounting: bytes resident, bytes per frame uploaded, surfaced in telemetry.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- PHASE 4 -->
+<section class="phase" id="p4">
+  <div class="num">4</div>
+  <div class="body">
+    <div class="head">
+      <h2>GoldSrc render states</h2>
+      <div class="meta"><span class="pill later">next</span><span>≈ 2 weeks</span><span>The state surface the ref API will demand.</span></div>
+    </div>
+    <div class="visible"><b>Visible result.</b> The map with water, glass, sprites, particles, an animated studio model and a HUD, all from your own loader.</div>
+    <ol class="steps">
+      <li>Pipeline permutations: opaque, alpha blend, additive, alpha test, depth write off, cull front/back/none, fog on/off, lightmap multitexture on/off.</li>
+      <li>Mid-frame viewport and scissor changes.</li>
+      <li>Orthographic 2D path with blending for HUD, console and menu. Fonts are just textured quads.</li>
+      <li>Lightstyles and dynamic lights writing into the lightmap atlas via the Phase 3 upload path.</li>
+      <li>Sprites and particles from the transient ring.</li>
+      <li>Studio models: CPU skinning into the transient ring, per-model textures, chrome and additive render modes.</li>
+      <li>Brush entities with their own transforms and render modes.</li>
+      <li>PVS and frustum culling, now that draw counts have a real consumer.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- PHASE 5 -->
+<section class="phase" id="p5">
+  <div class="num">5</div>
+  <div class="body">
+    <div class="head">
+      <h2>Platform layer</h2>
+      <div class="meta"><span class="pill later">next</span><span>≈ 1 week, parallel to Phase 4</span><span>Everything the engine needs that is not drawing.</span></div>
+    </div>
+    <div class="visible"><b>Visible result.</b> Frametime overlay with GPU timestamps; sound plays; the stick layout matches the HL1 controller scheme.</div>
+    <ol class="steps">
+      <li>Input: ScePad mapping for movement, look, jump, crouch, use, fire. Legacy probe already validated the API.</li>
+      <li>Audio: SceAudioOut backend with a ring buffer, sized from the legacy probe.</li>
+      <li>Filesystem: game data inside the title folder under <code>/app0</code>, deployed by the same tooling as <code>dev.conf</code>. Directory listing, large reads, case handling.</li>
+      <li>Memory: route the engine zone allocator and all GPU resources through direct memory. The anonymous heap ceiling is about 432 MiB; direct memory is verified to 3 GiB.</li>
+      <li>Threads and time: pthreads, monotonic clock, sleep granularity measured.</li>
+      <li>Frametime instrumentation: GPU timestamps via end-of-pipe writes, present latency via flip status, replacing the deadline counter that reads frames minus one under pipelining.</li>
+      <li>Close the measured three-symbol libc gap: project-owned <code>__assert</code>, fixed/SceUserService identity instead of <code>getpwuid</code>, and logging without <code>dladdr</code>. C++ runtime needs no new provider.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- PHASE 6 -->
+<section class="phase" id="p6">
+  <div class="num">6</div>
+  <div class="body">
+    <div class="head">
+      <h2>Engine integration</h2>
+      <div class="meta"><span class="pill later">next</span><span>≈ 2–3 weeks</span><span>Xash3D drives the renderer you already trust.</span></div>
+    </div>
+    <div class="visible"><b>Visible result.</b> Xash3D boots to its main menu on the PS5, then loads c1a0 through the engine and you play the tram ride.</div>
+    <ol class="steps">
+      <li>Modular build in Xash3D's native layout: engine in <code>eboot.bin</code>, with <code>ref_agc</code>, menu, client and server as PRX modules under <code>sce_module/</code>. The engine's library loader gets a PS5 backend: <code>COM_LoadLibrary</code> on <code>sceKernelLoadStartModule</code>, <code>COM_GetProcAddress</code> on the module's <code>PRXDESC1</code> export descriptor located through <code>sceKernelGetModuleInfo</code>, and unload on <code>sceKernelStopUnloadModule</code>. All three were proven by the Phase 1 spike; kernel <code>dlsym</code> and load-time <code>DT_NEEDED</code> binding are not part of the design on this firmware.</li>
+      <li><code>ref_agc</code> implementing the ref API directly on the Phase 2 to 4 backend, shipped as its own PRX so the renderer iterates without relinking the engine. No OpenGL emulation layer.</li>
+      <li>Engine platform hooks bound to Phase 5: input, sound, filesystem, memory, timing.</li>
+      <li>First boot: console visible, main menu drawn through the 2D path.<span class="gate"><b>Gate:</b> telemetry HELLO through menu draw, clean Close Game.</span></li>
+      <li>Load c1a0 through the engine. Compare the frame hash against the Phase 1 viewer for the same camera.</li>
+      <li>Save and load, level transitions, and the first full chapter.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- PHASE 7 -->
+<section class="phase" id="p7">
+  <div class="num">7</div>
+  <div class="body">
+    <div class="head">
+      <h2>Playable and release</h2>
+      <div class="meta"><span class="pill later">next</span><span>≈ 1–2 weeks</span></div>
+    </div>
+    <div class="visible"><b>Visible result.</b> HL1 playable start to finish from a signed title, released from a clean checkout with hashes.</div>
+    <ol class="steps">
+      <li>Performance budget: 16.6 ms at 1080p on the heaviest retail map, measured with Phase 5 instrumentation.</li>
+      <li>60k-frame soak in gameplay, plus a level-transition soak.</li>
+      <li>Release packaging from a fresh clone, publication audit, no game data in any archive.</li>
+      <li>Upstream the LLPC gfx1013 change with its test.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="rules">
+  <h2>Rules that carry through every phase</h2>
+  <div class="two">
+    <ul class="plain">
+      <li>One variable per hardware iteration. Host gates green before the console is touched.</li>
+      <li>A zero submit return proves nothing. Require effect, fence, exact VideoOut token, intact guards and clean teardown.</li>
+      <li>Every pointer that enters a packet passes the GPU-span guard.</li>
+      <li>Any change to synchronization, memory layout or command emission ends with a soak before it is called done.</li>
+    </ul>
+    <ul class="plain">
+      <li>Commercial map, WAD and model data never enters a repository or an archive. Bakers read it from a private path.</li>
+      <li>Every hardware run is archived with artifact hash and manifest, including the ones that fail.</li>
+      <li>New work lives in <code>exp/&lt;topic&gt;</code> worktrees of the public repo, never in copied stages.</li>
+      <li>Telemetry stays on <code>ps5log/1</code> over TCP. No console log files.</li>
+    </ul>
+  </div>
+
+  <h3>Risks to watch</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Risk</th><th>Where it bites</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td>libc surface</td><td>Phase 6 first boot</td><td>The probe reduced this to <code>__assert</code>, <code>getpwuid</code> and <code>dladdr</code>; close those three in Phase 5 with tests. The other 105 client libc/POSIX externals already have SDK providers.</td></tr>
+      <tr><td>Own PRX modules</td><td>Phase 6 modular build</td><td>Closed by the Phase 1 spike: runtime load, descriptor resolution and unload proven on hardware. Remaining constraint: TLS in modules only general-dynamic; every module must ship a <code>PRXDESC1</code> descriptor.</td></tr>
+      <tr><td>Cache coherence on dynamic uploads</td><td>Phase 3 lightmaps, Phase 4 skinning</td><td>Memory model written in Phase 2; readback of the updated region on every iteration.</td></tr>
+      <tr><td>Command buffer capacity</td><td>Phase 1 step 4 onward</td><td>Size from draw count × 30 DWORDs; host test asserts before submit.</td></tr>
+      <tr><td>Texture tiling topology</td><td>Phase 3 swizzled layout</td><td>Stay linear until frametime demands otherwise; real GB_ADDR_CONFIG still unknown.</td></tr>
+      <tr><td>Heap ceiling</td><td>Phase 6 engine hunk</td><td>Direct memory for everything large.</td></tr>
+      <tr><td>Draw count</td><td>Phase 4 retail maps</td><td>Culling in Phase 4 step 8; measure before optimizing indexed paths further.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<footer>Revision 4 records the 2026-09-06 Phase 1/2 hardware checkpoint. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
+</div>
+</body>
+</html>
