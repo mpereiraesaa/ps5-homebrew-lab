@@ -16,9 +16,10 @@ Reconciled: 2026-09-06. Hardware boundary: one PS5 on firmware 12.02.
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
 The Phase 1/2 implementation was merged through
-`mpereiraesaa/ps5-agc-gears#8` as commit `642d348` after all host and security
-checks passed. The laboratory submodule pins that commit. Phase 3 can now branch
-from the protected public `main` without a cross-PR dependency.
+`mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
+path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
+all host and security checks passed. The laboratory submodule now pins the
+Phase 3 commit.
 
 ## Evidence closing Phase 2
 

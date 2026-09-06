@@ -18,7 +18,8 @@ errors and intact guards. Exact evidence and its limitations are documented in
 
 The active engineering target is now Xash3D on PS5. Phases 0, 1 and 2 of
 `XASH3D_PS5_PLAN.html` are complete on the canonical public branch, and Phase 3
-has completed all six hardware gates on `feature/texture-path`. The
+completed all six hardware gates before merging through
+`mpereiraesaa/ps5-agc-gears#9` as commit `cbff264`. The
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`, and this laboratory pins its
 Gears submodule to that exact commit.
@@ -36,7 +37,8 @@ Phase 3 adds a bounded dynamic-lightmap path, deterministic mip chains,
 trilinear/anisotropic sampling, separate opaque/alpha-test/sky passes and exact
 resident/upload accounting. Its final FW 12.02 run completed 60,000 frames with
 zero errors, exact fence/VideoOut ownership, intact guards and a gap-free BYE.
-The next implementation phase is Phase 4, GoldSrc render states. See
+The laboratory submodule pins that complete Phase 3 commit. The next
+implementation phase is Phase 4, GoldSrc render states. See
 `XASH3D_CHECKPOINT.md` for the evidence boundary and executable order.
 
 The engine symbol probe is also complete. The client has only three genuine

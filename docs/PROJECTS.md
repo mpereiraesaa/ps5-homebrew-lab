@@ -12,9 +12,10 @@ trilineal/aniso 4:1 y pases separados opaco, alpha-test y sky. Las Fases 1 y 2
 pasaron gates de 60.000 frames con cero errores; la Fase 3 también cerró sus
 seis gates y su soak final de 60.000 frames con contabilidad exacta, tokens
 VideoOut/fence exactos y guardas intactas. La implementación de Fase 2 se
-fusionó mediante `mpereiraesaa/ps5-agc-gears#8` como `642d348`; la Fase 3 está
-lista para su PR desde `feature/texture-path`. Los antiguos Stages A–I y
-`PPSA99998` están archivados bajo `legacy/`.
+fusionó mediante `mpereiraesaa/ps5-agc-gears#8` como `642d348`; la Fase 3 se
+fusionó mediante `mpereiraesaa/ps5-agc-gears#9` como `cbff264`, ahora fijado por
+el submódulo canónico. Los antiguos Stages A–I y `PPSA99998` están archivados
+bajo `legacy/`.
 
 La primera capa reutilizable ya existe en `sdk/agc`: headers sanitizados,
 facades de enlace para `libSceAgc`/`libSceAgcDriver`, manifiesto de NIDs y test

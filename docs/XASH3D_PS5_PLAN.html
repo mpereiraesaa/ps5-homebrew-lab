@@ -151,7 +151,7 @@
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-06</div>
   <h2 id="checkpoint-title">The complete GoldSrc texture path passed 60,000 frames</h2>
-  <p><code>c1a0</code> now renders deterministic mip chains, a bounded dynamic lightmap, separate opaque and <code>{</code> alpha-test classes, and an unlit sky pass with exact residency/upload accounting. Run <code>20260906T182418688Z</code> completed 60,000 frames with zero errors, no presentation intervals over 17 ms, exact fence/VideoOut ownership, intact guards and a gap-free teardown. It accounted 68,731,904 resident bytes and 781,471,872 uploaded bytes across 122 mip chains and 2,915/137/158 opaque/alpha/sky draws. The Phase 2 foundation remains merged through <a href="https://github.com/mpereiraesaa/ps5-agc-gears/pull/8">ps5-agc-gears PR #8</a> at commit <code>642d348</code>; Phase 3 is hardware-complete on <code>feature/texture-path</code> and ready for publication.</p>
+  <p><code>c1a0</code> now renders deterministic mip chains, a bounded dynamic lightmap, separate opaque and <code>{</code> alpha-test classes, and an unlit sky pass with exact residency/upload accounting. Run <code>20260906T182418688Z</code> completed 60,000 frames with zero errors, no presentation intervals over 17 ms, exact fence/VideoOut ownership, intact guards and a gap-free teardown. It accounted 68,731,904 resident bytes and 781,471,872 uploaded bytes across 122 mip chains and 2,915/137/158 opaque/alpha/sky draws. The complete phase was merged through <a href="https://github.com/mpereiraesaa/ps5-agc-gears/pull/9">ps5-agc-gears PR #9</a> as commit <code>cbff264</code>, now pinned by the laboratory.</p>
   <div class="grid">
     <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
     <div class="item"><div class="k">Dynamic proof</div><div class="v">8×8 patch/frame · guards stable · 10k</div></div>
@@ -161,7 +161,7 @@
     <div class="item"><div class="k">Sky proof</div><div class="v">1 texture · 158 draws · distinct control/readback</div></div>
     <div class="item"><div class="k">Accounting</div><div class="v">68.7 MB resident · 781.5 MB uploaded</div></div>
     <div class="item"><div class="k">Final proof</div><div class="v">60k · exact tokens · guards intact · 0 errors</div></div>
-    <div class="item"><div class="k">Next step</div><div class="v">Publish Phase 3 PR · begin render states</div></div>
+    <div class="item"><div class="k">Next step</div><div class="v">Begin Phase 4 render states</div></div>
   </div>
 </section>
 
