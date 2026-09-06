@@ -125,7 +125,7 @@
 
 <div class="page">
 <header>
-  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-06 · rev 8</div>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-06 · rev 9</div>
   <h1>Xash3D on PS5</h1>
   <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. The complete Phase 3 texture path—bounded lightmap, deterministic mips, anisotropic sampling, alpha test, sky and exact accounting—has passed its final 60,000-frame hardware gate.</p>
   <div class="facts">
@@ -151,7 +151,7 @@
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-06</div>
   <h2 id="checkpoint-title">The complete GoldSrc texture path passed 60,000 frames</h2>
-  <p><code>c1a0</code> now renders deterministic mip chains, a bounded dynamic lightmap, separate opaque and <code>{</code> alpha-test classes, and an unlit sky pass with exact residency/upload accounting. Run <code>20260906T182418688Z</code> completed 60,000 frames with zero errors, no presentation intervals over 17 ms, exact fence/VideoOut ownership, intact guards and a gap-free teardown. It accounted 68,731,904 resident bytes and 781,471,872 uploaded bytes across 122 mip chains and 2,915/137/158 opaque/alpha/sky draws. The complete phase was merged through <a href="https://github.com/mpereiraesaa/ps5-agc-gears/pull/9">ps5-agc-gears PR #9</a> as commit <code>cbff264</code>, now pinned by the laboratory.</p>
+  <p><code>c1a0</code> now renders deterministic mip chains, a bounded dynamic lightmap, separate opaque and <code>{</code> alpha-test classes, and an unlit sky pass with exact residency/upload accounting. Run <code>20260906T182418688Z</code> completed 60,000 frames with zero errors, no presentation intervals over 17 ms, exact fence/VideoOut ownership, intact guards and a gap-free teardown. It accounted 68,731,904 resident bytes and 781,471,872 uploaded bytes across 122 mip chains and 2,915/137/158 opaque/alpha/sky draws. The complete phase was merged through <a href="https://github.com/mpereiraesaa/ps5-agc-gears/pull/9">ps5-agc-gears PR #9</a> as commit <code>cbff264</code>. The port now has its own repository, <a href="https://github.com/mpereiraesaa/ps5-xash3d">ps5-xash3d</a>, forked from that commit with full history and pinned by the laboratory; <code>ps5-agc-gears</code> is frozen as the standalone Gears demo, and Phase 4 onward lands in <code>ps5-xash3d</code>.</p>
   <div class="grid">
     <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
     <div class="item"><div class="k">Dynamic proof</div><div class="v">8×8 patch/frame · guards stable · 10k</div></div>
@@ -393,7 +393,7 @@
   </div>
 </section>
 
-<footer>Revision 8 records completion of all six 2026-09-06 Phase 3 texture-path hardware checkpoints, including exact residency/upload accounting and the final 60,000-frame soak. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
+<footer>Revision 9 moves the port to its own repository, <code>ps5-xash3d</code>, and freezes <code>ps5-agc-gears</code> as the Gears demo. Revision 8 recorded completion of all six 2026-09-06 Phase 3 texture-path hardware checkpoints, including exact residency/upload accounting and the final 60,000-frame soak. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
 </div>
 </body>
 </html>

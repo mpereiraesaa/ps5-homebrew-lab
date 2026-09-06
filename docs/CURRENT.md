@@ -4,15 +4,20 @@ Last reconciled: 2026-09-06. Tested console firmware: PS5 12.02.
 
 ## Canonical implementation
 
-`projects/ps5-agc-gears` is the only active AGC renderer. It is standalone,
-public, source-reproducible and hardware-validated. Its continuous production
-runtime draws the classic three-gear scene with independently authored
-`gfx1013` shaders, depth testing, double buffering, two frames in flight and
-exact GPU/VideoOut ownership.
+`projects/ps5-xash3d` (`mpereiraesaa/ps5-xash3d`, private until the owner
+publishes it) is the only active AGC renderer and the home of the Xash3D port.
+It was forked from `ps5-agc-gears` at `cbff264` with full history on
+2026-09-06, so it carries the Gears renderer foundation plus the Phase 1-3 BSP
+viewer, resource foundation and texture path. Its `make all` is the root host
+gate through `make xash3d-check`.
 
-The strict reference soak completed 60,000/60,000 frames with zero renderer
-errors and intact guards. Exact evidence and its limitations are documented in
-`projects/ps5-agc-gears/docs/HARDWARE_VALIDATION.md`.
+`projects/ps5-agc-gears` is frozen as the standalone public Gears demo:
+three lit gears, two frames in flight, exact GPU/VideoOut ownership and the
+60,000-frame reference soak documented in
+`projects/ps5-agc-gears/docs/HARDWARE_VALIDATION.md`. Only demo fixes land
+there. `mpereiraesaa/ps5-agc-gears#10` reverts the Phase 2/3 merges (#8, #9)
+from that repository and tags the demo as `gears-demo-freeze`; the laboratory
+moves its Gears pin once it merges.
 
 ## Xash3D checkpoint
 
@@ -21,8 +26,9 @@ The active engineering target is now Xash3D on PS5. Phases 0, 1 and 2 of
 completed all six hardware gates before merging through
 `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264`. The
 consolidated resource-foundation implementation was merged through
-`mpereiraesaa/ps5-agc-gears#8` as commit `642d348`, and this laboratory pins its
-Gears submodule to that exact commit.
+`mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
+history of `projects/ps5-xash3d`, which this laboratory pins at its first own
+commit `8865b3f` on top of `cbff264`.
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -37,8 +43,9 @@ Phase 3 adds a bounded dynamic-lightmap path, deterministic mip chains,
 trilinear/anisotropic sampling, separate opaque/alpha-test/sky passes and exact
 resident/upload accounting. Its final FW 12.02 run completed 60,000 frames with
 zero errors, exact fence/VideoOut ownership, intact guards and a gap-free BYE.
-The laboratory submodule pins that complete Phase 3 commit. The next
-implementation phase is Phase 4, GoldSrc render states. See
+The `ps5-xash3d` submodule pins that complete Phase 3 tree. The next
+implementation phase is Phase 4, GoldSrc render states, and it lands in
+`ps5-xash3d`. See
 `XASH3D_CHECKPOINT.md` for the evidence boundary and executable order.
 
 The engine symbol probe is also complete. The client has only three genuine

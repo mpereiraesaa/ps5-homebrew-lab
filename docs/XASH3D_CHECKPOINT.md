@@ -18,8 +18,10 @@ Reconciled: 2026-09-06. Hardware boundary: one PS5 on firmware 12.02.
 The Phase 1/2 implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
-all host and security checks passed. The laboratory submodule now pins the
-Phase 3 commit.
+all host and security checks passed. On 2026-09-06 the port moved to its own
+repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
+the laboratory submodule `projects/ps5-xash3d` pins it and Phase 4 lands there.
+`ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
 
