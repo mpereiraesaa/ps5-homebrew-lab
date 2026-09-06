@@ -43,6 +43,7 @@ After the console has been registered:
 python3 tools/ps5_remoteplay.py stream \
   --host "$PS5_HOST" --nickname PS5-054
 python3 tools/ps5_remoteplay.py status
+python3 tools/ps5_remoteplay.py acknowledge-quit
 python3 tools/ps5_remoteplay.py screenshot
 python3 tools/ps5_remoteplay.py record --seconds 30
 python3 tools/ps5_remoteplay.py focus
@@ -85,19 +86,29 @@ focused stream can send keyboard input to the PS5. When the owner takes the
 physical DualSense and begins playing directly on the PS5, the Remote Play
 session disconnects, but the stream window does not close immediately. It
 remains black with a `Session has quit` dialog reporting that the remote
-disconnected. The owner must click `OK`; that acknowledgement closes the
-stream window. The main Chiaki client remains open with its registered console
-entry; Chiaki itself has not died and a new stream can be started from that
-entry without pairing.
+disconnected. Acknowledging `OK` closes the stream window. The owner may click
+it directly or explicitly run:
+
+```sh
+python3 tools/ps5_remoteplay.py acknowledge-quit
+```
+
+The command requires exactly one visible modal with the exact title and Chiaki
+`WM_CLASS`, clicks the lower-right anchored `OK` button, restores the pointer,
+and verifies that both the modal and stream closed. Ambiguous or implausible
+windows fail closed. It conditionally restores prior non-Chiaki focus only if
+Chiaki still owns focus afterward. The main Chiaki client remains open with its
+registered console entry; Chiaki itself has not died and a new stream can be
+started from that entry without pairing.
 
 For runs that require physical controller movement and visual evidence, capture
 the initial view first, let the owner take the DualSense, and keep structured
 telemetry running after the session disconnects. Once the owner acknowledges
 the quit dialog and the run completes, restart only the stream from the
-existing entry and capture the final view. `status` reports the quit dialog and
-`stream` refuses to misclassify its still-open parent as a usable session. The
-helper never dismisses this operator-visible dialog automatically. This makes
-Remote Play capture and physical input sequential rather than concurrent.
+existing entry and capture the final view. `status` reports the quit dialog,
+`stream` refuses to misclassify its still-open parent as a usable session, and
+`acknowledge-quit` dismisses it only on explicit invocation. This makes Remote
+Play capture and physical input sequential rather than concurrent.
 
 Remote Play images are supporting visual evidence, not substitutes for the
 artifact hash, GPU fence, VideoOut token, guards or structured telemetry.

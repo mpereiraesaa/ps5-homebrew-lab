@@ -128,6 +128,27 @@ def quit_dialog_candidates() -> list[tuple[str, tuple[str, ...]]]:
     ]
 
 
+def select_quit_dialog(
+    candidates: list[tuple[str, tuple[str, ...]]],
+) -> str:
+    clients = chiaki_client_ids(candidates)
+    details = ", ".join(
+        f"{window_id}:{'/'.join(classes) or 'unknown'}"
+        for window_id, classes in candidates
+    )
+    if not clients:
+        raise SystemExit(
+            "no visible Chiaki 'Session has quit' dialog"
+            + (f"; candidates: {details}" if details else "")
+        )
+    if len(clients) != 1:
+        raise SystemExit(
+            "multiple visible Chiaki 'Session has quit' dialogs; refusing an "
+            f"ambiguous acknowledgement: {details}"
+        )
+    return clients[0]
+
+
 def chiaki_client_ids(
     candidates: list[tuple[str, tuple[str, ...]]],
 ) -> list[str]:
@@ -194,6 +215,112 @@ def window_exists(window_id: str) -> bool:
     return result.returncode == 0
 
 
+def xdotool_shell_values(arguments: list[str]) -> dict[str, int]:
+    result = subprocess.run(
+        [require_program("xdotool"), *arguments],
+        text=True, capture_output=True, check=True,
+    )
+    values: dict[str, int] = {}
+    for line in result.stdout.splitlines():
+        key, separator, value = line.partition("=")
+        if not separator:
+            continue
+        try:
+            values[key] = int(value)
+        except ValueError:
+            continue
+    return values
+
+
+def window_size(window_id: str) -> tuple[int, int]:
+    values = xdotool_shell_values(["getwindowgeometry", "--shell", window_id])
+    try:
+        return values["WIDTH"], values["HEIGHT"]
+    except KeyError as exc:
+        raise SystemExit("xdotool did not report the quit-dialog size") from exc
+
+
+def pointer_position() -> tuple[int, int]:
+    values = xdotool_shell_values(["getmouselocation", "--shell"])
+    try:
+        return values["X"], values["Y"]
+    except KeyError as exc:
+        raise SystemExit("xdotool did not report the pointer position") from exc
+
+
+def visible_chiaki_windows() -> list[str]:
+    result = subprocess.run(
+        [
+            require_program("xdotool"), "search", "--onlyvisible", "--class",
+            f"^{CHIAKI_WM_CLASS}$",
+        ],
+        text=True, capture_output=True, check=False,
+    )
+    candidates = [
+        line.strip() for line in result.stdout.splitlines() if line.strip()
+    ]
+    return chiaki_client_ids([
+        (window_id, window_classes(window_id)) for window_id in candidates
+    ])
+
+
+def click_quit_ok(window_id: str) -> None:
+    width, height = window_size(window_id)
+    if width < 180 or height < 120:
+        raise SystemExit(
+            f"refusing implausible quit-dialog geometry: {width}x{height}"
+        )
+    old_x, old_y = pointer_position()
+    # Qt does not accept synthetic Return/Space for this modal. The OK button
+    # is anchored at the lower right; target its center relative to the
+    # freshly resolved client window and always restore the pointer.
+    button_x = round(width * 0.86)
+    button_y = round(height * 0.88)
+    xdotool = require_program("xdotool")
+    try:
+        subprocess.run(
+            [
+                xdotool, "mousemove", "--sync", "--window", window_id,
+                str(button_x), str(button_y), "click", "1",
+            ],
+            check=True,
+        )
+    finally:
+        subprocess.run(
+            [xdotool, "mousemove", "--sync", str(old_x), str(old_y)],
+            check=True,
+        )
+
+
+def wait_for_windows_to_close(window_ids: list[str], timeout: float) -> bool:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if not any(window_exists(window_id) for window_id in window_ids):
+            return True
+        time.sleep(0.1)
+    return not any(window_exists(window_id) for window_id in window_ids)
+
+
+def restore_focus_after_acknowledgement(
+    previous_window: str | None, dismissed_ids: list[str],
+) -> bool:
+    current_window = active_window()
+    if (
+        previous_window is None
+        or previous_window in dismissed_ids
+        or current_window is None
+        or current_window == previous_window
+        or current_window not in visible_chiaki_windows()
+        or not window_exists(previous_window)
+    ):
+        return False
+    subprocess.run(
+        [require_program("xdotool"), "windowactivate", "--sync", previous_window],
+        check=True,
+    )
+    return True
+
+
 def restore_focus_if_chiaki_stole_it(
     previous_window: str | None, stream_ids: list[str],
 ) -> bool:
@@ -219,8 +346,8 @@ def start_stream(args: argparse.Namespace) -> None:
     if quit_dialogs:
         raise SystemExit(
             "Chiaki Remote Play is disconnected but its 'Session has quit' "
-            "dialog is still open; the owner must click OK before restarting "
-            "the existing registered stream"
+            "dialog is still open; run 'acknowledge-quit' or click OK before "
+            "restarting the existing registered stream"
         )
     existing_ids = stream_window_ids()
     if existing_ids:
@@ -254,6 +381,35 @@ def start_stream(args: argparse.Namespace) -> None:
             return
         time.sleep(0.25)
     raise SystemExit("Chiaki stream window did not appear")
+
+
+def acknowledge_quit(args: argparse.Namespace) -> None:
+    """Acknowledge exactly one verified Chiaki disconnect modal."""
+    candidates = quit_dialog_candidates()
+    dialog = select_quit_dialog(candidates)
+    stream_candidates = [
+        (window_id, window_classes(window_id))
+        for window_id in stream_window_ids()
+    ]
+    stream_ids = chiaki_client_ids(stream_candidates)
+    if len(stream_ids) > 1:
+        select_stream_window(stream_candidates)
+
+    previous_window = active_window()
+    dismissed_ids = [dialog, *stream_ids]
+    click_quit_ok(dialog)
+    if not wait_for_windows_to_close(dismissed_ids, args.wait):
+        raise SystemExit(
+            "Chiaki quit acknowledgement did not close the dialog and stream"
+        )
+    restored = restore_focus_after_acknowledgement(
+        previous_window, dismissed_ids
+    )
+    print(json.dumps({
+        "acknowledged_dialog": dialog,
+        "focus": "restored" if restored else "unchanged",
+        "stream_closed": True,
+    }, sort_keys=True))
 
 
 def focus_stream(_args: argparse.Namespace) -> None:
@@ -352,6 +508,9 @@ def parser() -> argparse.ArgumentParser:
     stream_cmd.set_defaults(func=start_stream)
     status_cmd = commands.add_parser("status")
     status_cmd.set_defaults(func=status)
+    acknowledge_cmd = commands.add_parser("acknowledge-quit")
+    acknowledge_cmd.add_argument("--wait", type=float, default=5)
+    acknowledge_cmd.set_defaults(func=acknowledge_quit)
     focus_cmd = commands.add_parser("focus")
     focus_cmd.set_defaults(func=focus_stream)
     shot_cmd = commands.add_parser("screenshot")

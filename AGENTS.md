@@ -12,6 +12,7 @@
   python3 tools/ps5_remoteplay.py build
   python3 tools/ps5_remoteplay.py stream --host "$PS5_HOST" --nickname PS5-054
   python3 tools/ps5_remoteplay.py status
+  python3 tools/ps5_remoteplay.py acknowledge-quit
   python3 tools/ps5_remoteplay.py screenshot
   python3 tools/ps5_remoteplay.py record --seconds 30
   python3 tools/ps5_remoteplay.py focus
@@ -28,9 +29,12 @@
   meanwhile.
 - Taking over with the physical DualSense disconnects the Remote Play session,
   but leaves `Chiaki | Stream` open with a `Session has quit` dialog. The owner
-  must acknowledge `OK` before that window closes. The main client and its
-  registered console entry remain; do not pair or initialize Chiaki again.
-  Restart only the stream when another capture is needed. See
+  can acknowledge `OK` directly or explicitly run `acknowledge-quit`; the
+  helper validates a single Chiaki modal, clicks its anchored button, verifies
+  that the modal and stream closed, restores the pointer and conditionally
+  restores prior non-Chiaki focus. The main client and its registered console
+  entry remain; do not pair or initialize Chiaki again. Restart only the stream
+  when another capture is needed. See
   `docs/REMOTEPLAY.md` for the sequential capture and physical-input workflow.
 - Pairing output contains a PIN and PSN Account ID. Never commit, archive,
   quote in logs or send those values to telemetry. Use
