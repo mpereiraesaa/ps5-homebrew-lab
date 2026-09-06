@@ -36,9 +36,16 @@ GPU ambiguo continúa siendo fail-closed y no se auto-cierra.
 ```sh
 python3 tools/night_supervisor.py --host "$PS5_HOST" health
 python3 tools/night_supervisor.py --host "$PS5_HOST" status
+python3 tools/night_supervisor.py --host "$PS5_HOST" launch-xash3d
+python3 tools/night_supervisor.py --host "$PS5_HOST" close-xash3d
 python3 tools/night_supervisor.py --host "$PS5_HOST" restart-shadowmount
 python3 tools/night_supervisor.py --host "$PS5_HOST" --operator-present cleanup
 ```
+
+`launch-xash3d` and `close-xash3d` are pinned to `PPSA99996`; they refuse an
+unexpected BigApp and never target the frozen `PPSA99997` Gears demo. The
+historical `PPSA99998` host is uninstalled and is not part of the current
+console workflow.
 
 `run-native-label-submit` ya cumplió su pregunta experimental y queda como
 historial. Para Stage E usar su build/verificador dedicado:

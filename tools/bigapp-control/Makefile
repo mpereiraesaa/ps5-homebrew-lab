@@ -8,6 +8,7 @@ all: status.elf close-fake.elf launch-san-andreas.elf close-san-andreas.elf \
 	close-agc-phase0.elf launch-agc-phase0-v2.elf close-agc-phase0-v2.elf \
 	launch-agc-native-sce.elf close-agc-native-sce.elf \
 	launch-agc-gears.elf close-agc-gears.elf \
+	launch-xash3d.elf close-xash3d.elf \
 	close-native-hello-world.elf
 
 status.elf: main.c
@@ -43,6 +44,12 @@ launch-agc-gears.elf: main.c
 close-agc-gears.elf: main.c
 	$(CC) $(CFLAGS) -DTARGET_TITLE='"PPSA99997"' -o $@ $< $(LDLIBS)
 
+launch-xash3d.elf: main.c
+	$(CC) $(CFLAGS) -DACTION_LAUNCH=1 -DTARGET_TITLE='"PPSA99996"' -o $@ $< $(LDLIBS)
+
+close-xash3d.elf: main.c
+	$(CC) $(CFLAGS) -DTARGET_TITLE='"PPSA99996"' -o $@ $< $(LDLIBS)
+
 close-native-hello-world.elf: main.c
 	$(CC) $(CFLAGS) -DTARGET_TITLE='"PPSA99999"' -o $@ $< $(LDLIBS)
 
@@ -51,6 +58,7 @@ clean:
 		launch-agc-phase0.elf close-agc-phase0.elf launch-agc-phase0-v2.elf \
 		close-agc-phase0-v2.elf launch-agc-native-sce.elf close-agc-native-sce.elf \
 		launch-agc-gears.elf close-agc-gears.elf \
+		launch-xash3d.elf close-xash3d.elf \
 		close-native-hello-world.elf
 
 .PHONY: all clean

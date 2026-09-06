@@ -9,6 +9,8 @@ compiled into it and refuses operations outside that identity.
 - `close-san-andreas.elf`: cleanly closes San Andreas only.
 - `launch-agc-gears.elf` / `close-agc-gears.elf`: operate only the standalone
   public demo identity `PPSA99997`.
+- `launch-xash3d.elf` / `close-xash3d.elf`: operate only the PS5 Xash3D
+  development identity `PPSA99996`.
 
 Closing uses `sceSystemServiceKillApp` and polls for completion. It never sends
 signals to arbitrary processes, never kills system processes, never replaces a

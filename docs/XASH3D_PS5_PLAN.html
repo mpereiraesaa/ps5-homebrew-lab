@@ -125,11 +125,11 @@
 
 <div class="page">
 <header>
-  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-06 · rev 9</div>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-06 · rev 10</div>
   <h1>Xash3D on PS5</h1>
   <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. The complete Phase 3 texture path—bounded lightmap, deterministic mips, anisotropic sampling, alpha test, sky and exact accounting—has passed its final 60,000-frame hardware gate.</p>
   <div class="facts">
-    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 3 · 6 gates done</div></div>
+    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 4 ready · identity split</div></div>
     <div class="fact"><div class="k">Latest gate</div><div class="v">60,000 frames · 0 errors</div></div>
     <div class="fact"><div class="k">Cadence</div><div class="v">59.94 fps · 2 in flight</div></div>
     <div class="fact"><div class="k">GPU target</div><div class="v">gfx1013 · AGC</div></div>
@@ -150,8 +150,8 @@
 
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-06</div>
-  <h2 id="checkpoint-title">The complete GoldSrc texture path passed 60,000 frames</h2>
-  <p><code>c1a0</code> now renders deterministic mip chains, a bounded dynamic lightmap, separate opaque and <code>{</code> alpha-test classes, and an unlit sky pass with exact residency/upload accounting. Run <code>20260906T182418688Z</code> completed 60,000 frames with zero errors, no presentation intervals over 17 ms, exact fence/VideoOut ownership, intact guards and a gap-free teardown. It accounted 68,731,904 resident bytes and 781,471,872 uploaded bytes across 122 mip chains and 2,915/137/158 opaque/alpha/sky draws. The complete phase was merged through <a href="https://github.com/mpereiraesaa/ps5-agc-gears/pull/9">ps5-agc-gears PR #9</a> as commit <code>cbff264</code>. The port now has its own repository, <a href="https://github.com/mpereiraesaa/ps5-xash3d">ps5-xash3d</a>, forked from that commit with full history and pinned by the laboratory; <code>ps5-agc-gears</code> is frozen as the standalone Gears demo, and Phase 4 onward lands in <code>ps5-xash3d</code>.</p>
+  <h2 id="checkpoint-title">Phase 4 is unblocked under a dedicated Xash3D identity</h2>
+  <p><code>c1a0</code> already passed the complete 60,000-frame Phase 3 texture gate with deterministic mip chains, bounded dynamic lightmap, separate opaque/<code>{</code>/sky passes and exact accounting. The pre-Phase 4 package split is now hardware-proven too: Xash3D is installed as <code>PPSA99996</code>, the frozen Gears demo remains <code>PPSA99997</code>, and separate exact-title helpers control them. Run <code>20260906T205728904Z</code> observed Xash3D under its new identity for 1,440 frames at 59.94 fps with zero renderer errors, then verified exact closure and four healthy console services. The obsolete historical host <code>PPSA99998</code> is uninstalled, absent from all application/mount paths and absent from live application-database cells.</p>
   <div class="grid">
     <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
     <div class="item"><div class="k">Dynamic proof</div><div class="v">8×8 patch/frame · guards stable · 10k</div></div>
@@ -161,6 +161,7 @@
     <div class="item"><div class="k">Sky proof</div><div class="v">1 texture · 158 draws · distinct control/readback</div></div>
     <div class="item"><div class="k">Accounting</div><div class="v">68.7 MB resident · 781.5 MB uploaded</div></div>
     <div class="item"><div class="k">Final proof</div><div class="v">60k · exact tokens · guards intact · 0 errors</div></div>
+    <div class="item"><div class="k">Installed identities</div><div class="v">Xash3D 99996 · Gears 99997 · 99998 retired</div></div>
     <div class="item"><div class="k">Next step</div><div class="v">Begin Phase 4 render states</div></div>
   </div>
 </section>
@@ -288,7 +289,7 @@
     </div>
     <div class="visible"><b>Visible result.</b> The map with water, glass, sprites, particles, an animated studio model and a HUD, all from your own loader.</div>
     <ol class="steps">
-      <li>Before the first Phase 4 hardware package, assign <code>ps5-xash3d</code> a development Title ID distinct from the frozen Gears demo, add its exact-title close helper to <code>night_supervisor.py</code>, and pass an identity/launch/close console gate. Until then the two <code>PPSA99997</code> packages must never be installed or launched interchangeably.</li>
+      <li><b>Complete.</b> <code>ps5-xash3d</code> owns <code>PPSA99996</code>, frozen Gears keeps <code>PPSA99997</code>, their exact-title helpers are separate, and the identity/launch/close gate passed on FW 12.02. The obsolete <code>PPSA99998</code> host is not installed.</li>
       <li>Pipeline permutations: opaque, alpha blend, additive, alpha test, depth write off, cull front/back/none, fog on/off, lightmap multitexture on/off.</li>
       <li>Mid-frame viewport and scissor changes.</li>
       <li>Orthographic 2D path with blending for HUD, console and menu. Fonts are just textured quads.</li>
@@ -394,7 +395,7 @@
   </div>
 </section>
 
-<footer>Revision 9 moves the port to its own repository, <code>ps5-xash3d</code>, and freezes <code>ps5-agc-gears</code> as the Gears demo. Revision 8 recorded completion of all six 2026-09-06 Phase 3 texture-path hardware checkpoints, including exact residency/upload accounting and the final 60,000-frame soak. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
+<footer>Revision 10 closes the pre-Phase 4 identity gate: Xash3D is hardware-proven as <code>PPSA99996</code>, Gears remains <code>PPSA99997</code>, exact-title helpers are separate and historical <code>PPSA99998</code> is uninstalled. Revision 9 moved the port to its own repository, <code>ps5-xash3d</code>, and froze <code>ps5-agc-gears</code> as the Gears demo. Revision 8 recorded completion of all six Phase 3 texture-path hardware checkpoints. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
 </div>
 </body>
 </html>

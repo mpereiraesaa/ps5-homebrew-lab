@@ -40,7 +40,7 @@ from ps5log_evidence import EvidenceError, validate_manifest  # noqa: E402
 
 
 ALLOWED_TITLES = {"FAKE00000", "PPSA03524", "AGCP12002", "AGCP12003",
-                  "PPSA99997", "PPSA99998", "PPSA99999"}
+                  "PPSA99996", "PPSA99997", "PPSA99998", "PPSA99999"}
 REQUIRED_PORTS = {"ps5debug": 744, "ftp": 2121, "shsrv": 2323,
                   "elfldr": 9021}
 HELPERS = Path(__file__).resolve().parent / "bigapp-control"
@@ -584,6 +584,7 @@ class Supervisor:
             "PPSA03524": "close-san-andreas.elf",
             "AGCP12002": "close-agc-phase0.elf",
             "AGCP12003": "close-agc-phase0-v2.elf",
+            "PPSA99996": "close-xash3d.elf",
             "PPSA99997": "close-agc-gears.elf",
             "PPSA99998": "close-agc-native-sce.elf",
             "PPSA99999": "close-native-hello-world.elf",
@@ -966,6 +967,7 @@ class Supervisor:
             )
         helpers = {
             "PPSA03524": "launch-san-andreas.elf",
+            "PPSA99996": "launch-xash3d.elf",
             "PPSA99997": "launch-agc-gears.elf",
             "PPSA99998": "launch-agc-native-sce.elf",
         }
@@ -1676,6 +1678,7 @@ def main() -> int:
                                            "close-agc-native-sce",
                                            "operator-close-agc-native-sce",
                                            "launch-agc-native-sce",
+                                           "launch-xash3d", "close-xash3d",
                                            "cleanup",
                                            "restart-shadowmount",
                                            "run-dma-buildonly",
@@ -1717,6 +1720,10 @@ def main() -> int:
             sup.operator_close_agc_native_sce(args.operator_present)
         elif args.action == "launch-agc-native-sce":
             sup.checked_launch("PPSA99998")
+        elif args.action == "launch-xash3d":
+            sup.checked_launch("PPSA99996")
+        elif args.action == "close-xash3d":
+            sup.checked_close("PPSA99996")
         elif args.action == "cleanup":
             sup.run_cleanup(args.operator_present, args.cleanup_wait_seconds)
         elif args.action == "restart-shadowmount":

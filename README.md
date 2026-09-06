@@ -16,6 +16,11 @@ soaks de 60.000 frames en hardware con fences GPU, tokens VideoOut y guardas
 exactos, cero errores del renderer y telemetría TCP estructurada. La Fase 4,
 estados de render GoldSrc, es la siguiente.
 
+La identidad de consola también está separada y validada: Xash3D usa
+`PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico
+`PPSA99998` fue desinstalado de la consola y no deja rutas ni filas vivas en su
+base de aplicaciones.
+
 `ps5-agc-gears` dibuja tres engranajes 3D animados con depth, iluminación,
 doble buffer y dos frames realmente en vuelo; pasó soaks de 10.000 y 60.000
 frames y es el origen del renderer.
@@ -57,9 +62,10 @@ igualmente al repo canónico:
 make native-release AMDLLPC=/ruta/a/amdllpc LLVM_READELF=/ruta/a/llvm-readelf
 ```
 
-Los stages A–I, `PPSA99998`, hbldr/elfldr y ShadowMountPlus permanecen sólo
-como historia reproducible bajo `legacy/` y `research/`. No son el flujo de
-desarrollo vigente.
+Los stages A–I y el código de `PPSA99998` permanecen sólo como historia
+reproducible bajo `legacy/` y `research/`; `PPSA99998` no permanece instalado
+en la consola. hbldr/elfldr y ShadowMountPlus siguen siendo infraestructura del
+laboratorio, no la implementación del port.
 
 En un clon nuevo, inicializar el renderer público fijado antes de ejecutar los
 gates:
