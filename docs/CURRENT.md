@@ -45,8 +45,10 @@ resident/upload accounting. Its final FW 12.02 run completed 60,000 frames with
 zero errors, exact fence/VideoOut ownership, intact guards and a gap-free BYE.
 The `ps5-xash3d` submodule now carries Phase 4's complete 99-state native
 catalog, real BSP binding, viewport/scissor restoration and the hardware-proven
-blend/depth/cull/fog/lightmap matrix. The next gate is the orthographic 2D
-HUD/console/menu/font path in `ps5-xash3d`. See
+blend/depth/cull/fog/lightmap matrix. Its orthographic blended 2D path is now
+hardware-proven too: HUD, console, menu and font geometry stream through the
+fence-retired ring using the alpha/additive `screen_2d` states. The next gate
+is lightstyles plus dynamic lights on the Phase 3 lightmap upload path. See
 `XASH3D_CHECKPOINT.md` for the evidence boundary and executable order.
 
 The package-identity prerequisite is also closed. Xash3D is installed and

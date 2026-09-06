@@ -10,7 +10,7 @@ Reconciled: 2026-09-07. Hardware boundary: one PS5 on firmware 12.02.
 | 1 — BSP viewer with noclip | Complete | `c1a0`, 3,611 draws, 164 base textures plus lightmap, physical DualSense movement and a clean 60,000-frame textured gate. |
 | 2 — Resource foundation | Complete | Fence-retired pool, two-slot transient ring, V#/T#/S#, per-frame constants, two pipeline permutations, cache contract and a clean 60,000-frame gate. |
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
-| 4 — GoldSrc render states | In progress, gates 1–2 closed | Native binding, the complete blend/depth/cull/fog/lightmap matrix and viewport/scissor restoration are hardware-proven; 2D, lighting, sprites/particles, studio/brush entities and culling remain. |
+| 4 — GoldSrc render states | In progress, gates 1–3 closed | Native binding, the complete blend/depth/cull/fog/lightmap matrix, viewport/scissor restoration and orthographic blended 2D are hardware-proven; lighting, sprites/particles, studio/brush entities and culling remain. |
 | 5 — Platform layer | Sized, later/parallel | ScePad, AudioOut, filesystem, direct-memory engine allocator, time/threads and three measured libc shims. |
 | 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
@@ -114,7 +114,7 @@ matching cells. Its source remains archived under `legacy/` and its exact
 pre-removal files have a private recoverable laboratory backup; it is not an
 installed application or an active workflow.
 
-Phase 4 gates 1 and 2 are closed in `ps5-xash3d`. The native catalog contains
+Phase 4 gates 1–3 are closed in `ps5-xash3d`. The native catalog contains
 99 semantic states and nine `gfx1013` shader variants; real opaque/masked draws
 and mid-frame viewport/scissor restoration first passed 10,000 frames. Run
 `20260906T223113472Z_PPSA99996_ps5-xash3d_0x7dfb90d3b053` then exercised nine
@@ -127,7 +127,22 @@ errors. Its ELF/fSELF/transcript hashes are
 `d914bcf26b5aa3e0ca17eb3c99a10cdb3abb929bf89f9817e96f7640f9baf2e6`,
 `31de1cf508c26f36217bb04aaa87140e191a71880a95e124a504d29c62441b9a` and
 `d875d6793d92407e297daef313c7ad24ab84d5ada3abc0b15fd04f2381805ef3`.
-The next ordered Phase 4 gate is orthographic blended 2D.
+
+Run `20260906T225115588Z_PPSA99996_ps5-xash3d_0x7f137394ac44` then closed
+the orthographic 2D gate. It bound `screen_2d` alpha/additive keys 129/130 and
+drew 522 indices per frame from a deterministic procedural atlas plus
+per-frame transient constants, descriptors and geometry. The visible result
+combined the BSP world with a translucent console, menu, HUD, 78 bitmap glyphs
+and an additive crosshair. It completed 10,000/10,000 frames with exact
+fence/VideoOut ownership, intact guards, six reclaimed allocations, a
+gap-free BYE and zero renderer errors. Its ELF/fSELF/transcript/capture hashes
+are `b7b2ef1e9cf4679bbe5edea37a8511aecdac3352252c7d48ffea0d6e70ac3dde`,
+`f391dbbae2f90a34f64a3593418be137a4efd5099651254724144bf1665404b2`,
+`12c94237d1aa4fb5e762372549e7e803f2df7781468b862af5a70a513237ac39`
+and `7102eadff45ee1b3c8598d02e5480fba1bc736494a0f80dfd7dbe46b936ee383`.
+The exact CLI stream and title were closed, independent status found no
+BigApp, and all four services remained healthy. The next ordered Phase 4 gate
+is lightstyles plus dynamic lights on the Phase 3 lightmap upload path.
 
 ## Parallel work that is now de-risked
 
