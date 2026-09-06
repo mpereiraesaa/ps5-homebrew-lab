@@ -48,9 +48,10 @@ la cámara del operador.
 make check
 ```
 
-Ese gate ejecuta los contratos del repo Gears y la suite independiente del
-servidor de telemetría. Para construir la aplicación se delega igualmente al
-repo canónico:
+Ese gate ejecuta, en orden, los contratos del port canónico `ps5-xash3d`, la
+demo Gears congelada, la suite independiente del servidor de telemetría y los
+contratos del helper Remote Play. Para construir la aplicación se delega
+igualmente al repo canónico:
 
 ```sh
 make native-release AMDLLPC=/ruta/a/amdllpc LLVM_READELF=/ruta/a/llvm-readelf

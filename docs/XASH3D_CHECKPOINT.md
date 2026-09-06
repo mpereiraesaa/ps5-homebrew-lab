@@ -96,6 +96,13 @@ and
 The exact title was closed after validation and all four console services
 remained stable. Phase 3 is complete; Phase 4 render states are next.
 
+Before the first Phase 4 hardware package, `ps5-xash3d` must stop sharing the
+local development identity `PPSA99997` with the frozen Gears demo. Assign a
+distinct Title ID, add a matching exact-title close helper to
+`tools/night_supervisor.py`, and pass an identity/launch/close gate on the
+console. Until that gate closes, the two packages must never be installed or
+launched interchangeably.
+
 ## Parallel work that is now de-risked
 
 The reproducible symbol probes show that libc/C++ is not the port blocker:

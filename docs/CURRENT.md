@@ -15,9 +15,9 @@ gate through `make xash3d-check`.
 three lit gears, two frames in flight, exact GPU/VideoOut ownership and the
 60,000-frame reference soak documented in
 `projects/ps5-agc-gears/docs/HARDWARE_VALIDATION.md`. Only demo fixes land
-there. `mpereiraesaa/ps5-agc-gears#10` reverts the Phase 2/3 merges (#8, #9)
-from that repository and tags the demo as `gears-demo-freeze`; the laboratory
-moves its Gears pin once it merges.
+there. Merged PR `mpereiraesaa/ps5-agc-gears#10` reverted the Phase 2/3 merges
+(#8, #9), tagged the demo as `gears-demo-freeze`, and the laboratory now pins
+the frozen tree at `8f035b7`.
 
 ## Xash3D checkpoint
 

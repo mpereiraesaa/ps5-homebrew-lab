@@ -24,9 +24,9 @@ Stages A–I y `PPSA99998` están archivados bajo `legacy/`.
 
 `projects/ps5-agc-gears` es el repositorio público de la demo Gears standalone,
 validada hasta 60.000 frames. Queda congelado como demo: sólo recibe
-correcciones propias. `mpereiraesaa/ps5-agc-gears#10` revierte los merges de
-Fase 2/3 (#8, #9) para devolver `main` a la demo publicada y etiqueta
-`gears-demo-freeze`.
+correcciones propias. El PR fusionado `mpereiraesaa/ps5-agc-gears#10` revirtió
+los merges de Fase 2/3 (#8, #9), devolvió el árbol de la demo a `8f035b7` y lo
+etiquetó como `gears-demo-freeze`; el submódulo del laboratorio fija ese commit.
 
 La primera capa reutilizable ya existe en `sdk/agc`: headers sanitizados,
 facades de enlace para `libSceAgc`/`libSceAgcDriver`, manifiesto de NIDs y test
