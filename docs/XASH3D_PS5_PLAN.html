@@ -125,12 +125,12 @@
 
 <div class="page">
 <header>
-  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-06 · rev 10</div>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-07 · rev 11</div>
   <h1>Xash3D on PS5</h1>
-  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. The complete Phase 3 texture path—bounded lightmap, deterministic mips, anisotropic sampling, alpha test, sky and exact accounting—has passed its final 60,000-frame hardware gate.</p>
+  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. Phase 3 is complete, and Phase 4 now binds the generated GoldSrc pipelines in real BSP draws and changes viewport/scissor mid-frame through a clean 10,000-frame hardware gate.</p>
   <div class="facts">
-    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 4 ready · identity split</div></div>
-    <div class="fact"><div class="k">Latest gate</div><div class="v">60,000 frames · 0 errors</div></div>
+    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 4 native binding + viewport</div></div>
+    <div class="fact"><div class="k">Latest gate</div><div class="v">10,000 frames · 0 errors</div></div>
     <div class="fact"><div class="k">Cadence</div><div class="v">59.94 fps · 2 in flight</div></div>
     <div class="fact"><div class="k">GPU target</div><div class="v">gfx1013 · AGC</div></div>
   </div>
@@ -149,9 +149,9 @@
 <div class="legend"><span class="l-done">done</span><span class="l-active">in progress</span><span class="l-later">next</span></div>
 
 <section class="checkpoint" aria-labelledby="checkpoint-title">
-  <div class="eyebrow">Current checkpoint · 2026-09-06</div>
-  <h2 id="checkpoint-title">Phase 4 is unblocked under a dedicated Xash3D identity</h2>
-  <p><code>c1a0</code> already passed the complete 60,000-frame Phase 3 texture gate with deterministic mip chains, bounded dynamic lightmap, separate opaque/<code>{</code>/sky passes and exact accounting. The pre-Phase 4 package split is now hardware-proven too: Xash3D is installed as <code>PPSA99996</code>, the frozen Gears demo remains <code>PPSA99997</code>, and separate exact-title helpers control them. Run <code>20260906T205728904Z</code> observed Xash3D under its new identity for 1,440 frames at 59.94 fps with zero renderer errors, then verified exact closure and four healthy console services. The obsolete historical host <code>PPSA99998</code> is uninstalled, absent from all application/mount paths and absent from live application-database cells.</p>
+  <div class="eyebrow">Current checkpoint · 2026-09-07</div>
+  <h2 id="checkpoint-title">Real Phase 4 pipelines and mid-frame viewport/scissor are hardware-proven</h2>
+  <p>The generated native catalog now owns 99 semantic render states and nine <code>gfx1013</code> shader variants. The real <code>c1a0</code> BSP draw path selects opaque-lightmap key 68 and masked-lightmap alpha-test key 71. It clears at 1920×1080, switches to a 1280×720 inset viewport with a nested 1120×640 scissor for the world, then restores the full-frame state before the final pass. Run <code>20260906T220730780Z</code> completed 10,000/10,000 frames at 59.94 fps with exact GPU fences and VideoOut tokens, intact guards, six reclaimed allocations, zero renderer errors and no presentation intervals over budget. A capture from that exact artifact visibly confirmed the inset and restoration. Xash3D remains <code>PPSA99996</code>, frozen Gears remains <code>PPSA99997</code>, and obsolete <code>PPSA99998</code> remains absent.</p>
   <div class="grid">
     <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
     <div class="item"><div class="k">Dynamic proof</div><div class="v">8×8 patch/frame · guards stable · 10k</div></div>
@@ -160,9 +160,10 @@
     <div class="item"><div class="k">Alpha proof</div><div class="v">1 texture · 42 draws · distinct control/readback</div></div>
     <div class="item"><div class="k">Sky proof</div><div class="v">1 texture · 158 draws · distinct control/readback</div></div>
     <div class="item"><div class="k">Accounting</div><div class="v">68.7 MB resident · 781.5 MB uploaded</div></div>
-    <div class="item"><div class="k">Final proof</div><div class="v">60k · exact tokens · guards intact · 0 errors</div></div>
+    <div class="item"><div class="k">Phase 4 catalog</div><div class="v">99 states · 9 native variants · real BSP keys</div></div>
+    <div class="item"><div class="k">Viewport proof</div><div class="v">inset + nested scissor + restore · 10k</div></div>
     <div class="item"><div class="k">Installed identities</div><div class="v">Xash3D 99996 · Gears 99997 · 99998 retired</div></div>
-    <div class="item"><div class="k">Next step</div><div class="v">Begin Phase 4 render states</div></div>
+    <div class="item"><div class="k">Next step</div><div class="v">Remaining state matrix + orthographic 2D</div></div>
   </div>
 </section>
 
@@ -285,13 +286,13 @@
   <div class="body">
     <div class="head">
       <h2>GoldSrc render states</h2>
-      <div class="meta"><span class="pill later">next</span><span>≈ 2 weeks</span><span>The state surface the ref API will demand.</span></div>
+      <div class="meta"><span class="pill active">in progress</span><span>≈ 2 weeks</span><span>The state surface the ref API will demand.</span></div>
     </div>
     <div class="visible"><b>Visible result.</b> The map with water, glass, sprites, particles, an animated studio model and a HUD, all from your own loader.</div>
     <ol class="steps">
       <li><b>Complete.</b> <code>ps5-xash3d</code> owns <code>PPSA99996</code>, frozen Gears keeps <code>PPSA99997</code>, their exact-title helpers are separate, and the identity/launch/close gate passed on FW 12.02. The obsolete <code>PPSA99998</code> host is not installed.</li>
-      <li>Pipeline permutations: opaque, alpha blend, additive, alpha test, depth write off, cull front/back/none, fog on/off, lightmap multitexture on/off.</li>
-      <li>Mid-frame viewport and scissor changes.</li>
+      <li><b>In progress.</b> Pipeline permutations: the 99-state cache and all nine native variants are complete; real opaque and alpha-test BSP binding passed 10,000 frames. Alpha blend, additive, depth-write, cull, fog and lightmap switching still require actual draw/readback gates.</li>
+      <li><b>Complete.</b> Mid-frame viewport and scissor changes plus full-frame restoration passed a visual and 10,000-frame FW 12.02 gate with exact ownership and zero errors.</li>
       <li>Orthographic 2D path with blending for HUD, console and menu. Fonts are just textured quads.</li>
       <li>Lightstyles and dynamic lights writing into the lightmap atlas via the Phase 3 upload path.</li>
       <li>Sprites and particles from the transient ring.</li>
@@ -395,7 +396,7 @@
   </div>
 </section>
 
-<footer>Revision 10 closes the pre-Phase 4 identity gate: Xash3D is hardware-proven as <code>PPSA99996</code>, Gears remains <code>PPSA99997</code>, exact-title helpers are separate and historical <code>PPSA99998</code> is uninstalled. Revision 9 moved the port to its own repository, <code>ps5-xash3d</code>, and froze <code>ps5-agc-gears</code> as the Gears demo. Revision 8 recorded completion of all six Phase 3 texture-path hardware checkpoints. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
+<footer>Revision 11 records real Phase 4 opaque/masked pipeline binding and the completed 10,000-frame viewport/scissor hardware gate. Revision 10 closed the identity split: Xash3D is <code>PPSA99996</code>, Gears remains <code>PPSA99997</code> and historical <code>PPSA99998</code> is uninstalled. Revision 9 moved the port to its own repository, <code>ps5-xash3d</code>, and froze <code>ps5-agc-gears</code> as the Gears demo. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
 </div>
 </body>
 </html>
