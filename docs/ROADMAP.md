@@ -1,10 +1,12 @@
 # Roadmap
 
-Última reconciliación: 2026-09-05.
+Última reconciliación: 2026-09-06.
 
 > Este documento conserva el roadmap histórico que produjo Gears. El roadmap
 > vigente está en `projects/ps5-agc-gears/docs/ROADMAP.md` y la política del lab
-> en `CURRENT.md`.
+> en `CURRENT.md`. El plan de evolución hacia GoldSrc está en
+> `XASH3D_PS5_PLAN.html` y su checkpoint ejecutable en
+> `XASH3D_CHECKPOINT.md`.
 
 ## Completado
 

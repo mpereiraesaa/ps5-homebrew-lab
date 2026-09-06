@@ -15,6 +15,12 @@ link to private captures or firmware-derived material.
   manifiestos y clasificación.
 - `REMOTEPLAY.md` — pairing, streaming, screenshots and video capture through
   Headless LinkDev and Chiaki.
+- `XASH3D_PS5_PLAN.html` — visual phase plan from the proven AGC renderer to a
+  playable native GoldSrc engine.
+- `XASH3D_CHECKPOINT.md` — current completed/active boundary, evidence and the
+  next isolated hardware gates.
+- `../research/xash3d/PS5_SYMBOL_GAP.md` — reproducible PS5-target compile and
+  unresolved-symbol sizing for Xash3D, mainui and hlsdk-portable.
 - `../research/gpu/LEGACY_FILESYSTEM_TELEMETRY.md` — frontera explícita entre
   evidencia histórica y el flujo de red objetivo.
 
@@ -36,6 +42,10 @@ make agc-sdk-check
 
 The public-facing demo has its independent documentation under
 `projects/ps5-agc-gears/docs/`.
+
+The Xash3D Phase 1/2 implementation was merged through public Gears PR #8 as
+commit `642d348`; the checked-in Gears submodule pins that exact canonical
+boundary.
 
 `STATUS.md`, `ROADMAP.md`, `FINDINGS.md`, `GPU_RESEARCH.md` and
 `RELEASE_STATE.md` retain the chronological Stage A–I record. Where their

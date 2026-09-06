@@ -393,3 +393,82 @@ cero, token exacto y teardown limpio. El soak midió 166.831.421.365 ns,
 
 fSELF `7b24d5f152f82584e5af1a9d906699b75f5527764db469189346f6017b284dc2`;
 captura `research/gpu/captures/runtime/20260905T125654862Z_PPSA99998_agc-native-sce_0x10105db257eb.capture.json`.
+
+## Módulos PRX propios (2026-09-06)
+
+Gate ejecutado con el título `PPSA99999` y el módulo `hello.prx` construido por
+`ps5-native-tool link --module` en la rama `exp/prx-module` del fork del
+boilerplate. Evidencia canónica:
+`research/gpu/captures/runtime/20260906T085730845Z_PPSA99999_prx-gate_0x519451728697.capture.json`.
+
+Demostrado en FW 12.02:
+
+- `sceKernelLoadStartModule("/app0/sce_module/hello.prx")` carga y arranca un
+  módulo propio; `sceKernelGetModuleInfo` devuelve nombre y cuatro segmentos;
+  las llamadas a sus exports y una import de kernel desde el módulo funcionan;
+  `sceKernelStopUnloadModule` descarga limpio. Transcript sin gaps y BYE.
+- Dos contratos del loader, hallados por bisección de unos veinte lanzamientos
+  con una variable por iteración y aplicados en el conversor:
+  `DT_PLTGOT` debe ser una tabla de tres entradas, porque el loader escribe
+  las entradas 1 y 2 aunque no exista PLT y con un GOT de una entrada corrompía
+  el module param y devolvía `0x80020063`; y `e_entry` se ejecuta como rutina
+  de arranque y debe devolver 0, ya que el relleno `int3` daba SIGTRAP y un
+  `ret` con `eax` basura daba `0x80020016`.
+
+No disponible en FW 12.02 para módulos de aplicación:
+
+- Carga por dependencia `DT_NEEDED`: el loader sólo carga las entradas
+  conocidas de `sce_module` como `libc.prx`; el módulo propio no se carga y
+  las imports quedan a cero.
+- `sceKernelDlsym`: devuelve `0x80020003` para todo módulo de aplicación,
+  incluido el `libc.prx` del boilerplate, con cualquier tabla hash, incluso de
+  un solo bucket. El desensamblado del `libkernel` de 12.02 muestra que es un
+  wrapper fino sobre la syscall, luego el rechazo es del kernel. El loader
+  tampoco invoca `module_start` por búsqueda de símbolo; llama a `e_entry`.
+- La tabla `DT_HASH` de los módulos de Sony no es SysV sobre el nombre
+  codificado, el NID, el nombre plano ni los bytes crudos del NID; su clave
+  sigue abierta y sólo importa si algún día hace falta `dlsym` del kernel.
+
+Resolución adoptada: cada módulo lleva un descriptor estático relocado
+(`PRXDESC1`) con pares nombre y puntero; el título lo localiza escaneando los
+segmentos de `sceKernelGetModuleInfo`. Implementación compartida en
+`modules/prx_loader.h` del fork, con tests host. El cargador de librerías de
+Xash3D debe apoyarse en `prx_load`, `prx_get_proc` y `prx_unload`.
+
+Observaciones operativas: `ftpsrv` expone los fSELF como ELF descifrado con
+los últimos 512 bytes reescritos, así que la verificación de subida compara el
+prefijo; el klog en el puerto 3232 de la consola muestra señales y errores de
+`rtld`; la salida con `_exit` aparece como SIGSYS en klog aunque el shell
+vuelva al menú sin diálogo.
+
+## Xash3D BSP y resource foundation (2026-09-06)
+
+La Fase 1 renderiza el `c1a0` privado con 3.611 draws, 164 texturas base,
+lightmap y noclip. El gate de movimiento físico registró 2.018 frames con
+traslación y 678 con giro. El gate texturado
+`20260906T104934442Z_PPSA99997_ps5-agc-gears_0x57b1c21d2219` completó
+60.000 frames, cero errores y BYE limpio; el log tiene SHA-256
+`091707cbcf4b3fe31c0bb9a7134dfddeb6de14c23ffcb06d428f412e7a2ed3eb`.
+
+La Fase 2 añade pool de memoria directa con generaciones y retiro diferido,
+ring transitorio de dos slots, builders V#/T#/S#, constant buffers, tabla
+generada de dos pipelines y contrato CPU→GPU/GPU→CPU. El gate
+`20260906T130036578Z_PPSA99997_ps5-agc-gears_0x5ed84765862b` completó
+60.000 frames conectados con cero errores, tokens exactos, guardas intactas,
+ambos slots reutilizables y cuatro allocations persistentes reclamadas. Su log
+tiene SHA-256
+`8a7b8ce9aa03552f92c1717ff7bb4d836b616a8b399cf938951ac21f21e4c66e`.
+El mapa permaneció idéntico entre dos capturas mientras la media verde del
+overlay cambió aproximadamente 30,2 niveles; el operador confirmó el pulso en
+vivo.
+
+El fetch de vértices estructurados del overlay devolvió ceros en aislamiento
+con esa combinación de pipeline. La solución validada conserva índices y color
+en memoria transitoria, genera las cuatro posiciones desde `gl_VertexIndex` y
+alimenta el color pulsante por el V# de constant buffer ya probado. La escritura
+de user data también queda separada por etapa: GS en `0x8d`, PS en `0x0d`.
+
+La implementación consolidada y la evidencia pública se fusionaron mediante
+`mpereiraesaa/ps5-agc-gears#8` como commit `642d348`. Mapas, binarios, logs
+completos y capturas permanecen privados; sólo se publican contratos, conteos y
+hashes sanitizados.
