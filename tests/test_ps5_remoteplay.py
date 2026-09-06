@@ -7,6 +7,7 @@ import importlib.util
 import stat
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +36,43 @@ def main() -> int:
     assert MODULE.LINKDEV_COMMIT == "b658657190873f1ae194b732f8dcfdb02543c4aa"
     assert MODULE.DEFAULT_CAPTURE_DIR.parts[-2:] == ("captures", "remoteplay")
     assert not MODULE.is_cli_chiaki_stream_process(999_999_999)
+    with mock.patch.object(
+        MODULE, "chiaki_windows", return_value=[]
+    ):
+        assert MODULE.ended_cli_stream_pid() is None
+    with mock.patch.object(
+        MODULE, "chiaki_windows", return_value=["4242"]
+    ), mock.patch.object(
+        MODULE, "window_pid", return_value=31337
+    ), mock.patch.object(
+        MODULE, "is_cli_chiaki_stream_process", return_value=True
+    ):
+        assert MODULE.ended_cli_stream_pid() == 31337
+    with mock.patch.object(
+        MODULE, "chiaki_windows", return_value=["4242"]
+    ), mock.patch.object(
+        MODULE, "window_pid", return_value=31337
+    ), mock.patch.object(
+        MODULE, "is_cli_chiaki_stream_process", return_value=False
+    ):
+        try:
+            MODULE.ended_cli_stream_pid()
+        except SystemExit as exc:
+            assert "not launched by the isolated" in str(exc)
+        else:
+            raise AssertionError("non-CLI ended stream was not rejected")
+    with mock.patch.object(
+        MODULE, "ended_cli_stream_pid", return_value=31337
+    ), mock.patch.object(
+        MODULE, "terminate_cli_stream_process"
+    ) as terminate, mock.patch.object(
+        MODULE, "chiaki_windows", return_value=[]
+    ), mock.patch.object(
+        MODULE, "acknowledge_quit_dialog",
+        side_effect=AssertionError("UI acknowledgement must not be used"),
+    ):
+        assert MODULE.stop_ended_cli_stream(2.0)
+        terminate.assert_called_once_with(31337, 2.0)
     sample = """[General]\nversion=2\n\n[registered_hosts]\n1\\rp_key=@ByteArray(first)\n1\\rp_regist_key=@ByteArray(first-reg)\n1\\server_nickname=PS5-816\n1\\target=1000100\n2\\rp_key=@ByteArray(second)\n2\\rp_regist_key=@ByteArray(second-reg)\n2\\server_nickname=PS5-054\n2\\target=1000100\nsize=2\n\n[settings]\nresolution=720p\n"""
     with tempfile.TemporaryDirectory() as directory:
         source = Path(directory) / "source.conf"

@@ -110,12 +110,12 @@ or start full engine integration prematurely.
 ## Remote Play operating contract
 
 Chiaki already has a valid console entry. Never pair or re-register it during a
-normal test. When the owner takes the physical DualSense, the Remote Play
-session disconnects but the stream window remains black behind a
-`Session has quit` dialog. Clicking `OK` closes only that stream window; the
-main Chiaki client remains available to restart streaming from the existing
-entry. The helper also supports direct console-mode startup, so the discovery
-client window is not required. It works around Chiaki 2.1.1's second-entry CLI
-bug with a private temporary copy of the existing PS5 registration; no pairing,
-re-registration or credential logging occurs. Automation must not assume focus
-or synthesize movement.
+normal test. The helper starts that entry directly in console mode, so the
+discovery/client window is not part of the workflow. If physical DualSense
+takeover ends Remote Play, `stop-stream` identifies and terminates only the
+exact isolated CLI process; `stream` performs the same stale-process cleanup
+before restarting. Neither path activates or acknowledges the Qt dialog,
+assumes focus, moves the pointer or synthesizes movement. The helper works
+around Chiaki 2.1.1's second-entry CLI bug with a private temporary copy of the
+existing PS5 registration; no pairing, re-registration or credential logging
+occurs.
