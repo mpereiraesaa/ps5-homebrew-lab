@@ -43,9 +43,10 @@ Phase 3 adds a bounded dynamic-lightmap path, deterministic mip chains,
 trilinear/anisotropic sampling, separate opaque/alpha-test/sky passes and exact
 resident/upload accounting. Its final FW 12.02 run completed 60,000 frames with
 zero errors, exact fence/VideoOut ownership, intact guards and a gap-free BYE.
-The `ps5-xash3d` submodule pins that complete Phase 3 tree. The next
-implementation phase is Phase 4, GoldSrc render states, and it lands in
-`ps5-xash3d`. See
+The `ps5-xash3d` submodule now carries Phase 4's complete 99-state native
+catalog, real BSP binding, viewport/scissor restoration and the hardware-proven
+blend/depth/cull/fog/lightmap matrix. The next gate is the orthographic 2D
+HUD/console/menu/font path in `ps5-xash3d`. See
 `XASH3D_CHECKPOINT.md` for the evidence boundary and executable order.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
