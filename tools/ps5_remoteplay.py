@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import signal
 import shlex
 import shutil
 import socket
@@ -520,6 +521,43 @@ def output_path(value: str | None, suffix: str) -> Path:
     return path.resolve()
 
 
+def demo_output_path(value: str | None, name: str) -> Path:
+    if value:
+        return output_path(value, "mp4")
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+    if not slug:
+        raise SystemExit("demo name must contain a letter or number")
+    timestamp = time.strftime("%Y%m%dT%H%M%S")
+    path = DEFAULT_CAPTURE_DIR / "demos" / f"{timestamp}-{slug}.mp4"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path.resolve()
+
+
+def recording_command(
+    path: Path, fps: int, window: str, display: str,
+    seconds: float | None = None, title: str | None = None,
+) -> list[str]:
+    if fps <= 0:
+        raise SystemExit("fps must be greater than zero")
+    if seconds is not None and seconds <= 0:
+        raise SystemExit("seconds must be greater than zero")
+    command = [
+        require_program("ffmpeg"), "-hide_banner", "-loglevel", "warning",
+        "-y", "-f", "x11grab", "-framerate", str(fps),
+        "-window_id", window, "-i", display,
+    ]
+    if seconds is not None:
+        command.extend(["-t", str(seconds)])
+    command.extend([
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
+        "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+    ])
+    if title:
+        command.extend(["-metadata", f"title={title}"])
+    command.append(str(path))
+    return command
+
+
 def screenshot(args: argparse.Namespace) -> None:
     path = output_path(args.output, "png")
     subprocess.run(
@@ -534,17 +572,42 @@ def record(args: argparse.Namespace) -> None:
     display = os.environ.get("DISPLAY")
     if not display:
         raise SystemExit("DISPLAY is not set; X11 capture is unavailable")
-    subprocess.run(
-        [
-            require_program("ffmpeg"), "-hide_banner", "-loglevel", "warning",
-            "-y", "-f", "x11grab", "-framerate", str(args.fps),
-            "-window_id", stream_window(), "-i", display,
-            "-t", str(args.seconds), "-c:v", "libx264", "-preset", "veryfast",
-            "-crf", "18", "-pix_fmt", "yuv420p", str(path),
-        ],
-        check=True,
-    )
+    subprocess.run(recording_command(
+        path, args.fps, stream_window(), display, seconds=args.seconds,
+    ), check=True)
     print(path)
+
+
+def record_demo(args: argparse.Namespace) -> None:
+    """Record a shareable presentation until Enter, Ctrl+C or a time limit."""
+    path = demo_output_path(args.output, args.name)
+    display = os.environ.get("DISPLAY")
+    if not display:
+        raise SystemExit("DISPLAY is not set; X11 capture is unavailable")
+    command = recording_command(
+        path, args.fps, stream_window(), display,
+        seconds=args.seconds, title=f"PS5 homebrew demo: {args.name}",
+    )
+    process = subprocess.Popen(command)
+    print(f"Recording PS5 demo to {path}", flush=True)
+    try:
+        if args.seconds is None:
+            try:
+                input("Press Enter to stop and finalize the video... ")
+            except EOFError:
+                print("stdin closed; finalizing the video", file=sys.stderr)
+            if process.poll() is None:
+                process.send_signal(signal.SIGINT)
+        process.wait()
+    except KeyboardInterrupt:
+        if process.poll() is None:
+            process.send_signal(signal.SIGINT)
+        process.wait()
+    if process.returncode not in {0, 255}:
+        raise SystemExit(f"ffmpeg recording failed with status {process.returncode}")
+    if not path.is_file() or path.stat().st_size == 0:
+        raise SystemExit("ffmpeg did not produce a video")
+    print(f"Finalized shareable video: {path}")
 
 
 def parser() -> argparse.ArgumentParser:
@@ -582,6 +645,15 @@ def parser() -> argparse.ArgumentParser:
     record_cmd.add_argument("--seconds", type=float, default=10)
     record_cmd.add_argument("--fps", type=int, default=60)
     record_cmd.set_defaults(func=record)
+    demo_cmd = commands.add_parser("record-demo")
+    demo_cmd.add_argument("--name", required=True)
+    demo_cmd.add_argument("--output")
+    demo_cmd.add_argument(
+        "--seconds", type=float,
+        help="optional fixed duration; otherwise stop with Enter or Ctrl+C",
+    )
+    demo_cmd.add_argument("--fps", type=int, default=60)
+    demo_cmd.set_defaults(func=record_demo)
     return result
 
 

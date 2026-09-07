@@ -35,6 +35,25 @@ def main() -> int:
     )
     assert MODULE.LINKDEV_COMMIT == "b658657190873f1ae194b732f8dcfdb02543c4aa"
     assert MODULE.DEFAULT_CAPTURE_DIR.parts[-2:] == ("captures", "remoteplay")
+    with tempfile.TemporaryDirectory() as directory:
+        with mock.patch.object(MODULE, "DEFAULT_CAPTURE_DIR", Path(directory)):
+            demo = MODULE.demo_output_path(None, "Xash3D: Phase 5!")
+            assert demo.parent.name == "demos"
+            assert demo.name.endswith("-xash3d-phase-5.mp4")
+    with mock.patch.object(MODULE, "require_program", return_value="/usr/bin/ffmpeg"):
+        command = MODULE.recording_command(
+            Path("/tmp/demo.mp4"), 60, "4242", ":0",
+            title="PS5 homebrew demo: Gears",
+        )
+        assert command[0] == "/usr/bin/ffmpeg"
+        assert command[command.index("-window_id") + 1] == "4242"
+        assert "-t" not in command
+        assert command[command.index("-movflags") + 1] == "+faststart"
+        assert command[-1] == "/tmp/demo.mp4"
+        bounded = MODULE.recording_command(
+            Path("/tmp/demo.mp4"), 30, "4242", ":0", seconds=12.5
+        )
+        assert bounded[bounded.index("-t") + 1] == "12.5"
     assert not MODULE.is_cli_chiaki_stream_process(999_999_999)
     with mock.patch.object(
         MODULE, "chiaki_windows", return_value=[]
