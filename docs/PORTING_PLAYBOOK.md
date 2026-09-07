@@ -7,8 +7,9 @@ crash. Keep it alive: when a blocker is solved, add a post-mortem here and, if
 it generalizes, a rule.
 
 The lesson that created this file: a "filesystem crash loading `gfx/palette.lmp`"
-turned out to be an unusable `strcasestr` exported by `libSceLibcInternal`. It
-cost a full session of reactive, app-level hypotheses (buffer overflow, fd
+turned out to be an unusable `strcasestr` import routed by the SDK stub to
+`libScePosixForWebKit`. It cost a full session of reactive, app-level
+hypotheses (buffer overflow, fd
 mismatch, null memory pool) because the **class** of the bug was never checked
 first. This playbook exists so the next agent checks the class first.
 
@@ -20,9 +21,11 @@ runtime. Treat "provided by `libSceLibcInternal`" in a symbol-gap report as a
 **yellow flag, not a green check**.
 
 - When the port already ships a portable, self-contained implementation of a
-  libc-ish helper behind a `HAVE_X` flag, **default to the in-tree one
-  (`HAVE_X=0`)**. It is already written and upstream-tested; for string/util
-  helpers it costs nothing and removes an entire bug class.
+  libc-ish helper behind a `HAVE_X` flag, use it as the safe starting point
+  until the target implementation has an execution test. **Keep the system
+  implementation when that smoke test passes**; select the fallback only for
+  a failing or still-unverified symbol. The objective is a measured Prospero
+  contract, not blanket replacement of `libSce*`.
 - This is not "always avoid the system lib." Core, standard, widely-exercised
   functions are usually fine (`strcasecmp`, `strncasecmp`, `strnlen`,
   `strlcpy`, `strlcat`, `malloc`, `pthread_*`, sockets, `clock_gettime` all
@@ -31,6 +34,10 @@ runtime. Treat "provided by `libSceLibcInternal`" in a symbol-gap report as a
 - **Verify by execution, not by the symbol table.** A three-line smoke test at
   boot that actually calls the symbol on real input catches this in minutes.
   A grep of `--dyn-syms` only tells you it is *imported*, not that it *works*.
+- The platform is not a black box: when a call fails or its provider/ABI is
+  ambiguous, inspect the matching firmware dump in Ghidra and reconcile its
+  control flow with the runtime fault. Static analysis explains a result; it
+  does not replace the hardware smoke test that accepts a symbol.
 
 ## Principle 2 — read the fault signature before theorizing
 
@@ -75,7 +82,8 @@ What the FW 12.02 ShadowMount payload title actually does, measured. Extend it
 as new facts appear. Full detail and evidence in `docs/FINDINGS.md`.
 
 - Descriptors 0–2 start **closed**; `dup2` onto them returns `EPERM`.
-- `libSceLibcInternal` `getcwd()` **faults**; `strcasestr` is **unusable**.
+- `libSceLibcInternal` `getcwd()` **faults**;
+  `libScePosixForWebKit`'s `strcasestr` route is **unusable**.
 - `chdir`, `access`, libc `opendir` return `EPERM` broadly; `getdents` returns
   `EINVAL` on the `/app0` nullfs image (works on `/download0`).
 - `/download0` is writable/persistent with positive `downloadDataSize`;
@@ -88,15 +96,20 @@ as new facts appear. Full detail and evidence in `docs/FINDINGS.md`.
   `ps5-python/docs/ps5-limitations.md`.)
 - Working, verified: `socket`/`bind`/`sendto`/`poll`, `pthread_*`,
   `clock_gettime`, `sceKernelOpen`/`Read`/`Write`/`Close`/`Stat`/`Getdents`,
-  `strcasecmp`/`strncasecmp`/`strnlen`/`strlcpy`/`strlcat`.
+  `strcasecmp`/`strncasecmp`/`strnlen`/`strlcpy`/`strlcat`. Xash3D run
+  `20260907T162442485Z_PPSA99996_xash3d-engine_0xb88fc0cf77a3` explicitly
+  called `strcasecmp`, `strnlen`, `strlcpy` and `strlcat` on representative
+  strings before engine startup, then spawned `c1a0` and closed cleanly.
 
 ## New-port pre-flight checklist
 
 - [ ] List every libc/syscall symbol the port will depend on; for the
       non-standard ones, add a boot-time **smoke test** that calls each on real
       input and reports through `ps5log/1`.
-- [ ] Default every `HAVE_X`-style "use system impl" flag to the port's own
-      implementation; opt into a system one only with a reason and a smoke test.
+- [ ] For every `HAVE_X`-style "use system impl" flag, begin conservatively,
+      run a real target smoke test, and record the result. Keep a passing
+      system implementation enabled; select the port fallback for a failing
+      or unverified symbol.
 - [ ] After the first link, dump `--dyn-syms` and review every imported symbol:
       is each one known-good, or merely exported?
 - [ ] Keep the fd lifecycle in one namespace: if you shim `open` to
@@ -104,6 +117,12 @@ as new facts appear. Full detail and evidence in `docs/FINDINGS.md`.
       (they worked here via libc, but verify per port).
 - [ ] Reuse the lab's evidence discipline: `ps5log/1` markers, immutable run
       manifests, one variable per hardware run.
+
+The Xash3D implementation is the current reference: `XASH_LIBC_SMOKE=1`
+forces real boot-time calls, while `xash/tools/audit_dyn_imports.py` combines
+the linked ELF, its needed libraries, SDK-stub providers and a hardware
+evidence ledger. It fails banned imports and leaves every unproven entry
+labelled `EXPORTED ONLY`.
 
 ## Blocker post-mortems
 
@@ -114,7 +133,7 @@ recognizes the pattern instead of re-deriving it.
 (what looked plausible and was wrong) · *Actual cause* · *Fix* · *General rule*
 (what to check first next time) · *Reference* (project, PR, run id).
 
-### strcasestr from libSceLibcInternal is unusable (Xash3D, 2026-09-07)
+### strcasestr via libScePosixForWebKit is unusable (Xash3D, 2026-09-07)
 
 - **Symptom:** deterministic `SIGSEGV` while loading `gfx/palette.lmp`,
   `pc=0x7eeffa2d0` (a fixed system address), `rax==pc`, `addr=0`, `rsp=0`. Read
@@ -126,12 +145,26 @@ recognizes the pattern instead of re-deriving it.
   proven correct.
 - **Actual cause:** `Image_LoadLMP` calls `Q_stristr(name,"palette.lmp")`, which
   the build mapped to `strcasestr` via `-DHAVE_STRCASESTR=1`. That import
-  resolved to an unusable placeholder in `libSceLibcInternal`; the indirect call
-  jumped to it (hence the constant `rax==pc` at a fixed system address). It was
+  was routed by the SDK stub to `libScePosixForWebKit.sprx`; its runtime target
+  was unusable and the indirect call jumped to it (hence the constant `rax==pc`
+  at a fixed system address). It was
   the first `Q_stristr` on the file-load path, so it presented as a gfx bug.
 - **Fix:** `HAVE_STRCASESTR=0` → Xash's portable `Q_stristr` from `crtlib`.
-  Verify: `llvm-readelf --dyn-syms <elf> | grep -i strcasestr` returns empty.
+  The accepted client fSELF
+  `b622cec5561f1cfb49731e6cad9b58cad49480afd970ee8fe9e6e858952666dc`
+  (linked ELF
+  `f4287a6f817ecdab19a1c8a60433cf3c6f33324e767a51b32aa543e8bb311c11`)
+  loaded and expanded the palette, returned from `Image_LoadLMP`, and loaded
+  the Half-Life DLL in run
+  `20260907T154452596Z_PPSA99996_xash3d-engine_0xb663524c9f61`.
+  `llvm-readelf --dyn-syms <elf> | grep -i strcasestr` is empty; the build now
+  rejects any ELF that reintroduces the import. A later pre-flight ELF
+  `f40d7c2b3cad0f56e96ef974785cbc53b4c6512bf3dd05b871ef985ed4aec7a1`
+  independently repeated the empty-symbol check while directly importing and
+  passing the other four optional string helpers on hardware.
 - **General rule:** Principle 1 — an exported system symbol is not a working
   one; prefer the in-tree portable impl for non-standard helpers, and check the
   imported-symbol class (Principle 2, row 1) before app-level hypotheses.
-- **Reference:** `projects/ps5-xash3d` (Phase 5 gate 2, `exp/engine-boot`).
+- **Reference:** `projects/ps5-xash3d` (Phase 5 gate 2, `exp/engine-boot`),
+  smoke run `20260907T162442485Z_PPSA99996_xash3d-engine_0xb88fc0cf77a3`,
+  fSELF `3aa7835949b1dd0f98de9fc8d6a9dec36fc16c68460617304b20eabb7cb5ce9f`.
