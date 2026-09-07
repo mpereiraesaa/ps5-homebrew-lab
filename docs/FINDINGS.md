@@ -522,6 +522,19 @@ foundation:
   reescritos; `tools/deploy_title_ftp.py` verifica `eboot.bin` contra el ELF
   enlazado por prefijo y el resto de archivos byte a byte.
 
+Contraste con las limitaciones publicadas por BlackBear para su port de
+CPython (`blackbearreloaded/ps5-python`, `docs/ps5-limitations.md`): coinciden
+en que la duplicación de descriptores no existe (allí `dup`/`dup2` devuelven
+`ENOTSUP`; aquí `dup2` sobre 0-2 dio `EPERM` en FW 12.02 con ShadowMount), en
+que `getaddrinfo` del SDK no sirve para IPv6 y en que no hay `dlopen`
+arbitrario de `.so`/`.sprx`. Añaden tres límites que el gate no ejercitó y que
+el port debe respetar: `execve` no lanza ELFs del sistema de archivos, así que
+`Sys_NewInstance` del engine (cambio de `-game` por `execv`) nunca funcionará y
+el cambio de juego debe ser en proceso como en Vita; `mmap` respaldado por
+archivo devuelve `ENOTSUP`, y no hay semáforos POSIX con nombre. El engine, el
+filesystem y el servidor no usan ninguno de los tres: `mmap` anónimo, `read`/
+`write`, y mutex/condvar de pthread.
+
 Todo vive en `ps5-xash3d`, rama `exp/engine-boot` (PR #3):
 `xash/platform_ps5/{boot,sys,fs,mem}_ps5.c`, `xash/build_engine.sh` y
 `docs/ENGINE_BOOT_PHASE5.md`. Las fuentes del engine no se tocan.
