@@ -20,6 +20,11 @@ fusionó mediante `mpereiraesaa/ps5-agc-gears#9` como `cbff264`; ambos commits
 son ya historia de `ps5-xash3d`, fijado por el submódulo canónico. Los antiguos
 Stages A–I y `PPSA99998` están archivados bajo `legacy/`.
 
+La Fase 4 ya tiene cinco gates de renderer cerrados en hardware: catálogo y
+binding nativo, matriz blend/depth/cull/fog/lightmap, viewport/scissor, ruta 2D,
+lightstyles/luces dinámicas y sprites/partículas transitorios. El próximo gate
+es studio models con skinning CPU, texturas propias, chrome y modo aditivo.
+
 Identidades instaladas: Xash3D usa `PPSA99996` y la demo Gears usa
 `PPSA99997`, cada una con helpers exactos independientes. El host histórico
 `PPSA99998` fue desinstalado; no queda en las rutas de aplicación/montaje ni en

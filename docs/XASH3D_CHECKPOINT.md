@@ -10,7 +10,7 @@ Reconciled: 2026-09-07. Hardware boundary: one PS5 on firmware 12.02.
 | 1 — BSP viewer with noclip | Complete | `c1a0`, 3,611 draws, 164 base textures plus lightmap, physical DualSense movement and a clean 60,000-frame textured gate. |
 | 2 — Resource foundation | Complete | Fence-retired pool, two-slot transient ring, V#/T#/S#, per-frame constants, two pipeline permutations, cache contract and a clean 60,000-frame gate. |
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
-| 4 — GoldSrc render states | In progress, gates 1–3 closed | Native binding, the complete blend/depth/cull/fog/lightmap matrix, viewport/scissor restoration and orthographic blended 2D are hardware-proven; lighting, sprites/particles, studio/brush entities and culling remain. |
+| 4 — GoldSrc render states | In progress, gates 1–5 closed | Native binding, the complete state matrix, viewport/scissor, orthographic 2D, BSP lighting and transient sprites/particles are hardware-proven; studio models, brush entities and culling remain. |
 | 5 — Platform layer | Sized, later/parallel | ScePad, AudioOut, filesystem, direct-memory engine allocator, time/threads and three measured libc shims. |
 | 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
@@ -165,7 +165,29 @@ and `197c0086ac8e72e91ff01465c513a029d95c39e690e2d611231a35c12cd10060`.
 Chiaki reused the registered entry through the isolated CLI helper; no pairing,
 client window or focus assumption was involved. Exact PID/title closure left
 no BigApp, all services healthy and `PPSA99998` absent. The next ordered gate
-is transient sprites plus particles.
+was transient sprites plus particles.
+
+Run `20260906T235831459Z_PPSA99996_ps5-xash3d_0x82bf1cd8fb89` closed that
+fifth Phase 4 gate. A procedural 64×32 RGBA8 atlas, one camera-facing sprite,
+24 alpha smoke particles and 48 additive sparks were rebuilt from the current
+framebuffer slot of the existing transient ring. Four 600-frame modes issued
+0/1/2/3 draws and 0/6/432/438 indices, respectively. The 10,000-frame FW 12.02
+run captured all four modes on both slots after fence zero and exact VideoOut
+retirement; every feature/control and combined/isolated comparison was
+distinct. It kept guards intact, reclaimed six allocations and ended with zero
+renderer errors plus a 284-record gap-free BYE.
+
+Its ELF/fSELF/bundle/transcript/manifest hashes are
+`b88df7b004495d828db7a594d1579a56fe4925578d384bef01b95b8ae5d63778`,
+`33e804f669a7acdddaf8a38a6a3f51ee6b0ae2d946bd0fc97a347596d33dcf2a`,
+`0e6396cf2dbec287c4e2bc28f90a90e8f5cb26b98f43ebcd539dba7d9c171105`,
+`e6d77a34f5276f59c12ac987f67a7720394b88c2788ee06e72f9f6ec8b9d4a05`
+and `6df527c58ea91bd060f3c570eda910d383b40a2018b5cb17751d128256a35899`.
+Three accepted CLI-stream captures visibly isolate sprite, particles and their
+combined result. Chiaki and the title were closed by exact PID/identity; no
+BigApp remained, all services were healthy and `PPSA99998` stayed absent. The
+next ordered gate is animated studio models with CPU skinning, per-model
+textures, chrome and additive modes.
 
 ## Parallel work that is now de-risked
 

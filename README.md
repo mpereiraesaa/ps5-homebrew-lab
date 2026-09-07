@@ -14,7 +14,9 @@ mipmaps con filtrado trilineal/anisotrópico, alpha-test y cielo, con noclip
 físico por DualSense y dos frames en vuelo. Las Fases 0–3 del plan pasaron
 soaks de 60.000 frames en hardware con fences GPU, tokens VideoOut y guardas
 exactos, cero errores del renderer y telemetría TCP estructurada. La Fase 4,
-estados de render GoldSrc, es la siguiente.
+estados de render GoldSrc, está en curso: sus pipelines, matriz completa de
+estados, viewport/scissor, ruta 2D, iluminación BSP y sprites/partículas ya
+pasaron gates de 10.000 frames. Studio models es el siguiente gate ordenado.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico

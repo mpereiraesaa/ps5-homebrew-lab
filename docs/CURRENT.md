@@ -49,7 +49,10 @@ blend/depth/cull/fog/lightmap matrix. Its orthographic blended 2D path and real
 BSP lighting path are hardware-proven too: HUD/console/menu/font geometry
 streams through the fence-retired ring, while original lightstyle planes and a
 face-local dynamic light update a bounded lightmap-atlas patch through the
-Phase 3 uploader. The next gate is transient sprites plus particles. See
+Phase 3 uploader. Camera-facing sprites and alpha/additive particles now stream
+through that same per-slot ring and passed a four-mode, eight-readback,
+10,000-frame gate. The next gate is animated studio models with CPU skinning,
+per-model textures, chrome and additive modes. See
 `XASH3D_CHECKPOINT.md` for the evidence boundary and executable order.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
