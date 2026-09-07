@@ -57,8 +57,8 @@ draw-AABB frustum culling reduces submitted world work. Every ordered gate
 passed independently. The complete water/glass/effects/Studio/HUD composition
 then passed a 60,000-frame FW 12.02 soak with two retired slots, exact
 ownership, intact guards, a gap-free BYE and zero errors. Phase 4 is complete.
-Phase 5's engine-bootstrap, filesystem, ScePad, SceAudioOut and direct-memory
-checkpoints passed on 2026-09-07.
+Phase 5's engine-bootstrap, filesystem, ScePad, SceAudioOut, direct-memory and
+thread/time checkpoints passed on 2026-09-07 UTC (2026-09-08 local).
 The Xash3D FWGS engine boots on FW 12.02, spawns `c1a0` with every entity class
 and quits cleanly. The accepted full-tree run deployed 4,741 files
 (555,437,162 bytes), served a 4,823-entry index, read the 12,565-byte
@@ -101,10 +101,17 @@ objects and ended with zero live bytes. Guards, allocation failures, stale
 tokens and foreign-owner errors all remained zero; reserve/allocate/map and
 unmap/release each occurred exactly once with success.
 
-The remaining Phase 5 gates are, in order: pthreads, monotonic time and
-measured sleep, which is now the next gate; GPU timestamps plus VideoOut flip
-latency;
-and project-owned shims for `__assert`, identity without `getpwuid`, and
+The thread/time gate is closed in merged Xash3D PR #8 (`ff0fd62`). Accepted
+run `20260907T220548886Z_PPSA99996_xash3d-engine_0xcb2ce47a2f65` created two
+distinct workers with exact create/join/detach `2/1/1`, completed 32,768
+mutex-protected increments, observed 8,191 advances across 8,192 monotonic
+reads with no regression, and passed 128 `nanosleep`/`usleep` measurements at
+1/2/5/10 ms with zero errors or early wakes. It then loaded `c1a0`, retained
+the exact direct-memory teardown and closed with a gap-free BYE.
+
+The remaining Phase 5 gates are, in order: GPU end-of-pipe timestamps plus
+VideoOut flip latency, which is now the next gate; project-owned shims for
+`__assert`, identity without `getpwuid`, and
 logging without `dladdr`. Every gate requires host tests, an incremental FW
 12.02 run, structured telemetry, exact ownership/teardown, zero errors and
 visual/audio/input evidence where applicable. Client/menu integration,
@@ -119,11 +126,11 @@ installed: its homebrew, mount, application and metadata paths are absent and
 the live application database contains no matching row.
 
 The engine symbol probe is also complete, but an exported provider is not
-treated as a hardware pass. The direct-memory gate's ELF declares 170 dynamic
-imports with none banned, and the evidence ledger holds 38 hardware-pass
-entries (including the five AudioOut and five direct-memory symbols), 3
-hardware-fail/guarded (`dup`, `dup2`, `execv`) and 7 banned: `strcasestr` plus
-the six outside this gate (AudioOut2, Audio3d, NGS2, AJM, AudioIn, Audiodec),
+treated as a hardware pass. The thread/time gate's ELF declares 171 dynamic
+imports with none banned, and its artifact-specific ledger holds 35
+hardware-pass entries, 3 hardware-fail/guarded (`dup`, `dup2`, `execv`) and
+133 exported-only entries; the global banned set is `strcasestr` plus the six
+outside this gate (AudioOut2, Audio3d, NGS2, AJM, AudioIn, Audiodec),
 which the link now rejects. The four enabled string helpers (`strcasecmp`,
 `strnlen`, `strlcpy`, `strlcat`) passed a focused FW 12.02 smoke run. The
 remaining project-owned gaps are `__assert`, `getpwuid` and `dladdr`. Raw
