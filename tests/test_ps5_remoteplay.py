@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import importlib.util
 import stat
+import subprocess
 import tempfile
 from pathlib import Path
 from unittest import mock
@@ -55,6 +56,25 @@ def main() -> int:
             Path("/tmp/demo.mp4"), 30, "4242", ":0", seconds=12.5
         )
         assert bounded[bounded.index("-t") + 1] == "12.5"
+    graceful = mock.Mock()
+    graceful.poll.return_value = None
+    graceful.stdin = mock.Mock()
+    MODULE.finalize_recording_process(graceful)
+    graceful.stdin.write.assert_called_once_with(b"q\n")
+    graceful.send_signal.assert_not_called()
+    graceful.kill.assert_not_called()
+    graceful.wait.assert_called_once_with(timeout=10.0)
+    fallback = mock.Mock()
+    fallback.poll.return_value = None
+    fallback.stdin = mock.Mock()
+    fallback.wait.side_effect = [
+        subprocess.TimeoutExpired("ffmpeg", 10.0),
+        subprocess.TimeoutExpired("ffmpeg", 2.0),
+        0,
+    ]
+    MODULE.finalize_recording_process(fallback)
+    fallback.send_signal.assert_called_once_with(MODULE.signal.SIGINT)
+    fallback.kill.assert_called_once_with()
     assert not MODULE.is_cli_chiaki_stream_process(999_999_999)
     with mock.patch.object(
         MODULE, "chiaki_windows", return_value=[]

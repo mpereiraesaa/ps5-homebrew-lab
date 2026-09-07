@@ -618,6 +618,36 @@ def record(args: argparse.Namespace) -> None:
     print(path)
 
 
+def finalize_recording_process(
+    process: subprocess.Popen[bytes], graceful_wait: float = 10.0,
+) -> None:
+    """Finalize ffmpeg through its native command, with bounded fallbacks."""
+    if process.poll() is not None:
+        return
+    try:
+        if process.stdin is not None:
+            process.stdin.write(b"q\n")
+            process.stdin.flush()
+            process.stdin.close()
+    except (BrokenPipeError, OSError):
+        pass
+    try:
+        process.wait(timeout=graceful_wait)
+        return
+    except subprocess.TimeoutExpired:
+        pass
+    if process.poll() is None:
+        process.send_signal(signal.SIGINT)
+    try:
+        process.wait(timeout=2.0)
+        return
+    except subprocess.TimeoutExpired:
+        pass
+    if process.poll() is None:
+        process.kill()
+    process.wait(timeout=2.0)
+
+
 def record_demo(args: argparse.Namespace) -> None:
     """Record a shareable presentation until Enter, Ctrl+C or a time limit."""
     path = demo_output_path(args.output, args.name)
@@ -628,21 +658,22 @@ def record_demo(args: argparse.Namespace) -> None:
         path, args.fps, stream_window(), display,
         seconds=args.seconds, title=f"PS5 homebrew demo: {args.name}",
     )
-    process = subprocess.Popen(command)
+    # Keep ffmpeg's stdin private so both Enter and Ctrl+C can send its
+    # graceful ``q`` command.  Delivering SIGINT directly can interrupt the
+    # MP4 muxer before it writes the moov atom, leaving an unplayable file.
+    process = subprocess.Popen(command, stdin=subprocess.PIPE)
     print(f"Recording PS5 demo to {path}", flush=True)
+
     try:
         if args.seconds is None:
             try:
                 input("Press Enter to stop and finalize the video... ")
             except EOFError:
                 print("stdin closed; finalizing the video", file=sys.stderr)
-            if process.poll() is None:
-                process.send_signal(signal.SIGINT)
+            finalize_recording_process(process)
         process.wait()
     except KeyboardInterrupt:
-        if process.poll() is None:
-            process.send_signal(signal.SIGINT)
-        process.wait()
+        finalize_recording_process(process)
     if process.returncode not in {0, 255}:
         raise SystemExit(f"ffmpeg recording failed with status {process.returncode}")
     if not path.is_file() or path.stat().st_size == 0:
