@@ -472,3 +472,56 @@ La implementación consolidada y la evidencia pública se fusionaron mediante
 `mpereiraesaa/ps5-agc-gears#8` como commit `642d348`. Mapas, binarios, logs
 completos y capturas permanecen privados; sólo se publican contratos, conteos y
 hashes sanitizados.
+
+## Xash3D engine boot: contrato real del sandbox (2026-09-07)
+
+Gate 1 de la Fase 5 cerrado en FW 12.02 con la corrida
+`20260907T074705479Z_PPSA99996_xash3d-engine_0x9c50d46dcc2a` (archivada en
+`research/gpu/captures/runtime/`): el engine Xash3D FWGS `9aa39ad` en modo
+dedicado, con `filesystem_stdio` y el servidor de hlsdk `e277ffa` enlazados
+estáticamente, montó `valve` desde `/app0/xash3d`, generó `c1a0` con las 251
+clases de entidad resueltas, simuló 90 s y salió por su propio `quit` con
+`XASH_EXIT result=0` y BYE sin gaps. Diecinueve lanzamientos separaron los
+hechos siguientes, todos medidos desde el título y ninguno documentado por la
+foundation:
+
+- Los descriptores 0, 1 y 2 arrancan cerrados y `dup2` sobre ellos devuelve
+  `EPERM`: la captura de stdio de `ps5log` no puede funcionar en un título. La
+  consola del engine llega por un shim de `write()` que reensambla líneas y
+  quita escapes ANSI; sin eso un `\033[0m` pegado al inicio de la línea
+  siguiente convirtió un registro estructurado en RAW y produjo un gap.
+- `getcwd()` de `libSceLibcInternal` hace `SIGSEGV` dentro de la propia
+  librería. `chdir()` devuelve `EPERM` para cualquier ruta, `/app0` incluido, y
+  `access()` también sobre `/download0` aunque `open`/`write` funcionan allí.
+  `filesystem_stdio` direcciona su raíz como `./`, así que el backend mantiene
+  un cwd virtual y resuelve rutas relativas antes de llamar a `sceKernelOpen`,
+  `sceKernelStat`, `sceKernelMkdir`, `sceKernelUnlink`, `sceKernelRename`.
+- `opendir()` de libc devuelve `EPERM` en todas partes; `sceKernelGetdents`
+  lista `/download0` pero devuelve `EINVAL` sobre la imagen `/app0` (nullfs de
+  ShadowMount). Como el motor descubre juegos, WADs y nombres por enumeración,
+  el build escribe `xash3d/.dirindex` y el backend sirve la imagen desde él.
+- `/download0` existe y es escribible con `downloadDataSize` 256; `/temp0` no
+  existe (`ENOENT`). La raíz del engine vive en `/download0/xash3d` y la imagen
+  es `-rodir`.
+- El heap de libc admite 8 MiB y falla a 16 MiB; la reserva de 21,25 MiB de
+  entidades del servidor no cabía. `lld --wrap` de `malloc/free/realloc/calloc`
+  envía las peticiones de 256 KiB o más a `mmap` anónimo (pico 32 MiB en la
+  corrida). `sceLibcHeapSize` no existe en los stubs del SDK y el conversor
+  nativo no publica exports, así que no hay forma de agrandar ese heap.
+- `ioctl(FIONBIO)` y `fcntl(F_SETFL)` devuelven `EPERM`/`EACCES` en el socket
+  UDP del servidor, que quedaba bloqueado en `recvfrom` y congelaba el bucle
+  principal. El shim de `recvfrom` hace `poll` con timeout cero. `socket`,
+  `bind`, `sendto`, `poll` y `pthread_create` funcionan.
+- `getaddrinfo`/`gethostname` importarían `libScePosixForWebKit` y una llamada
+  cayó con dirección NULL dentro de una librería del sistema; el backend
+  resuelve direcciones numéricas localmente.
+- El lld del SDK no sirve para `ld -r`: emite una sección de relocalización por
+  grupo COMDAT y el enlace final la rechaza; el paso relocable usa el `ld.lld`
+  del host y `llvm-objcopy -G lib_<módulo>_exports`.
+- `ftpsrv` devuelve los fSELF como ELF descifrado con los últimos 512 bytes
+  reescritos; `tools/deploy_title_ftp.py` verifica `eboot.bin` contra el ELF
+  enlazado por prefijo y el resto de archivos byte a byte.
+
+Todo vive en `ps5-xash3d`, rama `exp/engine-boot` (PR #3):
+`xash/platform_ps5/{boot,sys,fs,mem}_ps5.c`, `xash/build_engine.sh` y
+`docs/ENGINE_BOOT_PHASE5.md`. Las fuentes del engine no se tocan.

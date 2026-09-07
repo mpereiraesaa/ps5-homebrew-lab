@@ -125,7 +125,7 @@
 
 <div class="page">
 <header>
-  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-07 · rev 17</div>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-07 · rev 18</div>
   <h1>Xash3D on PS5</h1>
   <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. Phase 4 is complete: every ordered renderer gate passed independently, then the full water, glass, effects, animated Studio and HUD scene survived one clean 60,000-frame integrated ownership soak.</p>
   <div class="facts">
@@ -150,7 +150,7 @@
 
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-07</div>
-  <h2 id="checkpoint-title">GoldSrc render states are complete</h2>
+  <h2 id="checkpoint-title">The Xash3D engine boots on the console</h2>
   <p>Run <code>20260907T020656141Z</code> composed real BSP lightstyles and a dynamic light, source water and glass brush submodels, sprites, 72 particles, three CPU-skinned Studio instances and the blended HUD/console/menu/font path while world-tree PVS and frustum tests reduced 1,952 draws to 362. It completed 60,000/60,000 frames in one process with two retired readbacks, exact fences and VideoOut tokens, an exactly retired two-slot ring, intact guards, six reclaimed allocations, a 2,613-record gap-free BYE and zero renderer errors. The fail-closed validator accepted both private bundle identities; a registered-entry CLI-stream capture provides the visual complement without pairing or focus assumptions. Xash3D remains <code>PPSA99996</code>, frozen Gears remains <code>PPSA99997</code>, and obsolete <code>PPSA99998</code> remains absent.</p>
   <div class="grid">
     <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
@@ -170,7 +170,9 @@
     <div class="item"><div class="k">Visibility proof</div><div class="v">1,952 → 362 world draws · PVS + frustum</div></div>
     <div class="item"><div class="k">Final proof</div><div class="v">60k frames · 2 slots · 0 errors</div></div>
     <div class="item"><div class="k">Installed identities</div><div class="v">Xash3D 99996 · Gears 99997 · 99998 retired</div></div>
-    <div class="item"><div class="k">Next step</div><div class="v">Phase 5 platform layer</div></div>
+    <div class="item"><div class="k">Engine boot proof</div><div class="v">c1a0 spawned · 251 classes · 90 s · exit 0</div></div>
+    <div class="item"><div class="k">Sandbox contract</div><div class="v">no chdir · 8 MiB libc heap · index-listed image</div></div>
+    <div class="item"><div class="k">Next step</div><div class="v">Phase 5 gates 2–5</div></div>
   </div>
 </section>
 
@@ -317,17 +319,16 @@
   <div class="body">
     <div class="head">
       <h2>Platform layer</h2>
-      <div class="meta"><span class="pill active">next</span><span>≈ 1 week</span><span>Everything the engine needs that is not drawing.</span></div>
+      <div class="meta"><span class="pill active">in progress</span><span>≈ 1 week</span><span>Everything the engine needs that is not drawing. Gate 1 passed 2026-09-07.</span></div>
     </div>
-    <div class="visible"><b>Visible result.</b> Frametime overlay with GPU timestamps; sound plays; the stick layout matches the HL1 controller scheme.</div>
+    <div class="visible"><b>Visible result.</b> The real engine runs on the console: its console reaches the laboratory, <code>c1a0</code> spawns server-side, and later the frametime overlay, sound and the HL1 stick layout.</div>
     <ol class="steps">
-      <li>Input: ScePad mapping for movement, look, jump, crouch, use, fire. Legacy probe already validated the API.</li>
+      <li><b>Done.</b> Engine boot in dedicated mode without waf: <code>filesystem_stdio</code> and the hlsdk server as statically linked modules with generated export tables (all 251 entity classes), a PS5 backend that supplies clock, signals, the three libc shims and a bounded <code>quit</code>. Measured on the way: descriptors 0–2 start closed and refuse <code>dup2</code>; <code>chdir</code>/<code>access</code> return <code>EPERM</code>; libc <code>getcwd</code> faults; libc <code>opendir</code> fails and <code>getdents</code> is <code>EINVAL</code> on <code>/app0</code>; the libc heap stops at 8 MiB; <code>FIONBIO</code> is refused on UDP. The backend answers with a virtual working directory over <code>sceKernel*</code>, a build-time directory index of the image, an <code>mmap</code> router behind <code>--wrap=malloc</code> and a polled <code>recvfrom</code>.<span class="gate"><b>Gate:</b> run <code>20260907T074705479Z</code>: <code>Spawn Server: c1a0</code>, 90 s, <code>XASH_EXIT result=0</code>, gap-free BYE, validator green.</span></li>
+      <li>Filesystem as the first application-owned PRX: <code>filesystem_stdio</code> loaded through <code>prx_loader.h</code> instead of the static table. Game data stays under <code>/app0/xash3d</code> with its index; writable state lives in <code>/download0/xash3d</code>.</li>
+      <li>Input: ScePad mapping for movement, look, jump, crouch, use, fire, driven from the engine console rather than a probe.</li>
       <li>Audio: SceAudioOut backend with a ring buffer, sized from the legacy probe.</li>
-      <li>Filesystem: game data inside the title folder under <code>/app0</code>, deployed by the same tooling as <code>dev.conf</code>. Directory listing, large reads, case handling.</li>
-      <li>Memory: route the engine zone allocator and all GPU resources through direct memory. The anonymous heap ceiling is about 432 MiB; direct memory is verified to 3 GiB.</li>
-      <li>Threads and time: pthreads, monotonic clock, sleep granularity measured.</li>
+      <li>Memory: replace the interim <code>mmap</code> router with the direct-memory engine allocator and route GPU resources through it. Anonymous memory is verified to about 432 MiB; direct memory to 3 GiB; the libc heap is 8 MiB and cannot be grown from a title.</li>
       <li>Frametime instrumentation: GPU timestamps via end-of-pipe writes, present latency via flip status, replacing the deadline counter that reads frames minus one under pipelining.</li>
-      <li>Close the measured three-symbol libc gap: project-owned <code>__assert</code>, fixed/SceUserService identity instead of <code>getpwuid</code>, and logging without <code>dladdr</code>. C++ runtime needs no new provider.</li>
     </ol>
   </div>
 </section>
@@ -404,7 +405,7 @@
   </div>
 </section>
 
-<footer>Revision 17 closes Phase 4: transformed brush entities, real world PVS/frustum visibility and the complete water/glass/effects/Studio/HUD composition passed their ordered gates and a final 60,000-frame FW 12.02 ownership soak with zero errors. Revision 16 closed animated Studio models. Revision 15 closed transient sprites and particles. Revision 14 closed BSP lightstyles and dynamic lights. Revision 13 closed the orthographic blended 2D gate. Revision 12 closed the complete blend/depth/cull/fog/lightmap matrix. Revision 11 recorded real opaque/masked binding and viewport/scissor restoration. Revision 10 closed the identity split: Xash3D is <code>PPSA99996</code>, Gears remains <code>PPSA99997</code> and historical <code>PPSA99998</code> is uninstalled. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
+<footer>Revision 18 records Phase 5 gate 1: the Xash3D FWGS engine boots on FW 12.02 in dedicated mode, spawns c1a0 with all entity classes and quits cleanly after 90 s, and the sandbox contract it measured is folded into the remaining Phase 5 steps. Revision 17 closes Phase 4: transformed brush entities, real world PVS/frustum visibility and the complete water/glass/effects/Studio/HUD composition passed their ordered gates and a final 60,000-frame FW 12.02 ownership soak with zero errors. Revision 16 closed animated Studio models. Revision 15 closed transient sprites and particles. Revision 14 closed BSP lightstyles and dynamic lights. Revision 13 closed the orthographic blended 2D gate. Revision 12 closed the complete blend/depth/cull/fog/lightmap matrix. Revision 11 recorded real opaque/masked binding and viewport/scissor restoration. Revision 10 closed the identity split: Xash3D is <code>PPSA99996</code>, Gears remains <code>PPSA99997</code> and historical <code>PPSA99998</code> is uninstalled. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
 </div>
 </body>
 </html>

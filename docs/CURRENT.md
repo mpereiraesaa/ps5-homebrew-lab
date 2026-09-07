@@ -56,9 +56,12 @@ independent transforms and source render modes; and world-tree PVS plus
 draw-AABB frustum culling reduces submitted world work. Every ordered gate
 passed independently. The complete water/glass/effects/Studio/HUD composition
 then passed a 60,000-frame FW 12.02 soak with two retired slots, exact
-ownership, intact guards, a gap-free BYE and zero errors. Phase 4 is complete;
-the platform layer is next. See
-`XASH3D_CHECKPOINT.md` for the evidence boundary and executable order.
+ownership, intact guards, a gap-free BYE and zero errors. Phase 4 is complete.
+Phase 5 gate 1 passed on 2026-09-07: the Xash3D FWGS engine itself boots on
+the console in dedicated mode from `ps5-xash3d` branch `exp/engine-boot`
+(PR #3), spawns `c1a0` with every entity class and quits cleanly after a
+bounded 90 s run. See `XASH3D_CHECKPOINT.md` for the evidence boundary and
+`FINDINGS.md` for the sandbox contract that run measured.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains

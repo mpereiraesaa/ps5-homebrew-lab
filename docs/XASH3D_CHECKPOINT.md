@@ -11,7 +11,7 @@ Reconciled: 2026-09-07. Hardware boundary: one PS5 on firmware 12.02.
 | 2 — Resource foundation | Complete | Fence-retired pool, two-slot transient ring, V#/T#/S#, per-frame constants, two pipeline permutations, cache contract and a clean 60,000-frame gate. |
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
-| 5 — Platform layer | Sized, later/parallel | ScePad, AudioOut, filesystem, direct-memory engine allocator, time/threads and three measured libc shims. |
+| 5 — Platform layer | Gate 1 passed | The Xash3D FWGS engine boots on the console in dedicated mode with static `filesystem_stdio` and hlsdk server, spawns `c1a0` with all 251 entity classes, simulates 90 s and quits cleanly; ScePad, AudioOut and the direct-memory allocator follow. |
 | 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
@@ -259,6 +259,30 @@ The reproducible symbol probes show that libc/C++ is not the port blocker:
 Therefore Phase 5 can prototype the three tiny C shims and a minimal
 `platform/ps5` while Phase 3/4 mature, but it must not bypass the renderer gates
 or start full engine integration prematurely.
+
+## Phase 5 gate 1: engine boot (2026-09-07)
+
+Run `20260907T074705479Z_PPSA99996_xash3d-engine_0x9c50d46dcc2a` on FW 12.02,
+archived under `research/gpu/captures/runtime/`, validated by
+`ps5-xash3d/tools/validate_engine_boot_evidence.py`: engine `9aa39ad` and
+hlsdk `e277ffa` built without waf (`ps5-xash3d` PR #3, branch
+`exp/engine-boot`), `filesystem_stdio` and `server` resolved from the static
+tables, `valve` mounted from `/app0/xash3d` with `/download0/xash3d` as the
+writable root, `Spawn Server: c1a0`, `0 entities inhibited`, `4 player server
+started`, 90 s of simulation, `PS5_XASH_GATE_TIMEOUT ... action=quit`,
+`XASH_EXIT result=0`, 20 structured records, 38 console lines, no gaps.
+Transcript SHA-256
+`3c3d176c9f22d61db4c2c4911c676e81db3a5b16f8139be00cc3ce9ff5f06965`; ELF/fSELF
+`fa8df6b95c328123016243322bf4f51950252d0a1ed1f743974ec8b1769fe453` /
+`7d6747d276acd57411ab5e282f6f1672c0f796d7de336e7f5090141f910ce67b`.
+
+What the sandbox actually allows is recorded in `FINDINGS.md`, "Xash3D engine
+boot: contrato real del sandbox": closed stdio descriptors, `chdir`/`access`
+refused, a faulting `getcwd`, an unlistable image, an 8 MiB libc heap and
+non-blocking sockets refused on UDP. Each has a shim or a build step in
+`xash/platform_ps5/`; the engine sources are untouched. Remaining Phase 5
+gates: `filesystem_stdio` as an application-owned PRX, ScePad, AudioOut, the
+direct-memory allocator and frametime instrumentation.
 
 ## Remote Play operating contract
 
