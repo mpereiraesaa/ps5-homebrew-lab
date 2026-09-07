@@ -32,6 +32,7 @@ READY_RE = re.compile(
     r"READY \| PIN: (?P<pin>[0-9]{8}) \| "
     r"Account ID: (?P<account>[A-Za-z0-9+/]+=*) \| Timeout: (?P<timeout>[0-9]+)s"
 )
+STREAM_RESOLUTION = "1080p"
 
 
 def require_program(name: str) -> str:
@@ -277,6 +278,44 @@ def ended_cli_stream_pid() -> int | None:
     return pid
 
 
+def set_ini_value(
+    lines: list[str], section_name: str, key: str, value: str
+) -> list[str]:
+    """Set one QSettings INI value without disturbing unrelated settings."""
+    output: list[str] = []
+    in_section = False
+    saw_section = False
+    wrote_value = False
+    newline = "\r\n" if any(line.endswith("\r\n") for line in lines) else "\n"
+    for line in lines:
+        stripped = line.rstrip("\r\n")
+        if stripped.startswith("[") and stripped.endswith("]"):
+            if in_section and not wrote_value:
+                output.append(f"{key}={value}{newline}")
+                wrote_value = True
+            in_section = stripped[1:-1] == section_name
+            saw_section = saw_section or in_section
+            output.append(line)
+            continue
+        if in_section and stripped.partition("=")[0] == key:
+            if not wrote_value:
+                output.append(f"{key}={value}{newline}")
+                wrote_value = True
+        else:
+            output.append(line)
+    if in_section and not wrote_value:
+        output.append(f"{key}={value}{newline}")
+    elif not saw_section:
+        if output and not output[-1].endswith(("\n", "\r")):
+            output[-1] += newline
+        output.extend([
+            newline if output else "",
+            f"[{section_name}]{newline}",
+            f"{key}={value}{newline}",
+        ])
+    return output
+
+
 def isolate_registered_host_config(
     source: Path, nickname: str, destination: Path
 ) -> None:
@@ -357,7 +396,8 @@ def isolate_registered_host_config(
     if not saw_size:
         raise SystemExit("Chiaki registered_hosts array has no size entry")
 
-    destination.parent.mkdir(mode=0o700, parents=True)
+    output = set_ini_value(output, "settings", "resolution", STREAM_RESOLUTION)
+    destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     destination.write_text("".join(output), encoding="utf-8")
     destination.chmod(0o600)
 

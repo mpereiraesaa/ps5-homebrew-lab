@@ -35,6 +35,7 @@ def main() -> int:
     )
     assert MODULE.LINKDEV_COMMIT == "b658657190873f1ae194b732f8dcfdb02543c4aa"
     assert MODULE.DEFAULT_CAPTURE_DIR.parts[-2:] == ("captures", "remoteplay")
+    assert MODULE.STREAM_RESOLUTION == "1080p"
     with tempfile.TemporaryDirectory() as directory:
         with mock.patch.object(MODULE, "DEFAULT_CAPTURE_DIR", Path(directory)):
             demo = MODULE.demo_output_path(None, "Xash3D: Phase 5!")
@@ -106,8 +107,19 @@ def main() -> int:
         assert "first" not in isolated
         assert "2\\" not in isolated
         assert "size=1" in isolated
-        assert "resolution=720p" in isolated
+        assert "resolution=720p" not in isolated
+        assert isolated.count("resolution=1080p") == 1
         assert stat.S_IMODE(destination.stat().st_mode) == 0o600
+    no_settings = sample.replace("\n[settings]\nresolution=720p\n", "\n")
+    with tempfile.TemporaryDirectory() as directory:
+        source = Path(directory) / "source.conf"
+        destination = Path(directory) / "config" / "Chiaki" / "Chiaki.conf"
+        source.write_text(no_settings, encoding="utf-8")
+        MODULE.isolate_registered_host_config(
+            source, "PS5-054", destination
+        )
+        isolated = destination.read_text(encoding="utf-8")
+        assert "[settings]\nresolution=1080p\n" in isolated
     print("Remote Play host contracts passed")
     return 0
 

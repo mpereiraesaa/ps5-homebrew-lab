@@ -22,6 +22,8 @@
   selected registered console, cleans a stale CLI-owned stream when necessary,
   and never places pairing credentials on the command line. Build or pair only
   for initial setup or recovery; see `docs/REMOTEPLAY.md`.
+- The isolated stream profile requests 1080p. Keep Chiaki's 60 FPS and automatic
+  bitrate defaults unless a measured compatibility problem requires a change.
 - Remote Play captures belong under the ignored
   `research/gpu/captures/remoteplay/` tree unless the owner explicitly
   selects and audits one for publication.

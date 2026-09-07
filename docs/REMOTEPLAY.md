@@ -57,6 +57,12 @@ the requested, already registered PS5 entry. The real configuration is never
 modified, no credential is printed or placed on the command line, and the
 temporary copy is removed when the confined stream process exits.
 
+The temporary profile always sets `resolution=1080p`. Chiaki's independent
+defaults remain in effect for 60 FPS and automatic bitrate selection, so the
+normal command needs no quality arguments and the real Chiaki configuration is
+still untouched. Video capture records the negotiated stream window directly;
+it does not upscale a 720p source after the fact.
+
 The normal workflow never handles Chiaki's client UI. If Remote Play ends—for
 example, because the operator takes the physical DualSense—the CLI-owned stream
 process may remain behind a `Session has quit` dialog. Clean that exact process
