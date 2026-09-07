@@ -57,7 +57,8 @@ draw-AABB frustum culling reduces submitted world work. Every ordered gate
 passed independently. The complete water/glass/effects/Studio/HUD composition
 then passed a 60,000-frame FW 12.02 soak with two retired slots, exact
 ownership, intact guards, a gap-free BYE and zero errors. Phase 4 is complete.
-Phase 5's engine-bootstrap, filesystem and ScePad checkpoints passed on 2026-09-07.
+Phase 5's engine-bootstrap, filesystem, ScePad and SceAudioOut checkpoints
+passed on 2026-09-07.
 The Xash3D FWGS engine boots on FW 12.02, spawns `c1a0` with every entity class
 and quits cleanly. The accepted full-tree run deployed 4,741 files
 (555,437,162 bytes), served a 4,823-entry index, read the 12,565-byte
@@ -71,9 +72,26 @@ batches of up to 62, proved movement/look and both edges of jump, crouch, use
 and fire, reported zero read errors and closed Pad/UserService exactly in run
 `20260907T181827569Z_PPSA99996_xash3d-engine_0xbec4d1cc932e`.
 
-The remaining Phase 5 gates are, in order: SceAudioOut with a ring buffer and
-underrun accounting; the engine allocator and every GPU resource on direct
-memory; pthreads,
+SceAudioOut then closed as well. A client-independent C core owns a
+producer/consumer PCM ring, a continuous 147/160 resampler and a dedicated
+worker that alone holds the handle and calls `Output`, the NULL drain and
+`Close`, never holding the mutex across the blocking call; `s_ps5.c` binds it to
+Xash3D's own DMA ring. The engine keeps mixing at `SOUND_DMA_SPEED` because
+`s_main.c`, `s_stream.c` and `s_load.c` read that macro directly, so the
+conversion to the port's 48 kHz lives in the PS5 layer instead of in the
+submodule. Accepted run `20260907T194413175Z_PPSA99996_xash3d-engine_0xc372db81ccc6` opened the main port for the system user `0xff`
+and carried 66,150 source frames as 72,192 in 282 whole 256-frame blocks
+(71,999 resampled plus 193 terminal padding), with the consumed PCM hash equal
+to the independently generated pattern hash, zero underruns, zero `Output`
+errors and exactly one drain/close/join. The operator confirmed the low tone,
+the gap and the higher tone by ear, and a repeat run reproduced every counter
+bit for bit. Two facts measured here that the FW 6.02 reference does not
+document: `sceAudioOutOutput` returns the number of frames it accepted (256 at
+this grain), including the NULL drain, so success is non-negative rather than
+zero; and the system user `0xff` is accepted for the main port.
+
+The remaining Phase 5 gates are, in order: the engine allocator and every GPU
+resource on direct memory, which is the next gate; pthreads,
 monotonic time and measured sleep; GPU timestamps plus VideoOut flip latency;
 and project-owned shims for `__assert`, identity without `getpwuid`, and
 logging without `dladdr`. Every gate requires host tests, an incremental FW
@@ -90,9 +108,11 @@ installed: its homebrew, mount, application and metadata paths are absent and
 the live application database contains no matching row.
 
 The engine symbol probe is also complete, but an exported provider is not
-treated as a hardware pass. The current dynamic-import ledger contains 173
-symbols: 27 hardware-pass, 3 hardware-fail/guarded (`dup`, `dup2`, `execv`)
-and 143 exported-only. The four enabled string helpers (`strcasecmp`,
+treated as a hardware pass. The audio gate's ELF declares 179 dynamic imports
+with none banned, and the evidence ledger holds 33 hardware-pass entries (the
+five AudioOut symbols among them), 3 hardware-fail/guarded (`dup`, `dup2`,
+`execv`) and 7 banned: `strcasestr` plus the six outside this gate (AudioOut2,
+Audio3d, NGS2, AJM, AudioIn, Audiodec), which the link now rejects. The four enabled string helpers (`strcasecmp`,
 `strnlen`, `strlcpy`, `strlcat`) passed a focused FW 12.02 smoke run. The
 remaining project-owned gaps are `__assert`, `getpwuid` and `dladdr`. Raw
 lists, the evidence ledger and reproduction scripts live under
