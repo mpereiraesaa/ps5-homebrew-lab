@@ -11,7 +11,7 @@ Reconciled: 2026-09-08. Hardware boundary: one PS5 on firmware 12.02.
 | 2 — Resource foundation | Complete | Fence-retired pool, two-slot transient ring, V#/T#/S#, per-frame constants, two pipeline permutations, cache contract and a clean 60,000-frame gate. |
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
-| 5 — Platform layer | In progress; bootstrap + filesystem + ScePad + SceAudioOut + direct memory + threads/time closed | The engine boots, the retail tree passes, input/audio/memory have exact lifecycles, and pthread ownership, monotonic time and sleep granularity passed on FW 12.02. Remaining: frame/flip telemetry and the three project-owned libc shims. |
+| 5 — Platform layer | In progress; bootstrap + filesystem + ScePad + SceAudioOut + direct memory + threads/time + GPU/flip timing closed | The engine boots, the retail tree passes and every completed platform surface has an exact lifecycle. A 60,000-frame run correlated GPU EOP writes with fences and exact VideoOut events. Remaining: the three project-owned libc shims and final pass. |
 | 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
@@ -21,7 +21,7 @@ path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
 the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 5
-thread/time commit `ff0fd62`.
+GPU/flip timing commit `cd57ab8`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
@@ -427,11 +427,27 @@ teardown and emitted a gap-free clean BYE. ELF/fSELF SHA-256:
 transcript SHA-256
 `45a5cb16d0f1fd2123db8075626c2007e7a01948609f14a1f31fc7a01146a50b`.
 
-1. Frametime telemetry with GPU end-of-pipe timestamps and VideoOut flip
-   latency. This is the next gate.
-2. Project-owned shims for `__assert`, fixed or SceUserService-backed identity
+### GPU EOP and VideoOut timing: closed (2026-09-08 local)
+
+Xash3D PR #9, merged as `cd57ab8`, adds an optional selector-3 end-of-pipe
+timestamp before `SetFlip` while retaining the existing selector-2 ownership
+fence. Accepted run
+`20260907T225446311Z_PPSA99996_ps5-xash3d_0xcdd8ce3a668a` completed 60,000
+consecutive correlated records and GPU writes, with 59,999 strict raw-clock
+changes and zero regression, CPU-order error, sequence gap or renderer error.
+Submit-to-fence averaged 16,823,795 ns, submit-to-flip 32,754,596 ns and the
+CPU-observed fence-to-flip interval 15,930,800 ns. The raw GPU counter remains
+in its own clock domain and is not mislabeled as nanoseconds.
+
+The complete Phase 4 scene, exact fences/tokens and all guards remained valid.
+The gate ended with `gpu-flip-timing-soak-complete`; its ELF/fSELF hashes
+`bfbbd5fd89404765e0d52992df4abd1a1699d0e4df6398824748522392740ec1` /
+`fdb489280c1bac1f2489f0449bbf8f914eaf7b4cb2f8436ea11d59abaa72e798`
+were reproduced exactly after the hardware run.
+
+1. Project-owned shims for `__assert`, fixed or SceUserService-backed identity
    instead of `getpwuid`, and logging without `dladdr`.
-3. A final incremental FW 12.02 pass over every gate with host tests,
+2. A final incremental FW 12.02 pass over every gate with host tests,
    structured telemetry, immutable hashes, exact ownership/teardown, zero
    errors and visual/audio/input evidence where applicable.
 
