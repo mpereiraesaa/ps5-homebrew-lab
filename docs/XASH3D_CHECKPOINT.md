@@ -287,6 +287,15 @@ so the visible engine comes first: client-mode boot with `ref_soft` as a
 correctness harness, then `ref_agc`, then ScePad/AudioOut, then PRX and
 allocator consolidation. One agent owns the whole phase; others wait.
 
+Gate 2 (client engine boot) is in progress: the engine builds in client mode
+with `mainui`, the hlsdk client and `ref_null`/`ref_soft` as static modules and
+a headless video backend, links cleanly and boots to the filesystem scan. It is
+blocked by a deterministic hard `SIGSEGV` in a system libc/kernel routine during
+`FS_AddGameHierarchy`, triggered by the content of `gfx/` or `resource/`,
+independent of client vs dedicated mode and before any renderer load. Full
+bisection and next steps: `ps5-xash3d/docs/ENGINE_BOOT_PHASE5_GATE2.md`
+(`ps5-xash3d` branch `exp/engine-boot`).
+
 ## Remote Play operating contract
 
 Chiaki already has a valid console entry. Never pair or re-register it during a
