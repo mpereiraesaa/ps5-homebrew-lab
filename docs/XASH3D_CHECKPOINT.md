@@ -11,7 +11,7 @@ Reconciled: 2026-09-07. Hardware boundary: one PS5 on firmware 12.02.
 | 2 — Resource foundation | Complete | Fence-retired pool, two-slot transient ring, V#/T#/S#, per-frame constants, two pipeline permutations, cache contract and a clean 60,000-frame gate. |
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
-| 5 — Platform layer | In progress; bootstrap + filesystem + ScePad + SceAudioOut closed | The engine boots, the full 4,741-file retail tree passes, batched native ScePad input proves movement/look/jump/crouch/use/fire with exact teardown, and native SceAudioOut carries 1.5 s of 44.1 kHz PCM to the 48 kHz main port as 282 whole grains with a matching hash and zero underruns. Remaining: direct-memory ownership, threads/time, frame/flip telemetry and the three project-owned libc shims. |
+| 5 — Platform layer | In progress; bootstrap + filesystem + ScePad + SceAudioOut + direct memory closed | The engine boots, the retail tree passes, input and audio have exact native lifecycles, and one 128 MiB direct-memory root owns all C/C++ engine allocation plus generation-tagged representative GPU resources with exact teardown. Remaining: threads/time, frame/flip telemetry and the three project-owned libc shims. |
 | 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
@@ -390,15 +390,29 @@ that imports any of them.
 
 ## What remains to close Phase 5
 
-1. The engine allocator and every GPU resource on direct memory, with a
-   balanced allocation ledger, guards and generation-correct retirement. This
-   is the next gate.
-2. The pthread primitives the engine uses, monotonic clock and measured sleep
-   granularity on FW 12.02.
-3. Frametime telemetry with GPU timestamps and VideoOut flip latency.
-4. Project-owned shims for `__assert`, fixed or SceUserService-backed identity
+### Direct-memory checkpoint: closed (2026-09-07)
+
+Xash3D PR #7, merged as `cb7c2b3`, replaces the interim large-allocation
+router with one guarded 128 MiB fixed-VA direct-memory arena for all C and C++
+engine allocations. Its GPU ownership contract gives command, buffer, texture
+and depth allocations unique generations and moves them through active,
+retiring and reclaimed states only after exact completion proof.
+
+Accepted run `20260907T212512180Z_PPSA99996_xash3d-engine_0xc8f58f777975`
+loaded `c1a0` for 30 seconds, made 20,687 allocations and 1,091 reallocations,
+and reached a 35,632,245-byte peak. All four resource retire/reclaim pairs
+balanced; allocation, guard, stale-token and foreign-owner errors stayed zero.
+Eight process-lifetime objects totaling 22,565 bytes were explicitly accounted
+and reclaimed only after GPU ownership ended. Reserve/allocate/map and
+unmap/release each occurred exactly once with rc 0, leaving zero live bytes and
+a gap-free clean BYE.
+
+1. The pthread primitives the engine uses, monotonic clock and measured sleep
+   granularity on FW 12.02. This is the next gate.
+2. Frametime telemetry with GPU timestamps and VideoOut flip latency.
+3. Project-owned shims for `__assert`, fixed or SceUserService-backed identity
    instead of `getpwuid`, and logging without `dladdr`.
-5. A final incremental FW 12.02 pass over every gate with host tests,
+4. A final incremental FW 12.02 pass over every gate with host tests,
    structured telemetry, immutable hashes, exact ownership/teardown, zero
    errors and visual/audio/input evidence where applicable.
 
