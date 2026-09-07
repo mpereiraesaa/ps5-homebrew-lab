@@ -1,6 +1,6 @@
 # Xash3D on PS5 checkpoint
 
-Reconciled: 2026-09-07. Hardware boundary: one PS5 on firmware 12.02.
+Reconciled: 2026-09-08. Hardware boundary: one PS5 on firmware 12.02.
 
 ## Current position
 
@@ -11,7 +11,7 @@ Reconciled: 2026-09-07. Hardware boundary: one PS5 on firmware 12.02.
 | 2 — Resource foundation | Complete | Fence-retired pool, two-slot transient ring, V#/T#/S#, per-frame constants, two pipeline permutations, cache contract and a clean 60,000-frame gate. |
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
-| 5 — Platform layer | In progress; bootstrap + filesystem + ScePad + SceAudioOut + direct memory closed | The engine boots, the retail tree passes, input and audio have exact native lifecycles, and one 128 MiB direct-memory root owns all C/C++ engine allocation plus generation-tagged representative GPU resources with exact teardown. Remaining: threads/time, frame/flip telemetry and the three project-owned libc shims. |
+| 5 — Platform layer | In progress; bootstrap + filesystem + ScePad + SceAudioOut + direct memory + threads/time closed | The engine boots, the retail tree passes, input/audio/memory have exact lifecycles, and pthread ownership, monotonic time and sleep granularity passed on FW 12.02. Remaining: frame/flip telemetry and the three project-owned libc shims. |
 | 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
@@ -20,8 +20,8 @@ The Phase 1/2 implementation was merged through
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
-the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 4 commit
-`38c6a38`.
+the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 5
+thread/time commit `ff0fd62`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
@@ -388,7 +388,7 @@ Scope stayed PCM only. AJM and AAC/MP3/Opus decode, AudioOut2, Audio3d, NGS2,
 AudioIn and Chiaki capture remain out, and the link now rejects an artifact
 that imports any of them.
 
-## What remains to close Phase 5
+## Remaining Phase 5 closure
 
 ### Direct-memory checkpoint: closed (2026-09-07)
 
@@ -407,12 +407,31 @@ and reclaimed only after GPU ownership ended. Reserve/allocate/map and
 unmap/release each occurred exactly once with rc 0, leaving zero live bytes and
 a gap-free clean BYE.
 
-1. The pthread primitives the engine uses, monotonic clock and measured sleep
-   granularity on FW 12.02. This is the next gate.
-2. Frametime telemetry with GPU timestamps and VideoOut flip latency.
-3. Project-owned shims for `__assert`, fixed or SceUserService-backed identity
+### Threads and monotonic time: closed (2026-09-08 local)
+
+Xash3D PR #8, merged as `ff0fd62`, adds a host-tested core and an exact native
+gate. Accepted run
+`20260907T220548886Z_PPSA99996_xash3d-engine_0xcb2ce47a2f65` created two
+distinct workers: one joined and one detached exactly once. They completed
+32,768 mutex-protected increments with zero lifecycle or mutex errors. The
+gate recorded 8,192 `CLOCK_MONOTONIC` reads, 8,191 positive advances, an
+801 ns minimum step and no errors or regressions.
+
+Both `nanosleep` and the engine's historical `usleep` surface passed sixteen
+samples at each of 1, 2, 5 and 10 ms: 128 samples total, with zero errors and
+zero wakes earlier than the 50 microsecond tolerance. The same artifact loaded
+`c1a0`, completed the 30-second engine window, preserved exact direct-memory
+teardown and emitted a gap-free clean BYE. ELF/fSELF SHA-256:
+`3e22c9f8d686dee19f94a4780e7494ccc6e0e9312c98662b854ee4c4e7b75bbf` /
+`cd691f19664e44cd8cd6cfb9b019f5b6794f7a8410470a77ba86aec11e95bdde`;
+transcript SHA-256
+`45a5cb16d0f1fd2123db8075626c2007e7a01948609f14a1f31fc7a01146a50b`.
+
+1. Frametime telemetry with GPU end-of-pipe timestamps and VideoOut flip
+   latency. This is the next gate.
+2. Project-owned shims for `__assert`, fixed or SceUserService-backed identity
    instead of `getpwuid`, and logging without `dladdr`.
-4. A final incremental FW 12.02 pass over every gate with host tests,
+3. A final incremental FW 12.02 pass over every gate with host tests,
    structured telemetry, immutable hashes, exact ownership/teardown, zero
    errors and visual/audio/input evidence where applicable.
 
