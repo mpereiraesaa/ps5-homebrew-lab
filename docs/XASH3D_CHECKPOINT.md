@@ -11,7 +11,7 @@ Reconciled: 2026-09-07. Hardware boundary: one PS5 on firmware 12.02.
 | 2 — Resource foundation | Complete | Fence-retired pool, two-slot transient ring, V#/T#/S#, per-frame constants, two pipeline permutations, cache contract and a clean 60,000-frame gate. |
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
-| 5 — Platform layer | In progress; bootstrap + filesystem + ScePad closed | The engine boots, the full 4,741-file retail tree passes, and batched native ScePad input proves movement/look/jump/crouch/use/fire with exact teardown. Remaining: AudioOut, direct-memory ownership, threads/time, frame/flip telemetry and the three project-owned libc shims. |
+| 5 — Platform layer | In progress; bootstrap + filesystem + ScePad + SceAudioOut closed | The engine boots, the full 4,741-file retail tree passes, batched native ScePad input proves movement/look/jump/crouch/use/fire with exact teardown, and native SceAudioOut carries 1.5 s of 44.1 kHz PCM to the 48 kHz main port as 282 whole grains with a matching hash and zero underruns. Remaining: direct-memory ownership, threads/time, frame/flip telemetry and the three project-owned libc shims. |
 | 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
@@ -344,18 +344,61 @@ complete press/release evidence (1/1, 2/2, 2/2, 1/1), with zero read errors,
 transcript SHA-256
 `6dd2db62d23b2aa33f0387bacf2c4b534e4e64317562c4489b5bb3a2b21d20da`.
 
+## Phase 5 SceAudioOut checkpoint: closed (2026-09-07)
+
+Xash3D PR #5, merged as `41f4912`, adds the native `libSceAudioOut` PCM
+backend. A client-independent C core owns a producer/consumer ring, a
+continuous 147/160 resampler and a dedicated worker; the worker alone holds the
+handle and calls `Output`, the NULL drain and `Close`, and the mutex is never
+held across the blocking `Output`. `s_ps5.c` binds that core to Xash3D's own
+DMA ring.
+
+The rate mismatch mattered: Xash3D mixes at `SOUND_DMA_SPEED` (44100) and
+AudioOut takes only 48000 or 192000 Hz, but `s_main.c`, `s_stream.c` and
+`s_load.c` compute mixahead, stream timing and the default sound rate from that
+macro directly, so reassigning `snd.format.speed` would not have been enough.
+The upstream submodule stays untouched and the conversion happens in the PS5
+layer with phase preserved across block boundaries.
+
+Accepted FW 12.02 run `20260907T194413175Z_PPSA99996_xash3d-engine_0xc372db81ccc6` opened the main port for the system user `0xff`
+(type 0, index 0, handle `0x20000000`) and carried 66,150 source frames as
+72,192 frames in 282 whole 256-frame blocks: 71,999 resampled plus 193 terminal
+padding, the exact 147/160 relation. The consumed PCM hash
+`0x9fd6b8c32bb54595` equals the independently generated pattern hash. Zero
+underruns, zero `Output` errors, zero discarded frames, ring high-water 8,192
+over 8 wraps, exactly one drain/close/join owned by the worker,
+`ownership=exact pass=1`, `XASH_EXIT result=0` and a gap-free BYE. The operator
+confirmed hearing the low tone, the gap and the higher tone in that order —
+external evidence tied to the run id, since the device cannot assert
+`audible=true` about itself. ELF/fSELF SHA-256:
+`f6db533ac53728e86768c03c0b1b08e033ce3514348f8ea69cf8a9d9b3b9884e` /
+`febef3a565810dd18565a3dfc707506a2fbbad0dd1d55e077cf91a5f540b7f74`; transcript
+SHA-256 `f949a2d173b82c9415e3adb3f2c458947cf4600c98e254217d7b598c407a10bb`.
+Run `20260907T195320217Z_PPSA99996_xash3d-engine_0xc3f2392f8174` repeated every counter and both hashes bit for bit with the
+identical artifact.
+
+Two FW 12.02 facts the FW 6.02 reference does not document: `sceAudioOutOutput`
+returns the number of frames it accepted (256 at this grain), including the
+NULL drain, so success is non-negative rather than zero; and the system user
+`0xff` is accepted for the main port, so the foreground variant was never
+needed. The handle is also a large positive value, so handle checks must test
+for negative.
+
+Scope stayed PCM only. AJM and AAC/MP3/Opus decode, AudioOut2, Audio3d, NGS2,
+AudioIn and Chiaki capture remain out, and the link now rejects an artifact
+that imports any of them.
+
 ## What remains to close Phase 5
 
-1. SceAudioOut with a ring buffer, explicit producer/consumer ownership,
-   underrun accounting, audible proof and exact shutdown.
-2. The engine allocator and every GPU resource on direct memory, with a
-   balanced allocation ledger, guards and generation-correct retirement.
-3. The pthread primitives the engine uses, monotonic clock and measured sleep
+1. The engine allocator and every GPU resource on direct memory, with a
+   balanced allocation ledger, guards and generation-correct retirement. This
+   is the next gate.
+2. The pthread primitives the engine uses, monotonic clock and measured sleep
    granularity on FW 12.02.
-4. Frametime telemetry with GPU timestamps and VideoOut flip latency.
-5. Project-owned shims for `__assert`, fixed or SceUserService-backed identity
+3. Frametime telemetry with GPU timestamps and VideoOut flip latency.
+4. Project-owned shims for `__assert`, fixed or SceUserService-backed identity
    instead of `getpwuid`, and logging without `dladdr`.
-6. A final incremental FW 12.02 pass over every gate with host tests,
+5. A final incremental FW 12.02 pass over every gate with host tests,
    structured telemetry, immutable hashes, exact ownership/teardown, zero
    errors and visual/audio/input evidence where applicable.
 

@@ -599,3 +599,55 @@ flancos de salto/agacharse/usar/disparar. Terminó con cero read errors,
 `6681a8a822edf1114a5e9f32d01286b90442430a35a180295909d3ab8ca15d82`.
 El ledger del ELF final queda en 173 imports: 27 hardware PASS, 3
 FAIL/GUARDED y 143 EXPORTED ONLY.
+
+## Xash3D SceAudioOut nativo (2026-09-07)
+
+`xash/platform_ps5/audio_ps5.c` es un núcleo C independiente del cliente: ring
+PCM productor/consumidor, resampler continuo y un worker dedicado. El worker es
+el único dueño del handle y el único que llama a `Output`, al drain con `NULL` y
+a `Close`; el mutex nunca se mantiene durante el `Output` bloqueante.
+`s_ps5.c` sólo enlaza ese núcleo con el ring DMA propio de Xash3D.
+
+El desajuste de frecuencia era el punto delicado. Xash3D mezcla a
+`SOUND_DMA_SPEED` (44100) y AudioOut sólo acepta 48000 o 192000 Hz, pero
+`s_main.c`, `s_stream.c` y `s_load.c` calculan mixahead, tiempos de streaming y
+la frecuencia por defecto leyendo esa macro directamente: reasignar
+`snd.format.speed` no habría bastado. El submódulo upstream queda intacto y la
+conversión exacta 147/160 vive en la capa PS5, conservando la fase entre
+bloques. Para N frames fuente la cuenta de salida es exactamente
+`ceil((N-1)*160/147)`.
+
+La corrida aceptada
+`20260907T194413175Z_PPSA99996_xash3d-engine_0xc372db81ccc6` abrió el puerto
+main para el usuario system `0xff` (tipo 0, índice 0, handle `0x20000000`) y
+transportó 66.150 frames fuente como 72.192 en 282 bloques completos de 256:
+71.999 remuestreados más 193 de padding terminal. El hash del PCM consumido
+`0x9fd6b8c32bb54595` coincide con el hash del patrón generado de forma
+independiente. Cero underruns, cero errores de `Output`, cero descartes, un
+único drain/close/join en el worker, `ownership=exact pass=1` y BYE sin gaps. El
+operador confirmó de oído el tono bajo, el silencio y el tono alto en ese orden:
+evidencia externa ligada al run id, porque el dispositivo no puede afirmar
+`audible=true` sobre sí mismo. ``20260907T195320217Z_PPSA99996_xash3d-engine_0xc3f2392f8174`` repitió cada contador y ambos hashes bit a
+bit con el mismo artefacto.
+
+Dos hechos medidos aquí que la investigación de FW 6.02 no documenta:
+`sceAudioOutOutput` devuelve el número de frames aceptados (256 con este grain),
+también en el drain con `NULL`, así que el éxito es no negativo y no cero; y el
+usuario system `0xff` sí funciona para el puerto main, de modo que la variante
+foreground nunca fue necesaria. El handle además es un valor positivo grande
+(`0x20000000`): comprobarlo como índice pequeño sería incorrecto.
+
+La primera corrida en hardware dejó dos lecciones de método. El hash del PCM
+consumido arrancaba en cero porque el `memset` de `PS5_AudioInit` no sembraba la
+base FNV, así que nunca podía coincidir con el patrón; se localizó sin adivinar,
+comparando el recuento de frames silenciosos (13.233 idéntico en host y consola,
+lo que descartaba contenido corrupto) y reproduciendo el valor del dispositivo
+en el host al hashear desde semilla 0. Y `XASH_AUDIO_GATE_FRAMES` no hacía nada
+porque su unidad de traducción no incluía la cabecera generada: que el build
+imprima un valor no prueba que el código compilado lo respete.
+
+El ELF del gate declara 179 imports dinámicos y ninguno prohibido. El ledger de
+evidencia queda en 33 entradas hardware PASS (las cinco de AudioOut entre
+ellas), 3 FAIL/GUARDED y 7 prohibidas: `strcasestr` más las seis que quedan
+fuera de este gate (AudioOut2, Audio3d, NGS2, AJM, AudioIn y Audiodec), que el
+enlace ahora rechaza explícitamente.
