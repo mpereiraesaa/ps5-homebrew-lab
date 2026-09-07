@@ -109,10 +109,18 @@ reads with no regression, and passed 128 `nanosleep`/`usleep` measurements at
 1/2/5/10 ms with zero errors or early wakes. It then loaded `c1a0`, retained
 the exact direct-memory teardown and closed with a gap-free BYE.
 
-The remaining Phase 5 gates are, in order: GPU end-of-pipe timestamps plus
-VideoOut flip latency, which is now the next gate; project-owned shims for
-`__assert`, identity without `getpwuid`, and
-logging without `dladdr`. Every gate requires host tests, an incremental FW
+The GPU/flip timing gate is closed in merged Xash3D PR #9 (`cd57ab8`). Run
+`20260907T225446311Z_PPSA99996_ps5-xash3d_0xcdd8ce3a668a` correlated 60,000
+CPU submits, raw GPU end-of-pipe writes, ownership-fence observations and
+exact VideoOut events with 59,999 strict GPU-clock changes and no regression,
+CPU-order error, sequence gap or renderer error. The average submit-to-flip
+residence was 32,754,596 ns for the two-frame pipeline; the independently
+named observed fence-to-flip average was 15,930,800 ns. The accepted ELF and
+fSELF hashes reproduced exactly after the run.
+
+The remaining Phase 5 gates are, in order: project-owned shims for `__assert`,
+identity without `getpwuid`, and logging without `dladdr`; then the final
+incremental Phase 5 pass. Every gate requires host tests, an incremental FW
 12.02 run, structured telemetry, exact ownership/teardown, zero errors and
 visual/audio/input evidence where applicable. Client/menu integration,
 `ref_null`/`ref_soft`, `ref_agc` and application-owned PRX conversion remain
