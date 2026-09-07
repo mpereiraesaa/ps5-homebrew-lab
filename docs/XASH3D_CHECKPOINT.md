@@ -10,7 +10,7 @@ Reconciled: 2026-09-07. Hardware boundary: one PS5 on firmware 12.02.
 | 1 — BSP viewer with noclip | Complete | `c1a0`, 3,611 draws, 164 base textures plus lightmap, physical DualSense movement and a clean 60,000-frame textured gate. |
 | 2 — Resource foundation | Complete | Fence-retired pool, two-slot transient ring, V#/T#/S#, per-frame constants, two pipeline permutations, cache contract and a clean 60,000-frame gate. |
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
-| 4 — GoldSrc render states | In progress, gates 1–5 closed | Native binding, the complete state matrix, viewport/scissor, orthographic 2D, BSP lighting and transient sprites/particles are hardware-proven; studio models, brush entities and culling remain. |
+| 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Sized, later/parallel | ScePad, AudioOut, filesystem, direct-memory engine allocator, time/threads and three measured libc shims. |
 | 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
@@ -20,7 +20,8 @@ The Phase 1/2 implementation was merged through
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
-the laboratory submodule `projects/ps5-xash3d` pins it and Phase 4 lands there.
+the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 4 commit
+`38c6a38`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
@@ -213,6 +214,38 @@ The accepted combined CLI-stream capture visibly contains all three model
 modes. Chiaki and Xash3D closed by exact PID/title, all services remained
 healthy and `PPSA99998` stayed absent. The next ordered gate is independently
 transformed brush entities with their own render modes.
+
+Run `20260907T010315223Z_PPSA99996_ps5-xash3d_0x86475c3277bb` closed the
+seventh gate with three real BSP brush entities using independent animated
+transforms and source opaque/alpha/additive modes. Run
+`20260907T013429215Z_PPSA99996_ps5-xash3d_0x87fbad4e6ed0` then closed gate
+eight: real world-tree PVS plus draw-AABB frustum tests reduced 1,952 world
+draws to 646/414/362 while stable retired readbacks remained within their
+declared tolerance. Inline brush submodels retain their independent transformed
+path rather than sharing world-tree visibility numbering.
+
+The complete Phase 4 soak is
+`20260907T020656141Z_PPSA99996_ps5-xash3d_0x89c0f978ef68`. Its final
+600-frame window simultaneously composed 362 world draws, five brush entities
+(69 draws, including real `func_water` and `glass_med` source content), three
+animated Studio instances (12 draws), one sprite plus 72 particles (3 draws)
+and the HUD/console/menu/font overlay (2 draws). It completed 60,000/60,000
+frames in one process with 86,810 transient bytes per 131,072-byte slot, two
+post-retirement readbacks, exact fences and VideoOut tokens, intact guards, six
+reclaimed allocations, 2,613 gap-free records, dedicated BYE and zero errors.
+
+The final ELF/fSELF/BSP/Studio/transcript/manifest hashes are
+`d5499ae773f72e99a2eb7082206a04cb7deb00e43d6bbd463d7ecceb6c685dee`,
+`8af678d50024aa09caeae82abc97101d9f4fd859a7f7ac11420e783461054de0`,
+`d66be922584d7537e2dca7233293195d6ae383b22fc7959853537a75815c5cfa`,
+`d5b3a1f9b5c9035b02e678079b3586a5fe35987d55167dab27868050969b3e31`,
+`0bbccaee2e59eb8f516a29296300fb4f061fa2151aa22ceadf3c511a2b298f9f`
+and `a08dd9d7b851f75e8f22d875358cac76f933246a50821c38759fb2c9c16feebe`.
+The fail-closed validator accepted the immutable manifest, and a visible
+registered-entry CLI-stream capture has SHA-256
+`751d0fee9d54bb815acf3a5edc1ded8981cce0aca3f07b83ae4ff2344a8800a1`.
+Exact PID/title closure left no BigApp, all four services healthy and
+`PPSA99998` absent. Phase 4 is complete; Phase 5 is next.
 
 ## Parallel work that is now de-risked
 

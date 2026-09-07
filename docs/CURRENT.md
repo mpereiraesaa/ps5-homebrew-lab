@@ -1,6 +1,6 @@
 # Current development boundary
 
-Last reconciled: 2026-09-06. Tested console firmware: PS5 12.02.
+Last reconciled: 2026-09-07. Tested console firmware: PS5 12.02.
 
 ## Canonical implementation
 
@@ -28,7 +28,7 @@ completed all six hardware gates before merging through
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
 history of `projects/ps5-xash3d`, which this laboratory now pins at merged
-dedicated-title commit `c09318f` on top of `8865b3f` and `cbff264`.
+Phase 4 commit `38c6a38` (the dedicated identity began at `c09318f`).
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -49,10 +49,15 @@ blend/depth/cull/fog/lightmap matrix. Its orthographic blended 2D path and real
 BSP lighting path are hardware-proven too: HUD/console/menu/font geometry
 streams through the fence-retired ring, while original lightstyle planes and a
 face-local dynamic light update a bounded lightmap-atlas patch through the
-Phase 3 uploader. Camera-facing sprites and alpha/additive particles now stream
-through that same per-slot ring and passed a four-mode, eight-readback,
-10,000-frame gate. The next gate is animated studio models with CPU skinning,
-per-model textures, chrome and additive modes. See
+Phase 3 uploader. Camera-facing sprites and alpha/additive particles stream
+through that same per-slot ring. Animated Studio models use CPU skinning,
+per-model textures, chrome and additive modes; real brush entities retain
+independent transforms and source render modes; and world-tree PVS plus
+draw-AABB frustum culling reduces submitted world work. Every ordered gate
+passed independently. The complete water/glass/effects/Studio/HUD composition
+then passed a 60,000-frame FW 12.02 soak with two retired slots, exact
+ownership, intact guards, a gap-free BYE and zero errors. Phase 4 is complete;
+the platform layer is next. See
 `XASH3D_CHECKPOINT.md` for the evidence boundary and executable order.
 
 The package-identity prerequisite is also closed. Xash3D is installed and

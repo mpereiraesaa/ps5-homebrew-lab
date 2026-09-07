@@ -20,10 +20,12 @@ fusionó mediante `mpereiraesaa/ps5-agc-gears#9` como `cbff264`; ambos commits
 son ya historia de `ps5-xash3d`, fijado por el submódulo canónico. Los antiguos
 Stages A–I y `PPSA99998` están archivados bajo `legacy/`.
 
-La Fase 4 ya tiene cinco gates de renderer cerrados en hardware: catálogo y
-binding nativo, matriz blend/depth/cull/fog/lightmap, viewport/scissor, ruta 2D,
-lightstyles/luces dinámicas y sprites/partículas transitorios. El próximo gate
-es studio models con skinning CPU, texturas propias, chrome y modo aditivo.
+La Fase 4 está completa. Sus ocho gates cerraron catálogo/binding, matriz
+blend/depth/cull/fog/lightmap, viewport/scissor, ruta 2D, lightstyles/luces
+dinámicas, sprites/partículas, Studio animado, brush entities y visibilidad
+PVS/frustum. El gate integrado final sostuvo agua, vidrio, efectos, Studio y
+HUD durante 60.000 frames con ownership exacto, guardas intactas, BYE gap-free
+y cero errores. La Fase 5, platform layer, es el siguiente objetivo.
 
 Identidades instaladas: Xash3D usa `PPSA99996` y la demo Gears usa
 `PPSA99997`, cada una con helpers exactos independientes. El host histórico
@@ -82,8 +84,8 @@ concurrencia y memoria ejecutable.
 ## GoldSrc / Xash3D — objetivo activo
 
 Plan vigente: `docs/XASH3D_PS5_PLAN.html`; checkpoint textual:
-`docs/XASH3D_CHECKPOINT.md`. Las Fases 0–3 están cerradas en hardware y la Fase
-4, estados de render GoldSrc, es la siguiente. El probe de símbolos demuestra
+`docs/XASH3D_CHECKPOINT.md`. Las Fases 0–4 están cerradas en hardware y la Fase
+5, platform layer, es la siguiente. El probe de símbolos demuestra
 que libc y C++ no son el bloqueo: sólo faltan tres símbolos C triviales; el
 trabajo real es `platform/ps5`, `ref_agc` y la integración modular ya habilitada
 por el loader PRX propio.
