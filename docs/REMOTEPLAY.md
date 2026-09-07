@@ -44,6 +44,7 @@ python3 tools/ps5_remoteplay.py stream \
   --host "$PS5_HOST" --nickname PS5-054
 python3 tools/ps5_remoteplay.py screenshot
 python3 tools/ps5_remoteplay.py record --seconds 30
+python3 tools/ps5_remoteplay.py record-demo --name "Xash3D Phase 5"
 python3 tools/ps5_remoteplay.py stop-stream
 ```
 
@@ -55,6 +56,12 @@ upstream limitations with a mode-0600 temporary configuration containing only
 the requested, already registered PS5 entry. The real configuration is never
 modified, no credential is printed or placed on the command line, and the
 temporary copy is removed when the confined stream process exits.
+
+The temporary profile always sets `resolution=1080p`. Chiaki's independent
+defaults remain in effect for 60 FPS and automatic bitrate selection, so the
+normal command needs no quality arguments and the real Chiaki configuration is
+still untouched. Video capture records the negotiated stream window directly;
+it does not upscale a 720p source after the fact.
 
 The normal workflow never handles Chiaki's client UI. If Remote Play ends—for
 example, because the operator takes the physical DualSense—the CLI-owned stream
@@ -88,6 +95,23 @@ Outputs default to the ignored
 `research/gpu/captures/remoteplay/` directory. `record` captures video;
 audio capture is intentionally not enabled yet. Explicit `--output` paths are
 available when a particular evidence directory is required.
+
+For a community presentation, start the CLI stream, arrange the PS5 screen and
+run:
+
+```sh
+python3 tools/ps5_remoteplay.py record-demo --name "AGC Gears"
+```
+
+The command records the exact Remote Play window until Enter or `Ctrl+C`, then
+finalizes an H.264/yuv420p MP4 with fast-start metadata for broad player and web
+compatibility. The raw video is named and timestamped under the ignored
+`research/gpu/captures/remoteplay/demos/` directory. Use `--seconds N` for an
+automatic endpoint or `--output PATH` for an explicit destination. Review each
+recording before sharing it; the wrapper captures only the Chiaki stream, but
+the visible console UI may still contain account or notification information.
+Audio is not captured yet, so narration can be added during editing without
+mixing desktop sounds or notifications into the raw recording.
 
 The `stream` command restores focus to the launch-time developer window only
 when the new stream still owns focus. If the operator changed focus while the

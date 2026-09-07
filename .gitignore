@@ -6,7 +6,9 @@ dev.conf
 research/gpu/captures/
 research/gpu/dumps/
 research/gpu/ghidra/
+research/gpu/logs/
 research/gpu/sessions/
+research/xash3d/private-captures/
 research/gpu/experiments/hbldr-early-dmem/payload.inc
 projects/logging_server/runs/
 
