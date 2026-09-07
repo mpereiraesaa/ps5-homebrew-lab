@@ -20,16 +20,20 @@ sprites/partículas, Studio animado, brush entities y visibilidad; una corrida
 integrada final mantuvo agua, vidrio, efectos, Studio y HUD durante 60.000
 frames con ownership exacto y cero errores.
 
-La Fase 5 está en curso con engine bootstrap, filesystem completo, ScePad y
-SceAudioOut ya cerrados. El backend de input consume lotes cronológicos de
-hasta 64 registros y traduce el DualSense a los eventos canónicos de Xash3D; la
+La Fase 5 está en curso con engine bootstrap, filesystem completo, ScePad,
+SceAudioOut y memoria directa ya cerrados. El backend de input consume lotes
+cronológicos de hasta 64 registros y traduce el DualSense a los eventos
+canónicos de Xash3D; la
 corrida aceptada probó movimiento, cámara, salto, agacharse, usar y disparar,
 sin errores y con teardown exacto. El backend de audio saca PCM por
 `libSceAudioOut` desde un ring productor/consumidor con un resampler continuo
 147/160 y un worker que es el único dueño del handle: la corrida aceptada
 transportó 1,5 s de PCM a 44,1 kHz como 282 grains completos de 48 kHz, con
-hash coincidente, cero underruns y confirmación audible del operador. El
-siguiente gate es el allocator sobre direct memory.
+hash coincidente, cero underruns y confirmación audible del operador. Todo el
+allocator C/C++ del engine usa ahora una única raíz de 128 MiB sobre direct
+memory; cuatro recursos GPU representativos probaron generaciones, retiro y
+reclamación exactos, con guardas intactos y el arena vacío al terminar. El
+siguiente gate es threads, reloj monotónico y granularidad medida de sleep.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico
