@@ -125,12 +125,12 @@
 
 <div class="page">
 <header>
-  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-07 · rev 21</div>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-07 · rev 22</div>
   <h1>Xash3D on PS5</h1>
-  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. Phase 4 is complete and the Phase 5 filesystem foundation is now closed against the full retail tree. The remaining Phase 5 work is the non-drawing platform layer: pad, audio, direct memory, threads/time, performance telemetry and the three project-owned libc shims.</p>
+  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. Phase 4 is complete; Phase 5 has closed engine bootstrap, the full retail filesystem and native batched ScePad input. The remaining non-drawing platform layer is audio, direct memory, threads/time, performance telemetry and the three project-owned libc shims.</p>
   <div class="facts">
-    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 5 · filesystem closed</div></div>
-    <div class="fact"><div class="k">Latest gate</div><div class="v">4 HAVE_* helpers · HW pass</div></div>
+    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 5 · ScePad closed</div></div>
+    <div class="fact"><div class="k">Latest gate</div><div class="v">DualSense · 6 actions · HW pass</div></div>
     <div class="fact"><div class="k">Dataset</div><div class="v">4,741 files · 555.4 MB</div></div>
     <div class="fact"><div class="k">GPU target</div><div class="v">gfx1013 · AGC</div></div>
   </div>
@@ -150,8 +150,8 @@
 
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-07</div>
-  <h2 id="checkpoint-title">The Phase 5 filesystem contract is closed</h2>
-  <p>The accepted full-tree run <code>20260907T155915636Z_PPSA99996_xash3d-engine_0xb72c42a8f42f</code> deployed 4,741 files (555,437,162 bytes), served a 4,823-entry image index, resolved and read the 12,565-byte <code>delta.lst</code> twice, spawned <code>c1a0</code>, ran for 90 seconds and exited with <code>XASH_EXIT result=0</code> and a gap-free BYE. The earlier fault was not a filesystem lifecycle error: <code>gfx/palette.lmp</code> reported length 768, allocated 769 bytes, read 768 and closed cleanly. Its real cause was the SDK routing <code>strcasestr</code> through <code>libScePosixForWebKit.sprx</code>; <code>HAVE_STRCASESTR=0</code> selects Xash3D's portable <code>Q_stristr</code>, and the fixed ELF has no dynamic <code>strcasestr</code>. Xash3D remains <code>PPSA99996</code>, frozen Gears remains <code>PPSA99997</code>, and obsolete <code>PPSA99998</code> remains absent.</p>
+  <h2 id="checkpoint-title">The Phase 5 ScePad contract is closed</h2>
+  <p>The accepted run <code>20260907T181827569Z_PPSA99996_xash3d-engine_0xbec4d1cc932e</code> processed 24,535 connected ScePad records in chronological batches of up to 62, preserved short edges, and proved movement, look, jump, crouch, use and fire. It reported zero read errors, closed the pad and its owned UserService exactly, emitted <code>XASH_PAD_COMPLETE ... ownership=exact errors=0 pass=1</code>, and ended with a gap-free BYE. This builds on the already closed full-tree filesystem run and keeps Phase 6 client/menu/renderer integration separate. Xash3D remains <code>PPSA99996</code>, frozen Gears remains <code>PPSA99997</code>, and obsolete <code>PPSA99998</code> remains absent.</p>
   <div class="grid">
     <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
     <div class="item"><div class="k">Dynamic proof</div><div class="v">8×8 patch/frame · guards stable · 10k</div></div>
@@ -174,8 +174,9 @@
     <div class="item"><div class="k">Sandbox contract</div><div class="v">no chdir · 8 MiB libc heap · index-listed image</div></div>
     <div class="item"><div class="k">Filesystem proof</div><div class="v">4,823 index · delta.lst 12,565 B · 90 s</div></div>
     <div class="item"><div class="k">libc smoke proof</div><div class="v">strcasecmp · strnlen · strlcpy · strlcat</div></div>
-    <div class="item"><div class="k">Import ledger</div><div class="v">167 total · 21 pass · 3 guarded · 143 exported-only</div></div>
-    <div class="item"><div class="k">Next step</div><div class="v">ScePad → AudioOut → direct memory</div></div>
+    <div class="item"><div class="k">ScePad proof</div><div class="v">24,535 samples · batch 62 · 6 actions · 0 errors</div></div>
+    <div class="item"><div class="k">Import ledger</div><div class="v">173 total · 27 pass · 3 guarded · 143 exported-only</div></div>
+    <div class="item"><div class="k">Next step</div><div class="v">AudioOut → direct memory → threads/time</div></div>
   </div>
 </section>
 
@@ -322,15 +323,15 @@
   <div class="body">
     <div class="head">
       <h2>Platform layer</h2>
-      <div class="meta"><span class="pill active">in progress</span><span>≈ 1 week</span><span>Everything the engine needs that is not drawing. Bootstrap and filesystem checkpoints passed 2026-09-07.</span></div>
+      <div class="meta"><span class="pill active">in progress</span><span>≈ 1 week</span><span>Everything the engine needs that is not drawing. Bootstrap, filesystem and ScePad checkpoints passed 2026-09-07.</span></div>
     </div>
     <div class="visible"><b>Visible result.</b> The real engine has a hardware-proven PS5 platform contract: retail assets load reliably, DualSense drives the canonical actions, audio streams without underruns, large allocations and GPU resources have exact direct-memory ownership, and timing telemetry measures the real frame and flip path.</div>
     <ol class="steps">
       <li><b>Done.</b> Engine boot in dedicated mode without waf: <code>filesystem_stdio</code> and the hlsdk server as statically linked modules with generated export tables (all 251 entity classes), a PS5 backend that supplies clock, signals, the three libc shims and a bounded <code>quit</code>. Measured on the way: descriptors 0–2 start closed and refuse <code>dup2</code>; <code>chdir</code>/<code>access</code> return <code>EPERM</code>; libc <code>getcwd</code> faults; libc <code>opendir</code> fails and <code>getdents</code> is <code>EINVAL</code> on <code>/app0</code>; the libc heap stops at 8 MiB; <code>FIONBIO</code> is refused on UDP. The backend answers with a virtual working directory over <code>sceKernel*</code>, a build-time directory index of the image, an <code>mmap</code> router behind <code>--wrap=malloc</code> and a polled <code>recvfrom</code>.<span class="gate"><b>Gate:</b> run <code>20260907T074705479Z</code>: <code>Spawn Server: c1a0</code>, 90 s, <code>XASH_EXIT result=0</code>, gap-free BYE, validator green.</span></li>
       <li><b>Done.</b> Full filesystem contract: transactional deployment of 4,741 files / 555,437,162 bytes and a 4,823-entry index; case-correct lookup, repeated 12,565-byte reads and a 90-second <code>c1a0</code> run all pass. <code>gfx/palette.lmp</code> proved the open/length/allocate/read/close lifecycle exactly (768/769/768/0). The apparent filesystem crash was an imported <code>strcasestr</code> routed to <code>libScePosixForWebKit</code>, fixed by selecting portable <code>Q_stristr</code>.<span class="gate"><b>Gate:</b> run <code>20260907T155915636Z_PPSA99996_xash3d-engine_0xb72c42a8f42f</code>, <code>XASH_EXIT result=0</code>, gap-free BYE, no large-allocation failures.</span></li>
-      <li><b>Done baseline.</b> Runtime libc preflight: <code>HAVE_STRCASECMP=1</code>, <code>HAVE_STRNLEN=1</code>, <code>HAVE_STRLCPY=1</code> and <code>HAVE_STRLCAT=1</code> remain enabled because run <code>20260907T162442485Z_PPSA99996_xash3d-engine_0xb88fc0cf77a3</code> exercised them successfully before loading <code>c1a0</code> and exiting cleanly. The dynamic-import ledger classifies 167 symbols as 21 hardware-pass, 3 hardware-fail/guarded and 143 exported-only; provider presence alone is never treated as a pass.</li>
-      <li><b>Next.</b> ScePad backend for movement, look, jump, crouch, use and fire.<span class="gate"><b>Gate:</b> structured input telemetry and physical DualSense evidence for every action, with exact open/close ownership and clean bounded quit.</span></li>
-      <li>SceAudioOut backend with a fence-safe ring buffer, explicit producer/consumer ownership and underrun accounting.<span class="gate"><b>Gate:</b> audible proof, zero unexplained underruns and exact port/buffer teardown.</span></li>
+      <li><b>Done baseline.</b> Runtime libc preflight: <code>HAVE_STRCASECMP=1</code>, <code>HAVE_STRNLEN=1</code>, <code>HAVE_STRLCPY=1</code> and <code>HAVE_STRLCAT=1</code> remain enabled because run <code>20260907T162442485Z_PPSA99996_xash3d-engine_0xb88fc0cf77a3</code> exercised them successfully before loading <code>c1a0</code> and exiting cleanly. The current dynamic-import ledger classifies 173 symbols as 27 hardware-pass, 3 hardware-fail/guarded and 143 exported-only; provider presence alone is never treated as a pass.</li>
+      <li><b>Done.</b> Native C ScePad backend for movement, look, jump, crouch, use and fire. It consumes every oldest-first record from batches of up to 64, binds the standard pad surface to Xash events, selects the foreground user for ShadowMount/LNC and neutralizes disconnect, interception, read error and controller-generation changes.<span class="gate"><b>Gate:</b> run <code>20260907T181827569Z_PPSA99996_xash3d-engine_0xbec4d1cc932e</code>: 24,535 connected samples, maximum batch 62, every action edge, zero read errors, exact close/terminate ownership, <code>pass=1</code> and gap-free BYE.</span></li>
+      <li><b>Next.</b> SceAudioOut backend with a fence-safe ring buffer, explicit producer/consumer ownership and underrun accounting.<span class="gate"><b>Gate:</b> audible proof, zero unexplained underruns and exact port/buffer teardown.</span></li>
       <li>Replace the interim large-allocation router with the engine allocator on direct memory, and route every GPU resource through the same ownership model.<span class="gate"><b>Gate:</b> allocation ledger balances at shutdown, guards remain intact and no CPU/GPU owner outlives its generation.</span></li>
       <li>Threads and time: validate the pthread primitives actually used by the engine, monotonic clock behavior and measured sleep granularity on FW 12.02.<span class="gate"><b>Gate:</b> host tests plus structured hardware timing results and exact thread/join teardown.</span></li>
       <li>Frametime instrumentation: GPU timestamps via end-of-pipe writes and VideoOut flip-latency measurement, replacing the deadline counter that reads frames minus one under pipelining.<span class="gate"><b>Gate:</b> correlated CPU/GPU/flip records with no gaps through a bounded soak.</span></li>
@@ -402,7 +403,7 @@
   <table>
     <thead><tr><th>Risk</th><th>Where it bites</th><th>Mitigation</th></tr></thead>
     <tbody>
-      <tr><td>libc surface</td><td>Phase 5 platform closure</td><td>Close <code>__assert</code>, <code>getpwuid</code> and <code>dladdr</code> with project-owned shims. The import ledger currently has 167 symbols: 21 hardware-pass, 3 hardware-fail/guarded and 143 exported-only. An SDK provider is a hypothesis until a focused FW 12.02 smoke test passes.</td></tr>
+      <tr><td>libc surface</td><td>Phase 5 platform closure</td><td>Close <code>__assert</code>, <code>getpwuid</code> and <code>dladdr</code> with project-owned shims. The import ledger currently has 173 symbols: 27 hardware-pass, 3 hardware-fail/guarded and 143 exported-only. An SDK provider is a hypothesis until a focused FW 12.02 smoke test passes.</td></tr>
       <tr><td>Own PRX modules</td><td>Phase 6 modular build</td><td>Closed by the Phase 1 spike: runtime load, descriptor resolution and unload proven on hardware. Remaining constraint: TLS in modules only general-dynamic; every module must ship a <code>PRXDESC1</code> descriptor.</td></tr>
       <tr><td>Cache coherence on dynamic uploads</td><td>Phase 3 lightmaps, Phase 4 skinning</td><td>Memory model written in Phase 2; readback of the updated region on every iteration.</td></tr>
       <tr><td>Command buffer capacity</td><td>Phase 1 step 4 onward</td><td>Size from draw count × 30 DWORDs; host test asserts before submit.</td></tr>
@@ -414,7 +415,7 @@
   </div>
 </section>
 
-<footer>Revision 21 closes the Phase 5 filesystem checkpoint on the full retail tree, records the <code>strcasestr</code> import root cause and the four successful libc hardware smokes, introduces the 167-symbol evidence ledger, restores the Phase 5/6 boundary and lists every remaining platform-layer gate required for full Phase 5 closure. Revision 20 recorded the now-resolved filesystem symptom. Revision 18 records Phase 5 gate 1: the Xash3D FWGS engine boots on FW 12.02 in dedicated mode, spawns c1a0 with all entity classes and quits cleanly after 90 s. Revision 17 closes Phase 4 with the final 60,000-frame FW 12.02 ownership soak and zero errors. Revision 10 closed the identity split: Xash3D is <code>PPSA99996</code>, Gears remains <code>PPSA99997</code> and historical <code>PPSA99998</code> is uninstalled. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step closes with host tests and hardware evidence.</footer>
+<footer>Revision 22 closes the native ScePad gate with chronological batched reads, all six gameplay actions, exact ownership and an immutable FW 12.02 run; AudioOut is now the next Phase 5 gate. Revision 21 closed the full retail filesystem, recorded the <code>strcasestr</code> root cause and four successful libc smokes, and introduced the evidence-led import classification. Revision 18 records Phase 5 gate 1: the Xash3D FWGS engine boots on FW 12.02 in dedicated mode, spawns c1a0 with all entity classes and quits cleanly after 90 s. Revision 17 closes Phase 4 with the final 60,000-frame FW 12.02 ownership soak and zero errors. Revision 10 closed the identity split: Xash3D is <code>PPSA99996</code>, Gears remains <code>PPSA99997</code> and historical <code>PPSA99998</code> is uninstalled. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step closes with host tests and hardware evidence.</footer>
 </div>
 </body>
 </html>

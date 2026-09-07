@@ -574,3 +574,28 @@ La política queda mecanizada en `xash/tools/audit_dyn_imports.py` y
 hardware PASS, 3 hardware FAIL/GUARDED (`dup`, `dup2`, `execv`), 143 EXPORTED
 ONLY y cero banned. Un símbolo exportado es sólo un candidato hasta que un
 smoke enfocado en FW 12.02 demuestre su contrato real.
+
+## Xash3D ScePad nativo (2026-09-07)
+
+El backend `xash/platform_ps5/in_ps5.c` traduce ScePad directamente a los ejes
+y botones canónicos de Xash3D. Su contrato de 120 bytes y lectura cronológica
+por lotes deriva de `blackbearreloaded/ps5-native-gamepad-input-research` en
+commit `16e9b953b26a7102bc801a380f08fbf00060d84b`; el port implementa un adapter
+C propio. No descarta registros intermedios: `scePadRead` entrega hasta 64 y
+se procesan todos de más antiguo a más nuevo, conservando pulsaciones breves.
+
+En los lanzamientos ShadowMount/LNC el initial user puede quedar separado del
+DualSense activo. `sceUserServiceGetForegroundUser` devolvió el owner correcto,
+coincidiendo con el viewer BSP ya validado. Desconexión, intercepción, error de
+lectura o cambio de generación fuerzan inmediatamente el estado neutral para
+evitar teclas o ejes pegados. El cierre respeta ownership: un `scePadClose` y
+`sceUserServiceTerminate` sólo si la inicialización fue adquirida aquí.
+
+La corrida aceptada
+`20260907T181827569Z_PPSA99996_xash3d-engine_0xbec4d1cc932e` procesó 24.535
+muestras conectadas, alcanzó lotes de 62 y registró movimiento, look y ambos
+flancos de salto/agacharse/usar/disparar. Terminó con cero read errors,
+`ownership=exact`, `pass=1` y BYE sin gaps. El fSELF es
+`6681a8a822edf1114a5e9f32d01286b90442430a35a180295909d3ab8ca15d82`.
+El ledger del ELF final queda en 173 imports: 27 hardware PASS, 3
+FAIL/GUARDED y 143 EXPORTED ONLY.

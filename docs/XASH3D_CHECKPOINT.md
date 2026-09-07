@@ -11,7 +11,7 @@ Reconciled: 2026-09-07. Hardware boundary: one PS5 on firmware 12.02.
 | 2 — Resource foundation | Complete | Fence-retired pool, two-slot transient ring, V#/T#/S#, per-frame constants, two pipeline permutations, cache contract and a clean 60,000-frame gate. |
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
-| 5 — Platform layer | In progress; bootstrap + filesystem closed | The engine boots and the full 4,741-file retail tree passes indexed lookup, case handling, repeated reads, a 90-second `c1a0` run and clean shutdown. Remaining: ScePad, AudioOut, direct-memory ownership, threads/time, frame/flip telemetry and the three project-owned libc shims. |
+| 5 — Platform layer | In progress; bootstrap + filesystem + ScePad closed | The engine boots, the full 4,741-file retail tree passes, and batched native ScePad input proves movement/look/jump/crouch/use/fire with exact teardown. Remaining: AudioOut, direct-memory ownership, threads/time, frame/flip telemetry and the three project-owned libc shims. |
 | 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
@@ -317,25 +317,45 @@ after 20 seconds. ELF/fSELF SHA-256:
 `3aa7835949b1dd0f98de9fc8d6a9dec36fc16c68460617304b20eabb7cb5ce9f`.
 
 `xash/tools/audit_dyn_imports.py` and `xash/ps5_import_evidence.json` make that
-distinction reproducible. The smoke ELF has 167 dynamic imports: 21 hardware
-PASS, 3 hardware FAIL/GUARDED (`dup`, `dup2`, `execv`), 143 EXPORTED ONLY and
-zero banned imports. The four approved string helpers map to
+distinction reproducible. The current pad-gate ELF has 173 dynamic imports: 27
+hardware PASS, 3 hardware FAIL/GUARDED (`dup`, `dup2`, `execv`), 143 EXPORTED
+ONLY and zero banned imports. The four approved string helpers map to
 `libSceLibcInternal`; `strcasestr` maps to `libScePosixForWebKit`.
+
+## Phase 5 ScePad checkpoint: closed (2026-09-07)
+
+Xash3D PR #4, merged as `dfef288`, adds the native C ScePad backend and its
+host contracts. It consumes every oldest-first record from batches of up to
+64, translates both sticks, triggers and the standard button surface to Xash
+events, and neutralizes state on disconnect, interception, read error or
+controller-generation change. ShadowMount/LNC uses the foreground user; the
+backend closes the pad exactly once and terminates UserService only when it
+owned initialization.
+
+Accepted FW 12.02 run
+`20260907T181827569Z_PPSA99996_xash3d-engine_0xbec4d1cc932e` processed 24,535
+connected records across 4,361 polls, reached a 62-record batch, and recorded
+1,286 movement plus 1,258 look samples. Jump, crouch, use and fire each have
+complete press/release evidence (1/1, 2/2, 2/2, 1/1), with zero read errors,
+`scePadClose=0`, owned `sceUserServiceTerminate=0`, `ownership=exact`,
+`pass=1` and a gap-free BYE. ELF/fSELF SHA-256:
+`46da56f13a7d17f0b7d2323e2cc5d0fa16cb0d40997c25f9e5c73e527a15500a` /
+`6681a8a822edf1114a5e9f32d01286b90442430a35a180295909d3ab8ca15d82`;
+transcript SHA-256
+`6dd2db62d23b2aa33f0387bacf2c4b534e4e64317562c4489b5bb3a2b21d20da`.
 
 ## What remains to close Phase 5
 
-1. ScePad for movement, look, jump, crouch, use and fire, with structured input
-   evidence and exact handle teardown.
-2. SceAudioOut with a ring buffer, explicit producer/consumer ownership,
+1. SceAudioOut with a ring buffer, explicit producer/consumer ownership,
    underrun accounting, audible proof and exact shutdown.
-3. The engine allocator and every GPU resource on direct memory, with a
+2. The engine allocator and every GPU resource on direct memory, with a
    balanced allocation ledger, guards and generation-correct retirement.
-4. The pthread primitives the engine uses, monotonic clock and measured sleep
+3. The pthread primitives the engine uses, monotonic clock and measured sleep
    granularity on FW 12.02.
-5. Frametime telemetry with GPU timestamps and VideoOut flip latency.
-6. Project-owned shims for `__assert`, fixed or SceUserService-backed identity
+4. Frametime telemetry with GPU timestamps and VideoOut flip latency.
+5. Project-owned shims for `__assert`, fixed or SceUserService-backed identity
    instead of `getpwuid`, and logging without `dladdr`.
-7. A final incremental FW 12.02 pass over every gate with host tests,
+6. A final incremental FW 12.02 pass over every gate with host tests,
    structured telemetry, immutable hashes, exact ownership/teardown, zero
    errors and visual/audio/input evidence where applicable.
 
