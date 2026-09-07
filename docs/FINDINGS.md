@@ -435,9 +435,10 @@ segmentos de `sceKernelGetModuleInfo`. Implementación compartida en
 `modules/prx_loader.h` del fork, con tests host. El cargador de librerías de
 Xash3D debe apoyarse en `prx_load`, `prx_get_proc` y `prx_unload`.
 
-Observaciones operativas: `ftpsrv` expone los fSELF como ELF descifrado con
-los últimos 512 bytes reescritos, así que la verificación de subida compara el
-prefijo; el klog en el puerto 3232 de la consola muestra señales y errores de
+Observaciones operativas: `ftpsrv` convierte por defecto los fSELF a ELF al
+descargarlos, pero el comando `SELF` alterna ese modo por conexión. La
+verificación de subida lo deja desactivado y compara tamaño y SHA-256 exactos
+del fSELF almacenado, sin depender de `shsrv`; el klog en el puerto 3232 de la consola muestra señales y errores de
 `rtld`; la salida con `_exit` aparece como SIGSYS en klog aunque el shell
 vuelva al menú sin diálogo.
 

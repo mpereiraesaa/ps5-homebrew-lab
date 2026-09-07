@@ -8,9 +8,12 @@ import ftplib
 import hashlib
 import json
 import re
-import socket
+import sys
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "tools"))
+from ps5_ftp import verify_remote_file  # noqa: E402
 
 
 ROOT = Path(__file__).resolve().parent
@@ -108,63 +111,11 @@ def ensure_parent_dirs(ftp: ftplib.FTP, root: str, relative: str,
             created.append(path)
 
 
-def shsrv_file_size(host: str, remote: str, timeout: float = 8.0) -> int:
-    data = bytearray()
-    with socket.create_connection((host, 2323), timeout) as sock:
-        sock.settimeout(timeout)
-        while b"$ " not in data and len(data) < 16384:
-            data.extend(sock.recv(4096))
-        start = len(data)
-        sock.sendall(f"stat {remote}\n".encode("ascii"))
-        while len(data) < 32768:
-            chunk = sock.recv(4096)
-            if not chunk:
-                break
-            data.extend(chunk)
-            if b"$ " in data[start:]:
-                break
-    output = data[start:].decode("utf-8", "replace")
-    match = re.search(r"(?:^|\n)size: (\d+)(?:\r?$|\n)", output, re.MULTILINE)
-    if not match:
-        raise RuntimeError(f"shsrv stat was not parseable: {remote}")
-    return int(match.group(1))
-
-
 def verify_upload(ftp: ftplib.FTP, host: str, item: dict[str, object]) -> None:
+    del host  # compatibility with existing callers
     remote = str(item["remote_staging"])
-    expected_size = int(item["bytes"])
-    # FTP exposes decrypted SELF/PRX contents for SIZE/RETR. Verify the actual
-    # stored container through shsrv instead of comparing that virtual view.
-    size = (shsrv_file_size(host, remote) if bool(item["self_container"])
-            else ftp.size(remote))
-    if size != expected_size:
-        raise RuntimeError(f"remote size mismatch: {remote}: {size} != {expected_size}")
-    if bool(item["self_container"]):
-        return
-    data = bytearray()
-    ftp.retrbinary(f"RETR {remote}", data.extend)
-    if hashlib.sha256(data).hexdigest() != item["sha256"]:
-        raise RuntimeError(f"remote digest mismatch: {remote}")
-
-
-def verify_ftp_transformed_self(ftp: ftplib.FTP, remote: str,
-                                local_elf: Path) -> dict[str, int]:
-    """Verify ftpsrv's decrypted SELF view when shsrv is unavailable.
-
-    The server rewrites only the final signing-note area.  Requiring identical
-    size and an identical prefix excluding the last 512 bytes verifies all
-    loadable code/data while tolerating that deterministic transport behavior.
-    """
-    expected = local_elf.read_bytes()
-    transformed = bytearray()
-    ftp.retrbinary(f"RETR {remote}", transformed.extend)
-    stable = max(0, len(expected) - 512)
-    if (not expected.startswith(b"\x7fELF") or
-            len(transformed) != len(expected) or
-            bytes(transformed[:stable]) != expected[:stable]):
-        raise RuntimeError(f"FTP-transformed SELF verification failed: {remote}")
-    return {"transformed_bytes": len(transformed),
-            "stable_prefix_bytes": stable}
+    verify_remote_file(ftp, remote, int(item["bytes"]), str(item["sha256"]),
+                       bool(item["self_container"]))
 
 
 def deploy(host: str, port: int, journal: Path) -> None:
@@ -245,16 +196,7 @@ def swap_eboot(host: str, port: int, journal: Path,
             ftp.storbinary(f"STOR {staged}", stream)
         item = {"remote_staging": staged, "bytes": local.stat().st_size,
                 "sha256": digest(local), "self_container": True}
-        try:
-            verify_upload(ftp, host, item)
-        except TimeoutError:
-            build_name = local_root.parent.name.replace("dist-", "build-", 1)
-            local_elf = ROOT / build_name / "eboot.elf"
-            if not local_elf.is_file():
-                raise
-            proof = verify_ftp_transformed_self(ftp, staged, local_elf)
-            print(json.dumps({"event": "native_sce_ftp_transform_verified",
-                              "remote": staged, **proof}, sort_keys=True))
+        verify_upload(ftp, host, item)
 
         config = local_root / "dev.conf"
         if not config.is_file() and not allow_missing_dev_conf:

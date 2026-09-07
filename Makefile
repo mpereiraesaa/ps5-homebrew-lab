@@ -23,6 +23,7 @@ telemetry-check:
 
 remoteplay-check:
 	python3 tests/test_ps5_remoteplay.py
+	python3 tests/test_ps5_ftp.py
 
 sdk-check:
 	python3 sdk/agc/tests/verify_api.py
