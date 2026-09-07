@@ -189,6 +189,31 @@ BigApp remained, all services were healthy and `PPSA99998` stayed absent. The
 next ordered gate is animated studio models with CPU skinning, per-model
 textures, chrome and additive modes.
 
+Run `20260907T003611716Z_PPSA99996_ps5-xash3d_0x84cd5cd0ac8a` closed the
+sixth Phase 4 gate. A host-only Studio v10 baker converted the privately owned
+source model into a 93,952-byte checked bundle containing eight bones, a
+seven-frame 33 fps sequence, 134 expanded vertices, 282 indices, four draws
+and four embedded textures. The PS5 runtime keeps its texture data in the
+existing BSP allocation and performs interpolation, bone-hierarchy composition
+and CPU skinning into the current transient-ring slot. Five modes isolate
+control, textured, generated chrome, additive and the combined three-instance
+result.
+
+The FW 12.02 gate completed 10,000/10,000 frames, ten post-retirement
+readbacks, changing pose hashes, six reclaimed allocations, intact guards,
+zero renderer errors and a 286-record gap-free BYE. Its
+ELF/fSELF/BSP/Studio/transcript/manifest hashes are
+`a78675524a21b2a7b2264e3b271a4b80954333b01cd82456ee4fda3da7af1e52`,
+`0e0614f13bef7a0121ac6bde5cde0480f4e1162e8c6c6e8bfd008df71cd4dace`,
+`0e6396cf2dbec287c4e2bc28f90a90e8f5cb26b98f43ebcd539dba7d9c171105`,
+`d5b3a1f9b5c9035b02e678079b3586a5fe35987d55167dab27868050969b3e31`,
+`2cf010f8b95529265e9095efe2a4882e31965b3afaa459c02f829333d7acf03d`
+and `fe93f51167b551f47e82831d272513a7886a25564947f82e3b6c7d68791f6290`.
+The accepted combined CLI-stream capture visibly contains all three model
+modes. Chiaki and Xash3D closed by exact PID/title, all services remained
+healthy and `PPSA99998` stayed absent. The next ordered gate is independently
+transformed brush entities with their own render modes.
+
 ## Parallel work that is now de-risked
 
 The reproducible symbol probes show that libc/C++ is not the port blocker:

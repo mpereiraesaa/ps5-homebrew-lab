@@ -125,11 +125,11 @@
 
 <div class="page">
 <header>
-  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-07 · rev 15</div>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-07 · rev 16</div>
   <h1>Xash3D on PS5</h1>
-  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. Phase 4 now has real pipeline binding, mid-frame viewport/scissor, the complete state matrix, orthographic blended 2D, BSP lighting and transient sprites/particles proven through clean 10,000-frame hardware gates.</p>
+  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. Phase 4 now has real pipeline binding, mid-frame viewport/scissor, the complete state matrix, orthographic blended 2D, BSP lighting, transient effects and animated Studio models proven through clean 10,000-frame hardware gates.</p>
   <div class="facts">
-    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 4 sprites + particles complete</div></div>
+    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 4 Studio models complete</div></div>
     <div class="fact"><div class="k">Latest gate</div><div class="v">10,000 frames · 0 errors</div></div>
     <div class="fact"><div class="k">Cadence</div><div class="v">59.94 fps · 2 in flight</div></div>
     <div class="fact"><div class="k">GPU target</div><div class="v">gfx1013 · AGC</div></div>
@@ -150,8 +150,8 @@
 
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-07</div>
-  <h2 id="checkpoint-title">Transient sprites and particles are hardware-proven</h2>
-  <p>Run <code>20260906T235831459Z</code> rebuilt a procedural RGBA8 atlas, one camera-facing sprite, 24 alpha particles and 48 additive particles inside the current framebuffer slot of the existing transient ring. Four modes isolated control, sprite, particles and combined output across both slots. It completed 10,000/10,000 frames with eight distinct post-retirement readbacks, exact fences and VideoOut tokens, intact guards, six reclaimed allocations, a 284-record gap-free BYE and zero renderer errors. CLI-stream captures visibly isolate all three feature views without pairing, client-window control, focus assumptions or joystick input. Xash3D remains <code>PPSA99996</code>, frozen Gears remains <code>PPSA99997</code>, and obsolete <code>PPSA99998</code> remains absent.</p>
+  <h2 id="checkpoint-title">Animated Studio models are hardware-proven</h2>
+  <p>Run <code>20260907T003611716Z</code> loaded a checked private Studio v10 bundle inside the existing BSP allocation and interpolated an eight-bone, seven-frame sequence at 33 fps. CPU skinning rebuilt 134 vertices per instance in the current transient slot; five modes isolated control, textured, normal-generated chrome, additive and their three-instance combination. It completed 10,000/10,000 frames with ten distinct post-retirement readbacks, changing pose hashes, exact fences and VideoOut tokens, intact guards, six reclaimed allocations, a 286-record gap-free BYE and zero renderer errors. A CLI-stream capture visibly proves all three model modes without pairing, client-window control, focus assumptions or joystick input. Xash3D remains <code>PPSA99996</code>, frozen Gears remains <code>PPSA99997</code>, and obsolete <code>PPSA99998</code> remains absent.</p>
   <div class="grid">
     <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
     <div class="item"><div class="k">Dynamic proof</div><div class="v">8×8 patch/frame · guards stable · 10k</div></div>
@@ -165,8 +165,9 @@
     <div class="item"><div class="k">2D proof</div><div class="v">2 batches · 522 indices · HUD/console/menu/font</div></div>
     <div class="item"><div class="k">Lighting proof</div><div class="v">4 modes · 8 readbacks · 704-byte patch</div></div>
     <div class="item"><div class="k">Effects proof</div><div class="v">73 quads · 3 batches · 8 readbacks</div></div>
+    <div class="item"><div class="k">Studio proof</div><div class="v">8 bones · 5 modes · 10 readbacks</div></div>
     <div class="item"><div class="k">Installed identities</div><div class="v">Xash3D 99996 · Gears 99997 · 99998 retired</div></div>
-    <div class="item"><div class="k">Next step</div><div class="v">Animated studio models</div></div>
+    <div class="item"><div class="k">Next step</div><div class="v">Transformed brush entities</div></div>
   </div>
 </section>
 
@@ -299,7 +300,7 @@
       <li><b>Complete.</b> Orthographic 2D path: alpha/additive batches, HUD, translucent console and menu, procedural font atlas and per-frame transient geometry passed 10,000 frames with exact ownership and zero errors.</li>
       <li><b>Complete.</b> Real BSP lightstyle planes plus a face-local dynamic light update the lightmap atlas through the bounded Phase 3 upload path; four modes and eight retired readbacks passed 10,000 frames with zero errors.</li>
       <li><b>Complete.</b> One camera-facing sprite plus 24 alpha and 48 additive particles stream from the per-slot transient ring; control, isolated and combined modes passed eight retired readbacks and 10,000 frames with zero errors.</li>
-      <li>Studio models: CPU skinning into the transient ring, per-model textures, chrome and additive render modes.</li>
+      <li><b>Complete.</b> Studio v10 models: eight-bone animation is CPU-skinned into the transient ring; per-model textures, generated chrome and additive modes passed ten retired readbacks and 10,000 frames with zero errors.</li>
       <li>Brush entities with their own transforms and render modes.</li>
       <li>PVS and frustum culling, now that draw counts have a real consumer.</li>
     </ol>
@@ -399,7 +400,7 @@
   </div>
 </section>
 
-<footer>Revision 15 closes transient sprites and particles: one sprite plus 72 alpha/additive particles ran through the per-slot ring in a clean four-mode, eight-readback, 10,000-frame FW 12.02 gate. Revision 14 closed BSP lightstyles and dynamic lights. Revision 13 closed the orthographic blended 2D gate. Revision 12 closed the complete blend/depth/cull/fog/lightmap matrix. Revision 11 recorded real opaque/masked binding and viewport/scissor restoration. Revision 10 closed the identity split: Xash3D is <code>PPSA99996</code>, Gears remains <code>PPSA99997</code> and historical <code>PPSA99998</code> is uninstalled. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
+<footer>Revision 16 closes animated Studio models: CPU skinning, per-model textures, generated chrome and additive rendering ran through a clean five-mode, ten-readback, 10,000-frame FW 12.02 gate. Revision 15 closed transient sprites and particles. Revision 14 closed BSP lightstyles and dynamic lights. Revision 13 closed the orthographic blended 2D gate. Revision 12 closed the complete blend/depth/cull/fog/lightmap matrix. Revision 11 recorded real opaque/masked binding and viewport/scissor restoration. Revision 10 closed the identity split: Xash3D is <code>PPSA99996</code>, Gears remains <code>PPSA99997</code> and historical <code>PPSA99998</code> is uninstalled. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
 </div>
 </body>
 </html>
