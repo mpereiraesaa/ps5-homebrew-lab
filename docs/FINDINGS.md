@@ -472,3 +472,105 @@ La implementación consolidada y la evidencia pública se fusionaron mediante
 `mpereiraesaa/ps5-agc-gears#8` como commit `642d348`. Mapas, binarios, logs
 completos y capturas permanecen privados; sólo se publican contratos, conteos y
 hashes sanitizados.
+
+## Xash3D engine boot: contrato real del sandbox (2026-09-07)
+
+Gate 1 de la Fase 5 cerrado en FW 12.02 con la corrida
+`20260907T074705479Z_PPSA99996_xash3d-engine_0x9c50d46dcc2a` (archivada en
+`research/gpu/captures/runtime/`): el engine Xash3D FWGS `9aa39ad` en modo
+dedicado, con `filesystem_stdio` y el servidor de hlsdk `e277ffa` enlazados
+estáticamente, montó `valve` desde `/app0/xash3d`, generó `c1a0` con las 251
+clases de entidad resueltas, simuló 90 s y salió por su propio `quit` con
+`XASH_EXIT result=0` y BYE sin gaps. Diecinueve lanzamientos separaron los
+hechos siguientes, todos medidos desde el título y ninguno documentado por la
+foundation:
+
+- Los descriptores 0, 1 y 2 arrancan cerrados y `dup2` sobre ellos devuelve
+  `EPERM`: la captura de stdio de `ps5log` no puede funcionar en un título. La
+  consola del engine llega por un shim de `write()` que reensambla líneas y
+  quita escapes ANSI; sin eso un `\033[0m` pegado al inicio de la línea
+  siguiente convirtió un registro estructurado en RAW y produjo un gap.
+- `getcwd()` de `libSceLibcInternal` hace `SIGSEGV` dentro de la propia
+  librería. `chdir()` devuelve `EPERM` para cualquier ruta, `/app0` incluido, y
+  `access()` también sobre `/download0` aunque `open`/`write` funcionan allí.
+  `filesystem_stdio` direcciona su raíz como `./`, así que el backend mantiene
+  un cwd virtual y resuelve rutas relativas antes de llamar a `sceKernelOpen`,
+  `sceKernelStat`, `sceKernelMkdir`, `sceKernelUnlink`, `sceKernelRename`.
+- `opendir()` de libc devuelve `EPERM` en todas partes; `sceKernelGetdents`
+  lista `/download0` pero devuelve `EINVAL` sobre la imagen `/app0` (nullfs de
+  ShadowMount). Como el motor descubre juegos, WADs y nombres por enumeración,
+  el build escribe `xash3d/.dirindex` y el backend sirve la imagen desde él.
+- `/download0` existe y es escribible con `downloadDataSize` 256; `/temp0` no
+  existe (`ENOENT`). La raíz del engine vive en `/download0/xash3d` y la imagen
+  es `-rodir`.
+- El heap de libc admite 8 MiB y falla a 16 MiB; la reserva de 21,25 MiB de
+  entidades del servidor no cabía. `lld --wrap` de `malloc/free/realloc/calloc`
+  envía las peticiones de 256 KiB o más a `mmap` anónimo (pico 32 MiB en la
+  corrida). `sceLibcHeapSize` no existe en los stubs del SDK y el conversor
+  nativo no publica exports, así que no hay forma de agrandar ese heap.
+- `ioctl(FIONBIO)` y `fcntl(F_SETFL)` devuelven `EPERM`/`EACCES` en el socket
+  UDP del servidor, que quedaba bloqueado en `recvfrom` y congelaba el bucle
+  principal. El shim de `recvfrom` hace `poll` con timeout cero. `socket`,
+  `bind`, `sendto`, `poll` y `pthread_create` funcionan.
+- `getaddrinfo`/`gethostname` importarían `libScePosixForWebKit` y una llamada
+  cayó con dirección NULL dentro de una librería del sistema; el backend
+  resuelve direcciones numéricas localmente.
+- El lld del SDK no sirve para `ld -r`: emite una sección de relocalización por
+  grupo COMDAT y el enlace final la rechaza; el paso relocable usa el `ld.lld`
+  del host y `llvm-objcopy -G lib_<módulo>_exports`.
+- `ftpsrv` devuelve los fSELF como ELF descifrado con los últimos 512 bytes
+  reescritos; `tools/deploy_title_ftp.py` verifica `eboot.bin` contra el ELF
+  enlazado por prefijo y el resto de archivos byte a byte.
+
+Contraste con las limitaciones publicadas por BlackBear para su port de
+CPython (`blackbearreloaded/ps5-python`, `docs/ps5-limitations.md`): coinciden
+en que la duplicación de descriptores no existe (allí `dup`/`dup2` devuelven
+`ENOTSUP`; aquí `dup2` sobre 0-2 dio `EPERM` en FW 12.02 con ShadowMount), en
+que `getaddrinfo` del SDK no sirve para IPv6 y en que no hay `dlopen`
+arbitrario de `.so`/`.sprx`. Añaden tres límites que el gate no ejercitó y que
+el port debe respetar: `execve` no lanza ELFs del sistema de archivos, así que
+`Sys_NewInstance` del engine (cambio de `-game` por `execv`) nunca funcionará y
+el cambio de juego debe ser en proceso como en Vita; `mmap` respaldado por
+archivo devuelve `ENOTSUP`, y no hay semáforos POSIX con nombre. El engine, el
+filesystem y el servidor no usan ninguno de los tres: `mmap` anónimo, `read`/
+`write`, y mutex/condvar de pthread.
+
+Todo vive en `ps5-xash3d`, rama `exp/engine-boot` (PR #3):
+`xash/platform_ps5/{boot,sys,fs,mem}_ps5.c`, `xash/build_engine.sh` y
+`docs/ENGINE_BOOT_PHASE5.md`. Las fuentes del engine no se tocan.
+
+## Xash3D filesystem completo e imports libc (2026-09-07)
+
+El blocker posterior no era FTP ni el ciclo de vida de los descriptores. La
+corrida aceptada
+`20260907T155915636Z_PPSA99996_xash3d-engine_0xb72c42a8f42f` desplegó de forma
+transaccional 4.741 archivos / 555.437.162 bytes, sirvió un índice de 4.823
+entradas, resolvió y leyó dos veces `delta.lst` (12.565 bytes), ejecutó `c1a0`
+durante 90 segundos y terminó con `XASH_EXIT result=0`, BYE sin gaps y cero
+fallos de allocations grandes. Esto cierra listing indexado, case handling y
+lecturas grandes/repetidas sobre el árbol retail con el `ftpsrv` actual.
+
+La instrumentación de `gfx/palette.lmp` midió `real_length=768`, allocation de
+769 bytes, lectura de 768 bytes y cierre con resultado cero. La firma del fault
+y el mapa de proveedores llevaron a `strcasestr`: el SDK lo resolvía mediante
+`libScePosixForWebKit.sprx`, no `libSceLibcInternal`. `HAVE_STRCASESTR=0`
+selecciona ahora `Q_stristr`. La corrida corregida
+`20260907T154452596Z_PPSA99996_xash3d-engine_0xb663524c9f61` pasó el punto del
+fault; el fSELF tiene SHA-256
+`b622cec5561f1cfb49731e6cad9b58cad49480afd970ee8fe9e6e858952666dc`, el ELF
+enlazado `f4287a6f817ecdab19a1c8a60433cf3c6f33324e767a51b32aa543e8bb311c11`, y
+`llvm-readelf --dyn-syms <elf> | grep -i strcasestr` no produce salida.
+
+Los otros cuatro `HAVE_*` no se desactivaron por prevención: se validaron en
+hardware. La corrida
+`20260907T162442485Z_PPSA99996_xash3d-engine_0xb88fc0cf77a3` obtuvo
+`strcasecmp=0`, `strnlen=4`, `strlcpy=7` con `palette` y `strlcat=11` con
+`gfx/palette`, cargó `c1a0` y salió limpia a los 20 segundos. ELF/fSELF:
+`f40d7c2b3cad0f56e96ef974785cbc53b4c6512bf3dd05b871ef985ed4aec7a1` /
+`3aa7835949b1dd0f98de9fc8d6a9dec36fc16c68460617304b20eabb7cb5ce9f`.
+
+La política queda mecanizada en `xash/tools/audit_dyn_imports.py` y
+`xash/ps5_import_evidence.json`. En el ELF del smoke hay 167 imports: 21
+hardware PASS, 3 hardware FAIL/GUARDED (`dup`, `dup2`, `execv`), 143 EXPORTED
+ONLY y cero banned. Un símbolo exportado es sólo un candidato hasta que un
+smoke enfocado en FW 12.02 demuestre su contrato real.

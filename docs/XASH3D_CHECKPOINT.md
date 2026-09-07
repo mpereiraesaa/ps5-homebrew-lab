@@ -11,7 +11,7 @@ Reconciled: 2026-09-07. Hardware boundary: one PS5 on firmware 12.02.
 | 2 — Resource foundation | Complete | Fence-retired pool, two-slot transient ring, V#/T#/S#, per-frame constants, two pipeline permutations, cache contract and a clean 60,000-frame gate. |
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
-| 5 — Platform layer | Sized, later/parallel | ScePad, AudioOut, filesystem, direct-memory engine allocator, time/threads and three measured libc shims. |
+| 5 — Platform layer | In progress; bootstrap + filesystem closed | The engine boots and the full 4,741-file retail tree passes indexed lookup, case handling, repeated reads, a 90-second `c1a0` run and clean shutdown. Remaining: ScePad, AudioOut, direct-memory ownership, threads/time, frame/flip telemetry and the three project-owned libc shims. |
 | 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
@@ -245,7 +245,7 @@ The fail-closed validator accepted the immutable manifest, and a visible
 registered-entry CLI-stream capture has SHA-256
 `751d0fee9d54bb815acf3a5edc1ded8981cce0aca3f07b83ae4ff2344a8800a1`.
 Exact PID/title closure left no BigApp, all four services healthy and
-`PPSA99998` absent. Phase 4 is complete; Phase 5 is next.
+`PPSA99998` absent. Phase 4 is complete; Phase 5 is in progress.
 
 ## Parallel work that is now de-risked
 
@@ -256,9 +256,92 @@ The reproducible symbol probes show that libc/C++ is not the port blocker:
 - application PRX load, relocated export descriptors, calls and unload are
   already hardware-proven.
 
-Therefore Phase 5 can prototype the three tiny C shims and a minimal
-`platform/ps5` while Phase 3/4 mature, but it must not bypass the renderer gates
-or start full engine integration prematurely.
+Therefore Phase 5 closes the non-drawing platform contract before Phase 6
+starts full client, renderer and modular engine integration.
+
+## Phase 5 gate 1: engine boot (2026-09-07)
+
+Run `20260907T074705479Z_PPSA99996_xash3d-engine_0x9c50d46dcc2a` on FW 12.02,
+archived under `research/gpu/captures/runtime/`, validated by
+`ps5-xash3d/tools/validate_engine_boot_evidence.py`: engine `9aa39ad` and
+hlsdk `e277ffa` built without waf (`ps5-xash3d` PR #3, branch
+`exp/engine-boot`), `filesystem_stdio` and `server` resolved from the static
+tables, `valve` mounted from `/app0/xash3d` with `/download0/xash3d` as the
+writable root, `Spawn Server: c1a0`, `0 entities inhibited`, `4 player server
+started`, 90 s of simulation, `PS5_XASH_GATE_TIMEOUT ... action=quit`,
+`XASH_EXIT result=0`, 20 structured records, 38 console lines, no gaps.
+Transcript SHA-256
+`3c3d176c9f22d61db4c2c4911c676e81db3a5b16f8139be00cc3ce9ff5f06965`; ELF/fSELF
+`fa8df6b95c328123016243322bf4f51950252d0a1ed1f743974ec8b1769fe453` /
+`7d6747d276acd57411ab5e282f6f1672c0f796d7de336e7f5090141f910ce67b`.
+
+What the sandbox actually allows is recorded in `FINDINGS.md`, "Xash3D engine
+boot: contrato real del sandbox": closed stdio descriptors, `chdir`/`access`
+refused, a faulting `getcwd`, an unlistable image, an 8 MiB libc heap and
+non-blocking sockets refused on UDP. Each has a shim or a build step in
+`xash/platform_ps5/`; the engine sources are untouched. Xash PR #3 is merged
+as `23899eb99476980806627b28ba5243e3ab2260f3`, which is now the lab submodule
+pin.
+
+## Phase 5 filesystem checkpoint: closed (2026-09-07)
+
+The accepted full-tree run
+`20260907T155915636Z_PPSA99996_xash3d-engine_0xb72c42a8f42f` transactionally
+deployed 4,741 files / 555,437,162 bytes, served a 4,823-entry directory index,
+resolved and read the 12,565-byte `delta.lst` twice, executed `c1a0` for 90
+seconds and ended with `XASH_EXIT result=0`, gap-free BYE and zero large
+allocation failures. This closes indexed directory listing, case-correct
+lookup and large/repeated reads over the retail tree. The current `ftpsrv`
+completed that dataset deployment; FTP was not the crash source.
+
+The deterministic fault originally attributed to `FS_LoadFile` was outside
+the filesystem lifecycle. Instrumentation proved `gfx/palette.lmp` had
+`real_length=768`, allocated 769 bytes, read 768 bytes and closed with result
+zero. The SDK provider mapping then showed `strcasestr` routed through
+`libScePosixForWebKit.sprx`, not `libSceLibcInternal`. Setting
+`HAVE_STRCASESTR=0` selects Xash3D's portable `Q_stristr`. Fixed run
+`20260907T154452596Z_PPSA99996_xash3d-engine_0xb663524c9f61` booted beyond the
+fault; fSELF SHA-256
+`b622cec5561f1cfb49731e6cad9b58cad49480afd970ee8fe9e6e858952666dc`, linked
+ELF SHA-256
+`f4287a6f817ecdab19a1c8a60433cf3c6f33324e767a51b32aa543e8bb311c11`, and
+`llvm-readelf --dyn-syms <elf> | grep -i strcasestr` is empty.
+
+The four other `HAVE_*` decisions remain enabled because they passed focused
+hardware smoke, not merely because the SDK exports a name. Run
+`20260907T162442485Z_PPSA99996_xash3d-engine_0xb88fc0cf77a3` produced
+`strcasecmp=0`, `strnlen=4`, `strlcpy=7` with value `palette`, and
+`strlcat=11` with value `gfx/palette`, then loaded `c1a0` and exited cleanly
+after 20 seconds. ELF/fSELF SHA-256:
+`f40d7c2b3cad0f56e96ef974785cbc53b4c6512bf3dd05b871ef985ed4aec7a1` /
+`3aa7835949b1dd0f98de9fc8d6a9dec36fc16c68460617304b20eabb7cb5ce9f`.
+
+`xash/tools/audit_dyn_imports.py` and `xash/ps5_import_evidence.json` make that
+distinction reproducible. The smoke ELF has 167 dynamic imports: 21 hardware
+PASS, 3 hardware FAIL/GUARDED (`dup`, `dup2`, `execv`), 143 EXPORTED ONLY and
+zero banned imports. The four approved string helpers map to
+`libSceLibcInternal`; `strcasestr` maps to `libScePosixForWebKit`.
+
+## What remains to close Phase 5
+
+1. ScePad for movement, look, jump, crouch, use and fire, with structured input
+   evidence and exact handle teardown.
+2. SceAudioOut with a ring buffer, explicit producer/consumer ownership,
+   underrun accounting, audible proof and exact shutdown.
+3. The engine allocator and every GPU resource on direct memory, with a
+   balanced allocation ledger, guards and generation-correct retirement.
+4. The pthread primitives the engine uses, monotonic clock and measured sleep
+   granularity on FW 12.02.
+5. Frametime telemetry with GPU timestamps and VideoOut flip latency.
+6. Project-owned shims for `__assert`, fixed or SceUserService-backed identity
+   instead of `getpwuid`, and logging without `dladdr`.
+7. A final incremental FW 12.02 pass over every gate with host tests,
+   structured telemetry, immutable hashes, exact ownership/teardown, zero
+   errors and visual/audio/input evidence where applicable.
+
+Client/menu integration, `ref_null`/`ref_soft`, `ref_agc` and conversion of
+engine modules to application-owned PRXs are Phase 6. The early static client
+harness remains useful diagnostic evidence, but does not close a Phase 6 gate.
 
 ## Remote Play operating contract
 

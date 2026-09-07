@@ -56,9 +56,27 @@ independent transforms and source render modes; and world-tree PVS plus
 draw-AABB frustum culling reduces submitted world work. Every ordered gate
 passed independently. The complete water/glass/effects/Studio/HUD composition
 then passed a 60,000-frame FW 12.02 soak with two retired slots, exact
-ownership, intact guards, a gap-free BYE and zero errors. Phase 4 is complete;
-the platform layer is next. See
-`XASH3D_CHECKPOINT.md` for the evidence boundary and executable order.
+ownership, intact guards, a gap-free BYE and zero errors. Phase 4 is complete.
+Phase 5's engine-bootstrap and filesystem checkpoints passed on 2026-09-07.
+The Xash3D FWGS engine boots on FW 12.02, spawns `c1a0` with every entity class
+and quits cleanly. The accepted full-tree run deployed 4,741 files
+(555,437,162 bytes), served a 4,823-entry index, read the 12,565-byte
+`delta.lst` twice and completed a bounded 90-second run. The earlier
+`gfx/palette.lmp` fault was not an fd or filesystem failure: its measured
+length/read/close lifecycle was correct (768/768/0). The SDK had routed
+`strcasestr` through `libScePosixForWebKit`; `HAVE_STRCASESTR=0` now selects
+portable `Q_stristr`, and the linked ELF has no dynamic `strcasestr`.
+
+The remaining Phase 5 gates are, in order: ScePad for movement/look/jump/
+crouch/use/fire; SceAudioOut with a ring buffer and underrun accounting; the
+engine allocator and every GPU resource on direct memory; pthreads,
+monotonic time and measured sleep; GPU timestamps plus VideoOut flip latency;
+and project-owned shims for `__assert`, identity without `getpwuid`, and
+logging without `dladdr`. Every gate requires host tests, an incremental FW
+12.02 run, structured telemetry, exact ownership/teardown, zero errors and
+visual/audio/input evidence where applicable. Client/menu integration,
+`ref_null`/`ref_soft`, `ref_agc` and application-owned PRX conversion remain
+Phase 6 work.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
@@ -67,10 +85,14 @@ launch/close helpers for both. The obsolete historical host `PPSA99998` is not
 installed: its homebrew, mount, application and metadata paths are absent and
 the live application database contains no matching row.
 
-The engine symbol probe is also complete. The client has only three genuine
-SDK gaps (`__assert`, `getpwuid`, `dladdr`), and `mainui` plus both hlsdk
-modules have no missing C++ runtime provider. Raw lists and reproduction scripts
-live under `research/xash3d/`.
+The engine symbol probe is also complete, but an exported provider is not
+treated as a hardware pass. The current dynamic-import ledger contains 167
+symbols: 21 hardware-pass, 3 hardware-fail/guarded (`dup`, `dup2`, `execv`)
+and 143 exported-only. The four enabled string helpers (`strcasecmp`,
+`strnlen`, `strlcpy`, `strlcat`) passed a focused FW 12.02 smoke run. The
+remaining project-owned gaps are `__assert`, `getpwuid` and `dladdr`. Raw
+lists, the evidence ledger and reproduction scripts live under
+`research/xash3d/` and the pinned `ps5-xash3d` submodule.
 
 ## Development policy
 
