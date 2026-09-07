@@ -11,10 +11,14 @@ congelada como demo Gears.
 
 `ps5-xash3d` renderiza el mapa `c1a0` con texturas base, lightmap dinámico,
 mipmaps con filtrado trilineal/anisotrópico, alpha-test y cielo, con noclip
-físico por DualSense y dos frames en vuelo. Las Fases 0–3 del plan pasaron
-soaks de 60.000 frames en hardware con fences GPU, tokens VideoOut y guardas
-exactos, cero errores del renderer y telemetría TCP estructurada. La Fase 4,
-estados de render GoldSrc, es la siguiente.
+físico por DualSense y dos frames en vuelo. Las Fases 0–4 del plan están
+cerradas en hardware con fences GPU, tokens VideoOut y guardas exactos, cero
+errores del renderer y telemetría TCP estructurada. La Fase 4, estados de
+render GoldSrc, está completa. Sus ocho gates ordenados
+probaron pipelines, matriz de estados, viewport/scissor, 2D, iluminación BSP,
+sprites/partículas, Studio animado, brush entities y visibilidad; una corrida
+integrada final mantuvo agua, vidrio, efectos, Studio y HUD durante 60.000
+frames con ownership exacto y cero errores.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico
@@ -30,9 +34,10 @@ privadas del laboratorio. `main` está protegida; todo desarrollo nuevo ocurre
 en branches/worktrees y entra mediante pull request.
 
 El laboratorio también puede observar la consola directamente mediante Remote
-Play: `headless-linkdev` realiza el pairing por `elfldr`, Chiaki muestra el
-stream y `tools/ps5_remoteplay.py` toma capturas o grabaciones sin depender de
-la cámara del operador.
+Play. `tools/ps5_remoteplay.py` reutiliza la entrada Chiaki ya registrada para
+abrir el stream CLI y tomar capturas o grabaciones; el flujo normal no repite
+pairing, no abre el cliente principal y no depende del foco ni de la cámara del
+operador.
 
 ## Estructura
 

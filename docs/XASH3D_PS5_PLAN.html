@@ -125,11 +125,11 @@
 
 <div class="page">
 <header>
-  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-06 · rev 10</div>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-07 · rev 17</div>
   <h1>Xash3D on PS5</h1>
-  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. The complete Phase 3 texture path—bounded lightmap, deterministic mips, anisotropic sampling, alpha test, sky and exact accounting—has passed its final 60,000-frame hardware gate.</p>
+  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. Phase 4 is complete: every ordered renderer gate passed independently, then the full water, glass, effects, animated Studio and HUD scene survived one clean 60,000-frame integrated ownership soak.</p>
   <div class="facts">
-    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 4 ready · identity split</div></div>
+    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 4 complete</div></div>
     <div class="fact"><div class="k">Latest gate</div><div class="v">60,000 frames · 0 errors</div></div>
     <div class="fact"><div class="k">Cadence</div><div class="v">59.94 fps · 2 in flight</div></div>
     <div class="fact"><div class="k">GPU target</div><div class="v">gfx1013 · AGC</div></div>
@@ -141,17 +141,17 @@
   <a class="done" href="#p1"><span class="n">1</span><span class="t">BSP viewer, noclip</span></a>
   <a class="done" href="#p2"><span class="n">2</span><span class="t">Resource foundation</span></a>
   <a class="done" href="#p3"><span class="n">3</span><span class="t">Texture path</span></a>
-  <a class="active" href="#p4"><span class="n">4</span><span class="t">GoldSrc render states</span></a>
-  <a href="#p5"><span class="n">5</span><span class="t">Platform layer</span></a>
+  <a class="done" href="#p4"><span class="n">4</span><span class="t">GoldSrc render states</span></a>
+  <a class="active" href="#p5"><span class="n">5</span><span class="t">Platform layer</span></a>
   <a href="#p6"><span class="n">6</span><span class="t">Engine integration</span></a>
   <a href="#p7"><span class="n">7</span><span class="t">Playable and release</span></a>
 </nav>
 <div class="legend"><span class="l-done">done</span><span class="l-active">in progress</span><span class="l-later">next</span></div>
 
 <section class="checkpoint" aria-labelledby="checkpoint-title">
-  <div class="eyebrow">Current checkpoint · 2026-09-06</div>
-  <h2 id="checkpoint-title">Phase 4 is unblocked under a dedicated Xash3D identity</h2>
-  <p><code>c1a0</code> already passed the complete 60,000-frame Phase 3 texture gate with deterministic mip chains, bounded dynamic lightmap, separate opaque/<code>{</code>/sky passes and exact accounting. The pre-Phase 4 package split is now hardware-proven too: Xash3D is installed as <code>PPSA99996</code>, the frozen Gears demo remains <code>PPSA99997</code>, and separate exact-title helpers control them. Run <code>20260906T205728904Z</code> observed Xash3D under its new identity for 1,440 frames at 59.94 fps with zero renderer errors, then verified exact closure and four healthy console services. The obsolete historical host <code>PPSA99998</code> is uninstalled, absent from all application/mount paths and absent from live application-database cells.</p>
+  <div class="eyebrow">Current checkpoint · 2026-09-07</div>
+  <h2 id="checkpoint-title">GoldSrc render states are complete</h2>
+  <p>Run <code>20260907T020656141Z</code> composed real BSP lightstyles and a dynamic light, source water and glass brush submodels, sprites, 72 particles, three CPU-skinned Studio instances and the blended HUD/console/menu/font path while world-tree PVS and frustum tests reduced 1,952 draws to 362. It completed 60,000/60,000 frames in one process with two retired readbacks, exact fences and VideoOut tokens, an exactly retired two-slot ring, intact guards, six reclaimed allocations, a 2,613-record gap-free BYE and zero renderer errors. The fail-closed validator accepted both private bundle identities; a registered-entry CLI-stream capture provides the visual complement without pairing or focus assumptions. Xash3D remains <code>PPSA99996</code>, frozen Gears remains <code>PPSA99997</code>, and obsolete <code>PPSA99998</code> remains absent.</p>
   <div class="grid">
     <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
     <div class="item"><div class="k">Dynamic proof</div><div class="v">8×8 patch/frame · guards stable · 10k</div></div>
@@ -160,9 +160,17 @@
     <div class="item"><div class="k">Alpha proof</div><div class="v">1 texture · 42 draws · distinct control/readback</div></div>
     <div class="item"><div class="k">Sky proof</div><div class="v">1 texture · 158 draws · distinct control/readback</div></div>
     <div class="item"><div class="k">Accounting</div><div class="v">68.7 MB resident · 781.5 MB uploaded</div></div>
-    <div class="item"><div class="k">Final proof</div><div class="v">60k · exact tokens · guards intact · 0 errors</div></div>
+    <div class="item"><div class="k">Phase 4 catalog</div><div class="v">99 states · 9 native variants · real BSP keys</div></div>
+    <div class="item"><div class="k">State proof</div><div class="v">9 cases · 18 retired readbacks · 10k</div></div>
+    <div class="item"><div class="k">2D proof</div><div class="v">2 batches · 522 indices · HUD/console/menu/font</div></div>
+    <div class="item"><div class="k">Lighting proof</div><div class="v">4 modes · 8 readbacks · 704-byte patch</div></div>
+    <div class="item"><div class="k">Effects proof</div><div class="v">73 quads · 3 batches · 8 readbacks</div></div>
+    <div class="item"><div class="k">Studio proof</div><div class="v">8 bones · 5 modes · 10 readbacks</div></div>
+    <div class="item"><div class="k">Brush proof</div><div class="v">5 real submodels · water + glass · 69 draws</div></div>
+    <div class="item"><div class="k">Visibility proof</div><div class="v">1,952 → 362 world draws · PVS + frustum</div></div>
+    <div class="item"><div class="k">Final proof</div><div class="v">60k frames · 2 slots · 0 errors</div></div>
     <div class="item"><div class="k">Installed identities</div><div class="v">Xash3D 99996 · Gears 99997 · 99998 retired</div></div>
-    <div class="item"><div class="k">Next step</div><div class="v">Begin Phase 4 render states</div></div>
+    <div class="item"><div class="k">Next step</div><div class="v">Phase 5 platform layer</div></div>
   </div>
 </section>
 
@@ -280,35 +288,36 @@
 </section>
 
 <!-- PHASE 4 -->
-<section class="phase active" id="p4">
+<section class="phase done" id="p4">
   <div class="num">4</div>
   <div class="body">
     <div class="head">
       <h2>GoldSrc render states</h2>
-      <div class="meta"><span class="pill later">next</span><span>≈ 2 weeks</span><span>The state surface the ref API will demand.</span></div>
+      <div class="meta"><span class="pill done">done</span><span>The state surface the ref API will demand.</span></div>
     </div>
     <div class="visible"><b>Visible result.</b> The map with water, glass, sprites, particles, an animated studio model and a HUD, all from your own loader.</div>
     <ol class="steps">
       <li><b>Complete.</b> <code>ps5-xash3d</code> owns <code>PPSA99996</code>, frozen Gears keeps <code>PPSA99997</code>, their exact-title helpers are separate, and the identity/launch/close gate passed on FW 12.02. The obsolete <code>PPSA99998</code> host is not installed.</li>
-      <li>Pipeline permutations: opaque, alpha blend, additive, alpha test, depth write off, cull front/back/none, fog on/off, lightmap multitexture on/off.</li>
-      <li>Mid-frame viewport and scissor changes.</li>
-      <li>Orthographic 2D path with blending for HUD, console and menu. Fonts are just textured quads.</li>
-      <li>Lightstyles and dynamic lights writing into the lightmap atlas via the Phase 3 upload path.</li>
-      <li>Sprites and particles from the transient ring.</li>
-      <li>Studio models: CPU skinning into the transient ring, per-model textures, chrome and additive render modes.</li>
-      <li>Brush entities with their own transforms and render modes.</li>
-      <li>PVS and frustum culling, now that draw counts have a real consumer.</li>
+      <li><b>Complete.</b> Pipeline permutations: all 99 semantic states and nine native variants exist; opaque, alpha blend, additive, alpha test, depth-write on/off, cull front/back/none, fog on/off and lightmap on/off passed actual draw and paired framebuffer gates across 10,000 frames.</li>
+      <li><b>Complete.</b> Mid-frame viewport and scissor changes plus full-frame restoration passed a visual and 10,000-frame FW 12.02 gate with exact ownership and zero errors.</li>
+      <li><b>Complete.</b> Orthographic 2D path: alpha/additive batches, HUD, translucent console and menu, procedural font atlas and per-frame transient geometry passed 10,000 frames with exact ownership and zero errors.</li>
+      <li><b>Complete.</b> Real BSP lightstyle planes plus a face-local dynamic light update the lightmap atlas through the bounded Phase 3 upload path; four modes and eight retired readbacks passed 10,000 frames with zero errors.</li>
+      <li><b>Complete.</b> One camera-facing sprite plus 24 alpha and 48 additive particles stream from the per-slot transient ring; control, isolated and combined modes passed eight retired readbacks and 10,000 frames with zero errors.</li>
+      <li><b>Complete.</b> Studio v10 models: eight-bone animation is CPU-skinned into the transient ring; per-model textures, generated chrome and additive modes passed ten retired readbacks and 10,000 frames with zero errors.</li>
+      <li><b>Complete.</b> Real BSP brush entities retain source render modes and independent transforms; the final scene extends them with real <code>func_water</code> and <code>glass_med</code> submodels.</li>
+      <li><b>Complete.</b> Real world-tree PVS plus draw-AABB frustum culling reduced 1,952 world draws to 362 at the locked spawn camera while inline brush models retained their independent transformed path.</li>
+      <li><b>Complete.</b> The full visible scene passed a fail-closed 60,000-frame integrated FW 12.02 soak with two retired slots, exact ownership, intact guards, six reclaimed allocations, gap-free BYE and zero errors.</li>
     </ol>
   </div>
 </section>
 
 <!-- PHASE 5 -->
-<section class="phase" id="p5">
+<section class="phase active" id="p5">
   <div class="num">5</div>
   <div class="body">
     <div class="head">
       <h2>Platform layer</h2>
-      <div class="meta"><span class="pill later">next</span><span>≈ 1 week, parallel to Phase 4</span><span>Everything the engine needs that is not drawing.</span></div>
+      <div class="meta"><span class="pill active">next</span><span>≈ 1 week</span><span>Everything the engine needs that is not drawing.</span></div>
     </div>
     <div class="visible"><b>Visible result.</b> Frametime overlay with GPU timestamps; sound plays; the stick layout matches the HL1 controller scheme.</div>
     <ol class="steps">
@@ -395,7 +404,7 @@
   </div>
 </section>
 
-<footer>Revision 10 closes the pre-Phase 4 identity gate: Xash3D is hardware-proven as <code>PPSA99996</code>, Gears remains <code>PPSA99997</code>, exact-title helpers are separate and historical <code>PPSA99998</code> is uninstalled. Revision 9 moved the port to its own repository, <code>ps5-xash3d</code>, and froze <code>ps5-agc-gears</code> as the Gears demo. Revision 8 recorded completion of all six Phase 3 texture-path hardware checkpoints. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
+<footer>Revision 17 closes Phase 4: transformed brush entities, real world PVS/frustum visibility and the complete water/glass/effects/Studio/HUD composition passed their ordered gates and a final 60,000-frame FW 12.02 ownership soak with zero errors. Revision 16 closed animated Studio models. Revision 15 closed transient sprites and particles. Revision 14 closed BSP lightstyles and dynamic lights. Revision 13 closed the orthographic blended 2D gate. Revision 12 closed the complete blend/depth/cull/fog/lightmap matrix. Revision 11 recorded real opaque/masked binding and viewport/scissor restoration. Revision 10 closed the identity split: Xash3D is <code>PPSA99996</code>, Gears remains <code>PPSA99997</code> and historical <code>PPSA99998</code> is uninstalled. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step ends with something on screen.</footer>
 </div>
 </body>
 </html>
