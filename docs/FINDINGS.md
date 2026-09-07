@@ -538,3 +538,39 @@ filesystem y el servidor no usan ninguno de los tres: `mmap` anónimo, `read`/
 Todo vive en `ps5-xash3d`, rama `exp/engine-boot` (PR #3):
 `xash/platform_ps5/{boot,sys,fs,mem}_ps5.c`, `xash/build_engine.sh` y
 `docs/ENGINE_BOOT_PHASE5.md`. Las fuentes del engine no se tocan.
+
+## Xash3D filesystem completo e imports libc (2026-09-07)
+
+El blocker posterior no era FTP ni el ciclo de vida de los descriptores. La
+corrida aceptada
+`20260907T155915636Z_PPSA99996_xash3d-engine_0xb72c42a8f42f` desplegó de forma
+transaccional 4.741 archivos / 555.437.162 bytes, sirvió un índice de 4.823
+entradas, resolvió y leyó dos veces `delta.lst` (12.565 bytes), ejecutó `c1a0`
+durante 90 segundos y terminó con `XASH_EXIT result=0`, BYE sin gaps y cero
+fallos de allocations grandes. Esto cierra listing indexado, case handling y
+lecturas grandes/repetidas sobre el árbol retail con el `ftpsrv` actual.
+
+La instrumentación de `gfx/palette.lmp` midió `real_length=768`, allocation de
+769 bytes, lectura de 768 bytes y cierre con resultado cero. La firma del fault
+y el mapa de proveedores llevaron a `strcasestr`: el SDK lo resolvía mediante
+`libScePosixForWebKit.sprx`, no `libSceLibcInternal`. `HAVE_STRCASESTR=0`
+selecciona ahora `Q_stristr`. La corrida corregida
+`20260907T154452596Z_PPSA99996_xash3d-engine_0xb663524c9f61` pasó el punto del
+fault; el fSELF tiene SHA-256
+`b622cec5561f1cfb49731e6cad9b58cad49480afd970ee8fe9e6e858952666dc`, el ELF
+enlazado `f4287a6f817ecdab19a1c8a60433cf3c6f33324e767a51b32aa543e8bb311c11`, y
+`llvm-readelf --dyn-syms <elf> | grep -i strcasestr` no produce salida.
+
+Los otros cuatro `HAVE_*` no se desactivaron por prevención: se validaron en
+hardware. La corrida
+`20260907T162442485Z_PPSA99996_xash3d-engine_0xb88fc0cf77a3` obtuvo
+`strcasecmp=0`, `strnlen=4`, `strlcpy=7` con `palette` y `strlcat=11` con
+`gfx/palette`, cargó `c1a0` y salió limpia a los 20 segundos. ELF/fSELF:
+`f40d7c2b3cad0f56e96ef974785cbc53b4c6512bf3dd05b871ef985ed4aec7a1` /
+`3aa7835949b1dd0f98de9fc8d6a9dec36fc16c68460617304b20eabb7cb5ce9f`.
+
+La política queda mecanizada en `xash/tools/audit_dyn_imports.py` y
+`xash/ps5_import_evidence.json`. En el ELF del smoke hay 167 imports: 21
+hardware PASS, 3 hardware FAIL/GUARDED (`dup`, `dup2`, `execv`), 143 EXPORTED
+ONLY y cero banned. Un símbolo exportado es sólo un candidato hasta que un
+smoke enfocado en FW 12.02 demuestre su contrato real.
