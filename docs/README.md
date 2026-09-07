@@ -51,3 +51,5 @@ boundary.
 `RELEASE_STATE.md` retain the chronological Stage A–I record. Where their
 language says “current” or “next”, interpret it at the dated reconciliation;
 `CURRENT.md` supersedes those statements operationally.
+
+- [`PORTING_PLAYBOOK.md`](PORTING_PLAYBOOK.md): cross-project PS5/Prospero porting method, runtime contract and blocker post-mortems. Read before porting anything new under `projects/`.
