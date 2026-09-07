@@ -14,6 +14,7 @@
   python3 tools/ps5_remoteplay.py stream --host "$PS5_HOST" --nickname PS5-054
   python3 tools/ps5_remoteplay.py screenshot
   python3 tools/ps5_remoteplay.py record --seconds 30
+  python3 tools/ps5_remoteplay.py record-demo --name "Xash3D Phase 5"
   python3 tools/ps5_remoteplay.py stop-stream
   ```
 
@@ -21,9 +22,14 @@
   selected registered console, cleans a stale CLI-owned stream when necessary,
   and never places pairing credentials on the command line. Build or pair only
   for initial setup or recovery; see `docs/REMOTEPLAY.md`.
+- The isolated stream profile requests 1080p. Keep Chiaki's 60 FPS and automatic
+  bitrate defaults unless a measured compatibility problem requires a change.
 - Remote Play captures belong under the ignored
   `research/gpu/captures/remoteplay/` tree unless the owner explicitly
   selects and audits one for publication.
+- Use `record-demo` for operator-controlled community presentations. It records
+  until Enter or `Ctrl+C`, produces a web-compatible MP4, and keeps the raw
+  capture private until the owner reviews it for visible personal information.
 - Do not leave Chiaki as the active window after automation. The wrapper
   restores the prior workspace focus without overriding a later user focus
   choice. `stop-stream` targets only a PID whose process identity is verified
