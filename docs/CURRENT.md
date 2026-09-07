@@ -63,6 +63,12 @@ the console in dedicated mode from `ps5-xash3d` branch `exp/engine-boot`
 bounded 90 s run. See `XASH3D_CHECKPOINT.md` for the evidence boundary and
 `FINDINGS.md` for the sandbox contract that run measured.
 
+Phase 5 is owned end to end by one agent on `ps5-xash3d` branch
+`exp/engine-boot`; other agents leave `PPSA99996`, the engine worktree and the
+Phase 5 gates alone until the phase is declared closed in
+`XASH3D_PS5_PLAN.html`. The next gate is the engine in client mode with
+`ref_soft` as a stand-in renderer, then `ref_agc` on the Phase 2–4 backend.
+
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
 available as `PPSA99997`. `night_supervisor.py` has distinct exact-title

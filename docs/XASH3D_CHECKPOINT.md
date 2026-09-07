@@ -282,7 +282,10 @@ refused, a faulting `getcwd`, an unlistable image, an 8 MiB libc heap and
 non-blocking sockets refused on UDP. Each has a shim or a build step in
 `xash/platform_ps5/`; the engine sources are untouched. Remaining Phase 5
 gates: `filesystem_stdio` as an application-owned PRX, ScePad, AudioOut, the
-direct-memory allocator and frametime instrumentation.
+direct-memory allocator and frametime instrumentation, reordered in plan rev 19
+so the visible engine comes first: client-mode boot with `ref_soft` as a
+correctness harness, then `ref_agc`, then ScePad/AudioOut, then PRX and
+allocator consolidation. One agent owns the whole phase; others wait.
 
 ## Remote Play operating contract
 
