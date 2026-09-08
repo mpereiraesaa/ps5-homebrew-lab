@@ -26,9 +26,9 @@ dinámicas, sprites/partículas, Studio animado, brush entities y visibilidad
 PVS/frustum. El gate integrado final sostuvo agua, vidrio, efectos, Studio y
 HUD durante 60.000 frames con ownership exacto, guardas intactas, BYE gap-free
 y cero errores. La Fase 5, platform layer, está completa. La Fase 6 está
-activa y sus tres primeros gates ya probaron el loader híbrido,
-`filesystem_stdio.prx` y `server.prx` en FW 12.02; `menu.prx` es el siguiente
-checkpoint aislado.
+activa y sus cuatro primeros gates ya probaron el loader híbrido,
+`filesystem_stdio.prx`, `server.prx` y `menu.prx` en FW 12.02; `client` es el
+siguiente checkpoint aislado y `ref_agc` conserva su gate final.
 
 Identidades instaladas: Xash3D usa `PPSA99996` y la demo Gears usa
 `PPSA99997`, cada una con helpers exactos independientes. El host histórico

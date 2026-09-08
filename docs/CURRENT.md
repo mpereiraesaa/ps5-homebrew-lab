@@ -28,7 +28,7 @@ completed all six hardware gates before merging through
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
 history of `projects/ps5-xash3d`, which this laboratory now pins at merged
-Phase 6 server-PRX commit `cbc5948` (the dedicated identity began at
+Phase 6 MainUI-PRX commit `9f783ec` (the dedicated identity began at
 `c09318f`).
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
@@ -163,8 +163,17 @@ constructors have run on FW 12.02: the generated lifecycle now executes the
 relocated `.init_array` forward and `.fini_array` reverse. After the bounded
 15-second run, server stop/unload returned zero while the filesystem remained
 active; filesystem stop/unload then returned zero with no modules active and
-the engine arena balanced. The next isolated checkpoint converts only `menu`
-while preserving this executable/filesystem/server rollback point.
+the engine arena balanced.
+
+Phase 6 gate 4 is closed in merged Xash3D PR #14 (`9f783ec`). Accepted run
+`20260908T094038112Z_PPSA99996_xash3d-engine_0xf1174a815840` loaded MainUI as
+`menu.prx` on top of the filesystem/server checkpoint. Its 16 base and 12
+extended callbacks passed with complete engine masks, explicit C++ lifecycle,
+one activation and 5,127 redraws. The software framebuffer presented 5,100
+non-black frames; this proves UI execution but not yet AGC presentation on the
+TV. Server, menu and filesystem unloaded in order with active counts 2, 1 and
+0, zero structured errors and a clean BYE. The next isolated checkpoint
+converts only `client` while preserving this rollback point.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
