@@ -224,11 +224,11 @@ one image released and clean BYE. Eight host DLL bindings remain unimplemented.
 The validator accepted --allow-i386 and --allow-wx; one 16 KiB page merges
 write/execute permissions. That mapping run executed no guest instructions or graphics.
 
-Subsequent bounded host translation executed 95 instructions from the original
+Subsequent bounded host translation executed 103 instructions from the original
 Pinball entry plus GetModuleHandleA(NULL), returning the mapped base 0x01000000,
 and the CRT state setter __set_app_type, both mode-pointer getters, _controlfp, _initterm and __getmainargs.
 It now binds 207 imports (205 function tokens, two CRT data words) and stops
-inside an original-game initializer (EIP 0x0101cd38). That callback has started
+at GetSystemTimeAsFileTime inside an original-game initializer. That callback has started
 but not returned; full callback evidence remains synthetic. Guest FP control state and CRT mode-pointer getters also
 have host unit coverage. Other handlers remain pending; binding is not implementation.
 This is not PS5 guest execution or completed Win32 startup.
