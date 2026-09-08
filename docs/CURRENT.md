@@ -210,58 +210,29 @@ ledger and reproduction scripts live under
 
 ## Win32 compatibility layer
 
-`projects/prospero-win` is a second active application project, independent
-of the renderer line: a zero-emulation Win32 compatibility layer that
-manually maps classic PC programs into the console's address space and
-reimplements the Windows API surface natively. It uses development identity
-`PPSA99995`, distinct from Xash3D's `PPSA99996` and the frozen Gears demo's
-`PPSA99997`.
+prospero-win (PPSA99995) targets original Windows binaries. AMD64 execution
+requires Win64 ABI bridges; x86 requires software execution because the tested
+LDT compatibility-mode route is refused on FW 12.02. Neither application
+execution path is complete. The first game target is original Space Cadet
+Pinball, without recompilation; DRM and anti-cheat are out of scope.
 
-Phase 0.1 — parse, map, relocate, protect and recursively resolve
-third-party dependencies — **passed on FW 12.02 on 2026-09-08**, run
-`20260908T111650513Z_PPSA99995_prospero-win_0xf65743b2ac43`. The console
-mapped a Windows executable and the third-party DLL it imports, rebased both
-away from their preferred bases with relocations applied, verified both byte
-for byte, resolved the dependency chain, recorded `kernel32`/`msvcrt` as host
-bindings without reading them from disk, and released everything: 25 records,
-gap-free BYE, `PW_EXIT result=0`. `make check` includes its host contracts
-and publication audit; the evidence boundary is in
-`projects/prospero-win/docs/PE_MAPPING_PHASE0.md`.
+Phase 0.1 synthetic mapping passed. The original Pinball PE32 also passed
+mapping on PS5 in run
+`20260908T145242477Z_PPSA99995_prospero-win_0x1021ed623a4eb`: exact base
+0x01000000, 311296 reserved bytes, three verified sections, zero mismatches,
+one image released and clean BYE. Eight host DLL bindings remain unimplemented.
+The validator accepted --allow-i386 and --allow-wx; one 16 KiB page merges
+write/execute permissions. No guest instructions or graphics were executed.
 
-Two boundaries are documented there before any code depends on them.
-Executable memory needs the aliased write/execute path rather than a
-protection transition, so the project's memory contract carries both aliases
-from the start. And running 32-bit code — most of the intended catalogue — is
-an open question rather than a closed door: Zen 2 executes 32-bit
-instructions natively in compatibility mode, and reaching that mode needs a
-code descriptor the kernel installs through `sysarch(I386_SET_LDT, ...)`,
-which the pinned payload SDK declares but which no run has exercised on this
-firmware. Gate 0.2a asked it and the answer is **no**:
-`sysarch(I386_SET_LDT, ...)` returns `EINVAL` from a title, so no local
-descriptor can be installed and 32-bit compatibility mode cannot be entered.
-The same probe completes a full round trip on an ordinary x86-64 host, which
-is what makes the refusal attributable to the platform rather than to the
-stub. WoW64-style ABI thunking is therefore unavailable here. See
-`projects/prospero-win/docs/COMPAT32_PHASE0A.md`.
+Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
+does not eliminate x86 address/stack rewriting or establish a large guest
+working-set budget. Next: bounded execution/ABI tests, early x86 translator
+prototype and the Pinball Win32 surface. Reuse Xash3D audio/input contracts
+with WinMM and Win32 adapters; resolve component licensing before extraction.
 
-The scope decision that followed is settled: **both 32-bit and 64-bit
-programs are supported.** 64-bit code executes natively; 32-bit code goes
-through a same-ISA JIT translator, which is Phase 4 of that project's
-roadmap and is deliberately sequenced after a 64-bit program works end to
-end. Its platform prerequisites were measured rather than assumed: a low
-address is grantable on request so guest pointers can live below 4 GiB and
-memory operands need no rewriting, a title gets 256 MiB contiguous there,
-and `mprotect` to read-write-execute succeeds so a code cache needs no
-double mapping. The project is licensed LGPL-2.1-or-later; the reasoning,
-including why 2.1 rather than 3, is in its `LICENSING.md`.
-
-Two platform facts from these runs are recorded in `PORTING_PLAYBOOK.md`
-because they apply to every port: the page size is 16 KiB, not 4 KiB, and
-FreeBSD's `munmap` truncates a misaligned address downward and extends the
-length, so a misaligned trim releases memory that is still in use. The
-16 KiB granularity also means a 4 KiB-aligned PE cannot keep W^X: a 28 KiB
-image occupies two protectable pages and one ends up writable and
-executable, which the validator refuses unless the operator acknowledges it.
+Canonical status, artifact hashes and acceptance command:
+`projects/prospero-win/docs/PINBALL_TARGET.md`. Scope and sequence:
+`projects/prospero-win/docs/ROADMAP.md`. Project licence: LGPL-2.1-or-later.
 
 
 ## Development policy

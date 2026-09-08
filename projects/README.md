@@ -10,7 +10,7 @@ publica en bloque.
 | --- | --- | --- |
 | `ps5-xash3d/` | Activo: port Xash3D sobre AGC, Fases 0–3 validadas en hardware; público, `main` protegida pendiente | [mpereiraesaa/ps5-xash3d](https://github.com/mpereiraesaa/ps5-xash3d) |
 | `ps5-agc-gears/` | Público, standalone y validado en hardware; congelado como demo Gears | [mpereiraesaa/ps5-agc-gears](https://github.com/mpereiraesaa/ps5-agc-gears) |
-| `prospero-win/` | Activo: capa de compatibilidad Win32 sin emulación; Fase 0.1 completa en host, gate de consola pendiente | Pendiente (nombre, licencia y remoto sin decidir) |
+| `prospero-win/` | Activo: runtime Windows; mapeo del Pinball original validado en PS5, ejecución pendiente | LGPL-2.1-or-later; desarrollo local |
 | `logging_server/` | Componente privado reutilizable; suite host activa | Telemetría TCP `ps5log/1` |
 
 ## Regla de aislamiento
