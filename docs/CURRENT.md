@@ -243,6 +243,9 @@ Window creation reaches audio/table initialization, so these dependencies must
 be planned together. Six subsystem packages and evidence limits are recorded in
 `projects/prospero-win/docs/STARTUP_ANALYSIS.md`. This is static analysis, not
 new hardware or application-startup execution evidence.
+The guest heap core now implements allocation, zeroing, resizing and coalescing
+with host regression coverage. CRT adapters and guest errno/new-handler wiring
+remain pending; original execution still stops at malloc.
 
 The next API work is inventory-first, not incremental runtime discovery.
 `inventory_imports.py` confirms 207 imports across eight DLLs, all with Wine
