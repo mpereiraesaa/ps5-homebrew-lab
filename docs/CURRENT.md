@@ -28,7 +28,8 @@ completed all six hardware gates before merging through
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
 history of `projects/ps5-xash3d`, which this laboratory now pins at merged
-Phase 6 loader commit `af99dcd` (the dedicated identity began at `c09318f`).
+Phase 6 filesystem-PRX commit `0d1f0e0` (the dedicated identity began at
+`c09318f`).
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -136,8 +137,20 @@ and zero active handles. FW 12.02 cleared the module-info size word and did not
 automatically mutate the probe through its ELF entry, so the loader accepts
 the measured zero/`0x160` shape and modules expose explicit idempotent startup.
 The same run spawned `c1a0` and closed cleanly; a no-probe production
-regression passed afterward. The next isolated checkpoint converts only
-`filesystem_stdio`, keeping the server static until its own gate.
+regression passed afterward.
+
+Phase 6 gate 2 is closed in merged Xash3D PR #12 (`0d1f0e0`). Accepted run
+`20260908T071044664Z_PPSA99996_xash3d-engine_0xe8e95e4c0974` loaded
+`filesystem_stdio.prx` with four mapped segments and eight validated exports,
+explicitly initialized its 4,823-entry index, listed 22 `gfx/*` resources,
+resolved mixed-case `GfX/PaLeTtE.LmP` at 768 bytes and read the 2,546,336-byte
+`maps/c1a0.bsp`. The static server then spawned `c1a0`; after 15 seconds the
+filesystem state remained valid, `module_stop` and unload both returned zero,
+no dynamic handles remained and the engine arena closed exactly. The accepted
+allocator contract keeps `LoadFileMalloc` on process libc because its buffer
+crosses into host `COM_FreeFile`; a rejected private-arena diagnostic made
+that boundary observable through `SIGABRT`. The next isolated checkpoint
+converts only the server while preserving the proven dynamic filesystem.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
