@@ -12,7 +12,7 @@ Reconciled: 2026-09-08. Hardware boundary: one PS5 on firmware 12.02.
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
-| 6 — Engine integration | Active, gate 1 closed | Hybrid `COM_*` PRX loader is hardware-proven; filesystem, server, menu, client and `ref_agc` conversions remain. |
+| 6 — Engine integration | Active, gates 1–2 closed | Hybrid `COM_*` loader and dynamic `filesystem_stdio` are hardware-proven; server, menu, client and `ref_agc` conversions remain. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
 The Phase 1/2 implementation was merged through
@@ -21,7 +21,7 @@ path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
 the laboratory submodule `projects/ps5-xash3d` now pins the merged Phase 6
-loader-gate commit `af99dcd`.
+filesystem-PRX commit `0d1f0e0`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
@@ -506,9 +506,44 @@ Normal regression run
 `20260908T054524368Z_PPSA99996_xash3d-engine_0xe441394ac877` packaged no
 probe (`prx_gate=0`), loaded the complete retail tree and `c1a0` through the
 static fallback, and closed cleanly. The probe and all transactional deployment
-files were removed afterward. The next gate converts only
-`filesystem_stdio`, proving listing, large reads, case handling and
-`gfx/palette.lmp` through the PRX while leaving the server static.
+files were removed afterward.
+
+### Dynamic filesystem PRX: closed (2026-09-08)
+
+Xash3D PR #12, merged as `0d1f0e0`, removes only `filesystem_stdio` from the
+static table and packages it behind eight validated `PRXDESC1` exports. The
+server remains static. Because FW 12.02 does not invoke the module entry for
+this loading path, the `COM_*` owner explicitly calls `module_start` after
+validation and `module_stop` before unload; partial initialization and failed
+teardown retain ownership for rollback/retry.
+
+Accepted run
+`20260908T071044664Z_PPSA99996_xash3d-engine_0xe8e95e4c0974` mounted the
+complete 4,823-entry private tree, returned 22 `gfx/*` results, resolved
+mixed-case `GfX/PaLeTtE.LmP` to 768 bytes and read `maps/c1a0.bsp` at
+2,546,336 bytes with stable non-zero hashes. The static server loaded
+Half-Life and spawned `c1a0`. After 15.019 seconds, module state was still
+valid, explicit stop and unload returned zero, active module count was zero,
+the 128 MiB engine arena balanced and telemetry ended with a clean BYE.
+
+The ABI deliberately leaves `LoadFileMalloc` on shared process libc because
+the pointer is released by host `COM_FreeFile`. Rejected diagnostic run
+`20260908T065949157Z_PPSA99996_xash3d-engine_0xe850bfc43c41` instead wrapped
+the PRX allocator in a private arena: all filesystem reads passed, then libc
+raised `SIGABRT` at the cross-module free boundary. The immutable validator
+therefore requires `allocator_contract=libc-shared`.
+
+Host ELF/fSELF SHA-256:
+`0bdba330bbbe58f940f166fc9b2980fe21457ba8b1d7474b35b6ecda26a1d25d` /
+`2e1f31f70403661c4f0e9a7e5f0d408816e5800c5f9c2169d790c831b3260861`;
+PRX ELF/fSELF SHA-256:
+`4a6f0d34200bad5892f0af3d2d194b31f930834d9178d11f7336391084b3588d` /
+`888e0e73e6a228a9277600a009facb26933929752688b36633aa2f5c3f54740c`;
+transcript/manifest SHA-256:
+`808cc9a79c3892829f38f8865b9405d055a31c7aff37aa3571db14fdcdc09efb` /
+`26752b034280ed22d99bc3112d2407e939729b85cc72df90e45f2962f338bf45`.
+The next gate converts only the server while retaining this dynamic filesystem
+checkpoint.
 
 ## Remote Play operating contract
 
