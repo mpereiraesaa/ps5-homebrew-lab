@@ -12,7 +12,7 @@ Reconciled: 2026-09-08. Hardware boundary: one PS5 on firmware 12.02.
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
-| 6 — Engine integration | Active, gates 1–2 closed | Hybrid `COM_*` loader and dynamic `filesystem_stdio` are hardware-proven; server, menu, client and `ref_agc` conversions remain. |
+| 6 — Engine integration | Active, gates 1–3 closed | Hybrid `COM_*` loader plus dynamic `filesystem_stdio` and HLSDK server are hardware-proven; menu, client and `ref_agc` conversions remain. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
 The Phase 1/2 implementation was merged through
@@ -21,7 +21,7 @@ path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
 the laboratory submodule `projects/ps5-xash3d` now pins the merged Phase 6
-filesystem-PRX commit `0d1f0e0`.
+server-PRX commit `cbc5948`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
@@ -542,8 +542,45 @@ PRX ELF/fSELF SHA-256:
 transcript/manifest SHA-256:
 `808cc9a79c3892829f38f8865b9405d055a31c7aff37aa3571db14fdcdc09efb` /
 `26752b034280ed22d99bc3112d2407e939729b85cc72df90e45f2962f338bf45`.
-The next gate converts only the server while retaining this dynamic filesystem
-checkpoint.
+
+### Dynamic server PRX: closed (2026-09-08)
+
+Xash3D PR #13, merged as `cbc5948`, removes the HLSDK server from the host and
+packages it beside the already dynamic filesystem. Its generated descriptor
+contains 257 entries: 251 engine exports, two bounded ABI probes and lifecycle
+state/start/stop exports. The host retained no static filesystem or server
+fallback for the accepted build.
+
+Rejected run `20260908T081747518Z_PPSA99996_xash3d-engine_0xec9200150ba2`
+isolated a real module-lifecycle rule. Six `CVarGetPointer` callbacks worked,
+but the first `CVarRegister(&build_commit)` received `name=NULL` because the
+two relocated `.init_array` entries had not run. The generated module startup
+now invokes constructors forward and shutdown invokes finalizers reverse,
+both idempotently. This corrected the fault without changing HLSDK source or
+replacing a Prospero library.
+
+Accepted run
+`20260908T082646982Z_PPSA99996_xash3d-engine_0xed0f9a243abc` loaded four
+server segments and all 257 descriptor entries, reported 251 engine exports,
+proved ABI mask 7 and passed two non-mutating callbacks from PRX code into the
+engine. The dynamic filesystem retained its 4,823-entry index, mixed-case
+768-byte palette lookup and 2,546,336-byte `c1a0.bsp` read. The real HLSDK flow
+then emitted `Spawn Server: c1a0`, loaded the graph and started a four-player
+server. After 15 seconds, server stop/unload returned zero with the filesystem
+still active; filesystem stop/unload then returned zero with no modules active,
+exact arena teardown and a gap-free BYE.
+
+Host ELF/fSELF SHA-256:
+`10284d275fa5ec6cdbd194b9682d0b7ab5c813ebe69d86aceffc8a3a200478c5` /
+`53548f84c50942e49edeeee0ce2d1283db5fa3286a9c76d71f0070bb1b43488a`;
+server ELF/fSELF SHA-256:
+`26eb2e10b966918692e378166307bb4ac3b52bc76f2a0dccc4cbe26266e889a5` /
+`c3aa4956510f9e638cedaa54178f5fb313a76eb7601336cc39180b22bad9295c`;
+transcript/manifest SHA-256:
+`69cb7dd0f0fb5dacfde1de0486c183da63b6b5a11643dcfbde2860b6a9bb5a3f` /
+`fe73667d6a764d5e5e363afcd2cd75b29232e3d2cc4c498e4ce7c1c6a4435428`.
+The next gate converts only `menu` while retaining this accepted
+executable/filesystem/server rollback point.
 
 ## Remote Play operating contract
 

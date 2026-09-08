@@ -28,7 +28,7 @@ completed all six hardware gates before merging through
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
 history of `projects/ps5-xash3d`, which this laboratory now pins at merged
-Phase 6 filesystem-PRX commit `0d1f0e0` (the dedicated identity began at
+Phase 6 server-PRX commit `cbc5948` (the dedicated identity began at
 `c09318f`).
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
@@ -149,8 +149,22 @@ filesystem state remained valid, `module_stop` and unload both returned zero,
 no dynamic handles remained and the engine arena closed exactly. The accepted
 allocator contract keeps `LoadFileMalloc` on process libc because its buffer
 crosses into host `COM_FreeFile`; a rejected private-arena diagnostic made
-that boundary observable through `SIGABRT`. The next isolated checkpoint
-converts only the server while preserving the proven dynamic filesystem.
+that boundary observable through `SIGABRT`.
+
+Phase 6 gate 3 is closed in merged Xash3D PR #13 (`cbc5948`). Accepted run
+`20260908T082646982Z_PPSA99996_xash3d-engine_0xed0f9a243abc` loaded both
+`filesystem_stdio.prx` and `server.prx`. The server descriptor exposed 257
+entries, including 251 engine exports; its ABI table mask was 7 and two
+non-mutating PRX-to-engine callback smokes passed before the unmodified HLSDK
+registration and map flow spawned `c1a0`, loaded the graph and started the
+four-player server. An earlier deterministic fault at the first real cvar
+registration established that application-owned PRXs cannot assume C++
+constructors have run on FW 12.02: the generated lifecycle now executes the
+relocated `.init_array` forward and `.fini_array` reverse. After the bounded
+15-second run, server stop/unload returned zero while the filesystem remained
+active; filesystem stop/unload then returned zero with no modules active and
+the engine arena balanced. The next isolated checkpoint converts only `menu`
+while preserving this executable/filesystem/server rollback point.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
