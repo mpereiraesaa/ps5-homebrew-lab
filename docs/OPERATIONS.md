@@ -86,8 +86,9 @@ nativo están validados en FW 12.02. El linker debe conservar congruencia de
   desactiva la conversión transparente con `SELF` en esa misma conexión y
   exige tamaño y SHA-256 exactos de los bytes almacenados. `shsrv` en TCP 2323
   sigue siendo un shell/launcher; no es un segundo FTP ni participa en la
-  verificación de uploads. El smoke read-only de FW 12.02 verificó de esta
-  forma tanto el `eboot.bin` como el `menu.prx` instalados de Xash3D.
+  verificación de uploads. El gate `client.prx` verificó así, antes de una
+  única promoción transaccional, `eboot.bin`, `filesystem_stdio.prx`,
+  `server.prx`, `menu.prx` y `client.prx` por tamaño y SHA-256 exactos.
 - El runtime no abre archivos de log, no usa USB/download0 y no necesita que
   el helper modifique mounts.
 - El supervisor valida HELLO/BYE, boot token, secuencia sin gaps, tamaño, hash

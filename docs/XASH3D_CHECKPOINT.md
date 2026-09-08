@@ -12,7 +12,7 @@ Reconciled: 2026-09-08. Hardware boundary: one PS5 on firmware 12.02.
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
-| 6 — Engine integration | Active, gates 1–4 closed | Hybrid `COM_*` loader plus dynamic filesystem, server and MainUI are hardware-proven; client and `ref_agc` conversions remain. |
+| 6 — Engine integration | Active, gates 1–5 closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI and GoldSrc client are hardware-proven; only `ref_agc` remains. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
 The Phase 1/2 implementation was merged through
@@ -20,9 +20,9 @@ The Phase 1/2 implementation was merged through
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
-the laboratory submodule `projects/ps5-xash3d` now pins title-icon commit
-`ea9be4b`, built on documentation reconciliation `3c80830`; the merged Phase 6
-MainUI-PRX implementation is commit `9f783ec`.
+the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 6
+client-PRX commit `3a30250`, which includes the dedicated title icon from
+`ea9be4b`; the preceding MainUI-PRX implementation is `9f783ec`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
@@ -601,7 +601,37 @@ errors/gaps and a clean BYE. Host ELF/fSELF hashes were
 menu ELF/fSELF hashes were
 `64099d2824a41580d482435a5c567ef30bcecf9e868463c915b5cf3c5697686d` /
 `ec496e4c978dbef7f12305134eb2ba441de2983f551c5ef853e7291c8045aa1b`.
-The next gate converts only `client` while preserving this rollback point.
+This remains the standalone visible-menu proof beneath the accepted client
+gate.
+
+### Dynamic GoldSrc client PRX: closed (2026-09-08)
+
+Xash3D PR #17, merged as `3a30250`, packages the pinned HLSDK client as
+`client.prx` while preserving the dynamic filesystem/server/menu bundle.
+Accepted run
+`20260908T130114060Z_PPSA99996_xash3d-engine_0xfc0996a1effb` loaded four
+client mappings and a 48-entry descriptor containing 42 actual GoldSrc
+exports. Interface version 7, host callback mask 63, module callback mask 15
+and two non-mutating PRX-to-engine smokes all passed.
+
+The gate entered the real `c1a0` workload so the client performed one video
+init, 4,916 frame callbacks and 4,907 successful HUD redraws. The software
+backend presented 4,800 non-black frames with final hash
+`3af6afa7ee47ec93`; native TV presentation remains scoped to `ref_agc`.
+Server, menu, client and filesystem then stopped/unloaded with active counts
+3, 2, 1 and 0. The bounded run ended with result zero, 89 structured records,
+115 raw lines, zero errors/gaps/oversized records and a clean BYE.
+
+Host ELF/fSELF hashes were
+`d461cdecc461f0b5472b082b2580b2748f1161e65aa66cba0b0b6c8e26a0d736` /
+`9d215b914097a007f5f8b6f69ab8f92481c8341e5090bb5ccc64e81adeb854ef`;
+client ELF/fSELF hashes were
+`70b54c8628eab934d1cef3d3cb0c2baa177a3a2ddde5e2cf01daddb81e045ba4` /
+`9600971dcc1dcf4b6e5d1f90b05b54bc3dabd4cfb50eb8a4a5f2b89a3abd321a`;
+transcript/manifest hashes were
+`95ce0a78d96f4f12a72097553d47329a98d35bd4ebf3b40e252d6964e0bd2524` /
+`3e92238bad943b6dc824b6e4d2001ab4a83e8cbf31f8ab43ea4f393ab129a366`.
+The five-file bundle is the rollback point for the independent `ref_agc` gate.
 
 ## Remote Play operating contract
 
