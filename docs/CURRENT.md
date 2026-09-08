@@ -57,8 +57,9 @@ draw-AABB frustum culling reduces submitted world work. Every ordered gate
 passed independently. The complete water/glass/effects/Studio/HUD composition
 then passed a 60,000-frame FW 12.02 soak with two retired slots, exact
 ownership, intact guards, a gap-free BYE and zero errors. Phase 4 is complete.
-Phase 5's engine-bootstrap, filesystem, ScePad, SceAudioOut, direct-memory and
-thread/time checkpoints passed on 2026-09-07 UTC (2026-09-08 local).
+Phase 5's engine-bootstrap, filesystem, ScePad, SceAudioOut, direct-memory,
+thread/time, GPU/flip timing and project-owned libc-shim checkpoints passed on
+2026-09-07 UTC (2026-09-08 local).
 The Xash3D FWGS engine boots on FW 12.02, spawns `c1a0` with every entity class
 and quits cleanly. The accepted full-tree run deployed 4,741 files
 (555,437,162 bytes), served a 4,823-entry index, read the 12,565-byte
@@ -118,13 +119,15 @@ residence was 32,754,596 ns for the two-frame pipeline; the independently
 named observed fence-to-flip average was 15,930,800 ns. The accepted ELF and
 fSELF hashes reproduced exactly after the run.
 
-The remaining Phase 5 gates are, in order: project-owned shims for `__assert`,
-identity without `getpwuid`, and logging without `dladdr`; then the final
-incremental Phase 5 pass. Every gate requires host tests, an incremental FW
-12.02 run, structured telemetry, exact ownership/teardown, zero errors and
-visual/audio/input evidence where applicable. Client/menu integration,
-`ref_null`/`ref_soft`, `ref_agc` and application-owned PRX conversion remain
-Phase 6 work.
+The final Phase 5 gate is closed in merged Xash3D PR #10 (`a2cb856`). Run
+`20260907T235551519Z_PPSA99996_xash3d-engine_0xd12e2a9238fb` retained
+project-owned `__assert`, `getpwuid` and `dladdr` definitions while importing
+none of them dynamically. Its assert formatter/reporter policy, stable `ps5`
+identity and zeroed `dladdr`/`argv[0]` fallback all passed before the complete
+`c1a0` workload; 30 records ended without gaps or errors in a clean BYE. The
+ELF/fSELF hashes reproduced exactly. Phase 5 is complete. Client/menu
+integration, `ref_null`/`ref_soft`, `ref_agc` and application-owned PRX
+conversion are Phase 6 work and the next checkpoint.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
@@ -141,8 +144,9 @@ hardware-pass entries, 3 hardware-fail/guarded (`dup`, `dup2`, `execv`) and
 outside this gate (AudioOut2, Audio3d, NGS2, AJM, AudioIn, Audiodec),
 which the link now rejects. The four enabled string helpers (`strcasecmp`,
 `strnlen`, `strlcpy`, `strlcat`) passed a focused FW 12.02 smoke run. The
-remaining project-owned gaps are `__assert`, `getpwuid` and `dladdr`. Raw
-lists, the evidence ledger and reproduction scripts live under
+former project-owned gaps `__assert`, `getpwuid` and `dladdr` are now closed by
+local definitions plus the accepted hardware probe. Raw lists, the evidence
+ledger and reproduction scripts live under
 `research/xash3d/` and the pinned `ps5-xash3d` submodule.
 
 ## Development policy
