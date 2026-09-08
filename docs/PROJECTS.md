@@ -25,7 +25,10 @@ blend/depth/cull/fog/lightmap, viewport/scissor, ruta 2D, lightstyles/luces
 dinámicas, sprites/partículas, Studio animado, brush entities y visibilidad
 PVS/frustum. El gate integrado final sostuvo agua, vidrio, efectos, Studio y
 HUD durante 60.000 frames con ownership exacto, guardas intactas, BYE gap-free
-y cero errores. La Fase 5, platform layer, es el siguiente objetivo.
+y cero errores. La Fase 5, platform layer, está completa. La Fase 6 está
+activa y sus cuatro primeros gates ya probaron el loader híbrido,
+`filesystem_stdio.prx`, `server.prx` y `menu.prx` en FW 12.02; `client` es el
+siguiente checkpoint aislado y `ref_agc` conserva su gate final.
 
 Identidades instaladas: Xash3D usa `PPSA99996` y la demo Gears usa
 `PPSA99997`, cada una con helpers exactos independientes. El host histórico
@@ -84,11 +87,11 @@ concurrencia y memoria ejecutable.
 ## GoldSrc / Xash3D — objetivo activo
 
 Plan vigente: `docs/XASH3D_PS5_PLAN.html`; checkpoint textual:
-`docs/XASH3D_CHECKPOINT.md`. Las Fases 0–4 están cerradas en hardware y la Fase
-5, platform layer, es la siguiente. El probe de símbolos demuestra
-que libc y C++ no son el bloqueo: sólo faltan tres símbolos C triviales; el
-trabajo real es `platform/ps5`, `ref_agc` y la integración modular ya habilitada
-por el loader PRX propio.
+`docs/XASH3D_CHECKPOINT.md`. Las Fases 0–5 están cerradas en hardware y la Fase
+6 tiene tres gates cerrados. El engine conserva su identidad `PPSA99996` y ya
+carga filesystem y servidor como PRXs propios, con lifecycle explícito,
+callbacks ABI probados y teardown ordenado. El trabajo inmediato es convertir
+`menu`; después siguen `client` y `ref_agc` como checkpoints independientes.
 
 Half-Life requiere datos originales que no forman parte del código del engine
 y nunca deben incorporarse a repositorios ni artefactos públicos.

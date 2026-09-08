@@ -20,6 +20,38 @@ sprites/partículas, Studio animado, brush entities y visibilidad; una corrida
 integrada final mantuvo agua, vidrio, efectos, Studio y HUD durante 60.000
 frames con ownership exacto y cero errores.
 
+La Fase 5 está completa: engine bootstrap, filesystem completo, ScePad,
+SceAudioOut, memoria directa, threads/reloj, telemetría GPU/flip y los tres
+shims propios ya están cerrados. El backend de input consume lotes
+cronológicos de hasta 64 registros y traduce el DualSense a los eventos
+canónicos de Xash3D; la
+corrida aceptada probó movimiento, cámara, salto, agacharse, usar y disparar,
+sin errores y con teardown exacto. El backend de audio saca PCM por
+`libSceAudioOut` desde un ring productor/consumidor con un resampler continuo
+147/160 y un worker que es el único dueño del handle: la corrida aceptada
+transportó 1,5 s de PCM a 44,1 kHz como 282 grains completos de 48 kHz, con
+hash coincidente, cero underruns y confirmación audible del operador. Todo el
+allocator C/C++ del engine usa ahora una única raíz de 128 MiB sobre direct
+memory; cuatro recursos GPU representativos probaron generaciones, retiro y
+reclamación exactos, con guardas intactos y el arena vacío al terminar. El
+gate de threads probó dos workers distintos con ownership `join`/`detach`
+exacto, 32.768 incrementos protegidos, 8.192 lecturas monotónicas sin regresión
+y 128 muestras `nanosleep`/`usleep` sin errores ni despertares anticipados. El
+gate de telemetría correlacionó 60.000 submits, timestamps GPU end-of-pipe,
+fences y eventos VideoOut exactos sin gaps ni regresiones. El cierre final
+retuvo `__assert`, `getpwuid` y `dladdr` como definiciones locales del port,
+probó sus contratos en FW 12.02 y cargó `c1a0` sin errores. La Fase 6 ya está
+activa y tiene cuatro gates cerrados: el loader híbrido,
+`filesystem_stdio.prx`, el servidor HLSDK y MainUI como PRXs propios. La
+combinación dinámica montó las 4.823
+entradas, probó listing, lectura grande y path con case mixto; el servidor
+publicó 251 exports del engine, ejecutó sus constructores C++, cruzó la ABI en
+ambos sentidos, levantó `c1a0` y se descargó antes que el filesystem con
+ownership exacto. MainUI publicó sus 16 callbacks base y 12 extendidos, se
+activó y redibujó 5.127 veces sobre un framebuffer software no negro. El
+siguiente checkpoint convierte sólo `client`; después sigue `ref_agc` como
+gate independiente y presentación nativa en TV.
+
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico
 `PPSA99998` fue desinstalado de la consola y no deja rutas ni filas vivas en su

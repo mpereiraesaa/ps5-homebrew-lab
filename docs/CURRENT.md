@@ -1,6 +1,6 @@
 # Current development boundary
 
-Last reconciled: 2026-09-07. Tested console firmware: PS5 12.02.
+Last reconciled: 2026-09-08. Tested console firmware: PS5 12.02.
 
 ## Canonical implementation
 
@@ -28,7 +28,8 @@ completed all six hardware gates before merging through
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
 history of `projects/ps5-xash3d`, which this laboratory now pins at merged
-Phase 4 commit `38c6a38` (the dedicated identity began at `c09318f`).
+Phase 6 MainUI-PRX commit `9f783ec` (the dedicated identity began at
+`c09318f`).
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -56,9 +57,123 @@ independent transforms and source render modes; and world-tree PVS plus
 draw-AABB frustum culling reduces submitted world work. Every ordered gate
 passed independently. The complete water/glass/effects/Studio/HUD composition
 then passed a 60,000-frame FW 12.02 soak with two retired slots, exact
-ownership, intact guards, a gap-free BYE and zero errors. Phase 4 is complete;
-the platform layer is next. See
-`XASH3D_CHECKPOINT.md` for the evidence boundary and executable order.
+ownership, intact guards, a gap-free BYE and zero errors. Phase 4 is complete.
+Phase 5's engine-bootstrap, filesystem, ScePad, SceAudioOut, direct-memory,
+thread/time, GPU/flip timing and project-owned libc-shim checkpoints passed on
+2026-09-07 UTC (2026-09-08 local).
+The Xash3D FWGS engine boots on FW 12.02, spawns `c1a0` with every entity class
+and quits cleanly. The accepted full-tree run deployed 4,741 files
+(555,437,162 bytes), served a 4,823-entry index, read the 12,565-byte
+`delta.lst` twice and completed a bounded 90-second run. The earlier
+`gfx/palette.lmp` fault was not an fd or filesystem failure: its measured
+length/read/close lifecycle was correct (768/768/0). The SDK had routed
+`strcasestr` through `libScePosixForWebKit`; `HAVE_STRCASESTR=0` now selects
+portable `Q_stristr`, and the linked ELF has no dynamic `strcasestr`. The
+native ScePad backend then processed 24,535 connected records in chronological
+batches of up to 62, proved movement/look and both edges of jump, crouch, use
+and fire, reported zero read errors and closed Pad/UserService exactly in run
+`20260907T181827569Z_PPSA99996_xash3d-engine_0xbec4d1cc932e`.
+
+SceAudioOut then closed as well. A client-independent C core owns a
+producer/consumer PCM ring, a continuous 147/160 resampler and a dedicated
+worker that alone holds the handle and calls `Output`, the NULL drain and
+`Close`, never holding the mutex across the blocking call; `s_ps5.c` binds it to
+Xash3D's own DMA ring. The engine keeps mixing at `SOUND_DMA_SPEED` because
+`s_main.c`, `s_stream.c` and `s_load.c` read that macro directly, so the
+conversion to the port's 48 kHz lives in the PS5 layer instead of in the
+submodule. Accepted run `20260907T194413175Z_PPSA99996_xash3d-engine_0xc372db81ccc6` opened the main port for the system user `0xff`
+and carried 66,150 source frames as 72,192 in 282 whole 256-frame blocks
+(71,999 resampled plus 193 terminal padding), with the consumed PCM hash equal
+to the independently generated pattern hash, zero underruns, zero `Output`
+errors and exactly one drain/close/join. The operator confirmed the low tone,
+the gap and the higher tone by ear, and a repeat run reproduced every counter
+bit for bit. Two facts measured here that the FW 6.02 reference does not
+document: `sceAudioOutOutput` returns the number of frames it accepted (256 at
+this grain), including the NULL drain, so success is non-negative rather than
+zero; and the system user `0xff` is accepted for the main port.
+
+The direct-memory gate is closed in merged Xash3D PR #7 (`cb7c2b3`). One
+128 MiB fixed-VA root now owns every C/C++ engine allocation. The representative
+GPU contract allocated command, buffer, texture and depth resources with four
+unique generations and balanced all four retire/reclaim pairs. Accepted run
+`20260907T212512180Z_PPSA99996_xash3d-engine_0xc8f58f777975` loaded `c1a0`,
+reached a 35,632,245-byte peak across 20,687 allocations and 1,091
+reallocations, then reclaimed eight explicitly classified process-lifetime
+objects and ended with zero live bytes. Guards, allocation failures, stale
+tokens and foreign-owner errors all remained zero; reserve/allocate/map and
+unmap/release each occurred exactly once with success.
+
+The thread/time gate is closed in merged Xash3D PR #8 (`ff0fd62`). Accepted
+run `20260907T220548886Z_PPSA99996_xash3d-engine_0xcb2ce47a2f65` created two
+distinct workers with exact create/join/detach `2/1/1`, completed 32,768
+mutex-protected increments, observed 8,191 advances across 8,192 monotonic
+reads with no regression, and passed 128 `nanosleep`/`usleep` measurements at
+1/2/5/10 ms with zero errors or early wakes. It then loaded `c1a0`, retained
+the exact direct-memory teardown and closed with a gap-free BYE.
+
+The GPU/flip timing gate is closed in merged Xash3D PR #9 (`cd57ab8`). Run
+`20260907T225446311Z_PPSA99996_ps5-xash3d_0xcdd8ce3a668a` correlated 60,000
+CPU submits, raw GPU end-of-pipe writes, ownership-fence observations and
+exact VideoOut events with 59,999 strict GPU-clock changes and no regression,
+CPU-order error, sequence gap or renderer error. The average submit-to-flip
+residence was 32,754,596 ns for the two-frame pipeline; the independently
+named observed fence-to-flip average was 15,930,800 ns. The accepted ELF and
+fSELF hashes reproduced exactly after the run.
+
+The final Phase 5 gate is closed in merged Xash3D PR #10 (`a2cb856`). Run
+`20260907T235551519Z_PPSA99996_xash3d-engine_0xd12e2a9238fb` retained
+project-owned `__assert`, `getpwuid` and `dladdr` definitions while importing
+none of them dynamically. Its assert formatter/reporter policy, stable `ps5`
+identity and zeroed `dladdr`/`argv[0]` fallback all passed before the complete
+`c1a0` workload; 30 records ended without gaps or errors in a clean BYE. The
+ELF/fSELF hashes reproduced exactly. Phase 5 is complete.
+
+Phase 6 gate 1 is closed in merged Xash3D PR #11 (`af99dcd`). Run
+`20260908T054317837Z_PPSA99996_xash3d-engine_0xe423c3826406` exercised the
+real Xash `COM_*` API against an application-owned PRX: four mapped segments,
+six validated `PRXDESC1` exports, expected missing-symbol behavior, code/data
+calls, a kernel import and reverse function naming, followed by exact unload
+and zero active handles. FW 12.02 cleared the module-info size word and did not
+automatically mutate the probe through its ELF entry, so the loader accepts
+the measured zero/`0x160` shape and modules expose explicit idempotent startup.
+The same run spawned `c1a0` and closed cleanly; a no-probe production
+regression passed afterward.
+
+Phase 6 gate 2 is closed in merged Xash3D PR #12 (`0d1f0e0`). Accepted run
+`20260908T071044664Z_PPSA99996_xash3d-engine_0xe8e95e4c0974` loaded
+`filesystem_stdio.prx` with four mapped segments and eight validated exports,
+explicitly initialized its 4,823-entry index, listed 22 `gfx/*` resources,
+resolved mixed-case `GfX/PaLeTtE.LmP` at 768 bytes and read the 2,546,336-byte
+`maps/c1a0.bsp`. The static server then spawned `c1a0`; after 15 seconds the
+filesystem state remained valid, `module_stop` and unload both returned zero,
+no dynamic handles remained and the engine arena closed exactly. The accepted
+allocator contract keeps `LoadFileMalloc` on process libc because its buffer
+crosses into host `COM_FreeFile`; a rejected private-arena diagnostic made
+that boundary observable through `SIGABRT`.
+
+Phase 6 gate 3 is closed in merged Xash3D PR #13 (`cbc5948`). Accepted run
+`20260908T082646982Z_PPSA99996_xash3d-engine_0xed0f9a243abc` loaded both
+`filesystem_stdio.prx` and `server.prx`. The server descriptor exposed 257
+entries, including 251 engine exports; its ABI table mask was 7 and two
+non-mutating PRX-to-engine callback smokes passed before the unmodified HLSDK
+registration and map flow spawned `c1a0`, loaded the graph and started the
+four-player server. An earlier deterministic fault at the first real cvar
+registration established that application-owned PRXs cannot assume C++
+constructors have run on FW 12.02: the generated lifecycle now executes the
+relocated `.init_array` forward and `.fini_array` reverse. After the bounded
+15-second run, server stop/unload returned zero while the filesystem remained
+active; filesystem stop/unload then returned zero with no modules active and
+the engine arena balanced.
+
+Phase 6 gate 4 is closed in merged Xash3D PR #14 (`9f783ec`). Accepted run
+`20260908T094038112Z_PPSA99996_xash3d-engine_0xf1174a815840` loaded MainUI as
+`menu.prx` on top of the filesystem/server checkpoint. Its 16 base and 12
+extended callbacks passed with complete engine masks, explicit C++ lifecycle,
+one activation and 5,127 redraws. The software framebuffer presented 5,100
+non-black frames; this proves UI execution but not yet AGC presentation on the
+TV. Server, menu and filesystem unloaded in order with active counts 2, 1 and
+0, zero structured errors and a clean BYE. The next isolated checkpoint
+converts only `client` while preserving this rollback point.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
@@ -67,10 +182,18 @@ launch/close helpers for both. The obsolete historical host `PPSA99998` is not
 installed: its homebrew, mount, application and metadata paths are absent and
 the live application database contains no matching row.
 
-The engine symbol probe is also complete. The client has only three genuine
-SDK gaps (`__assert`, `getpwuid`, `dladdr`), and `mainui` plus both hlsdk
-modules have no missing C++ runtime provider. Raw lists and reproduction scripts
-live under `research/xash3d/`.
+The engine symbol probe is also complete, but an exported provider is not
+treated as a hardware pass. The thread/time gate's ELF declares 171 dynamic
+imports with none banned, and its artifact-specific ledger holds 35
+hardware-pass entries, 3 hardware-fail/guarded (`dup`, `dup2`, `execv`) and
+133 exported-only entries; the global banned set is `strcasestr` plus the six
+outside this gate (AudioOut2, Audio3d, NGS2, AJM, AudioIn, Audiodec),
+which the link now rejects. The four enabled string helpers (`strcasecmp`,
+`strnlen`, `strlcpy`, `strlcat`) passed a focused FW 12.02 smoke run. The
+former project-owned gaps `__assert`, `getpwuid` and `dladdr` are now closed by
+local definitions plus the accepted hardware probe. Raw lists, the evidence
+ledger and reproduction scripts live under
+`research/xash3d/` and the pinned `ps5-xash3d` submodule.
 
 ## Development policy
 
@@ -106,13 +229,13 @@ before restart. The normal workflow does not focus, acknowledge or click the
 
 ## Application-owned modules
 
-Runtime loading of application-owned PRX modules is validated on FW 12.02
-(see `FINDINGS.md`, "Módulos PRX propios"). The tooling lives in the
-native-foundation fork, branch `exp/prx-module`: `ps5-native-tool link
---module`, `tools/build-module.sh` and `modules/prx_loader.h`. The hardware
-gate lives in the Gears repository branch `exp/prx-gate`. Load-time
-`DT_NEEDED` binding and `sceKernelDlsym` are not available for these modules;
-symbol resolution goes through the module's export descriptor.
+Runtime loading of application-owned PRX modules is now validated both by the
+original spike and inside Xash's real `COM_*` path on FW 12.02 (see
+`FINDINGS.md`, "Módulos PRX propios", and Xash3D PR #11). The public builder
+pins the native-foundation fork's `exp/prx-module` tooling and uses
+`ps5-native-tool link --module`. Load-time `DT_NEEDED` binding and
+`sceKernelDlsym` are not available for these modules; symbol resolution goes
+through each module's range-checked `PRXDESC1` export descriptor.
 
 ## Historical boundary
 
