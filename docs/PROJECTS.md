@@ -62,7 +62,12 @@ Base 0x01000000, 311296 bytes reservados, tres secciones verificadas sin
 discrepancias y cierre limpio. Una página de 16 KiB combina permisos WX.
 Las ocho DLLs se clasificaron como interfaces host aún sin implementar.
 
-Próximos pasos: ejecución y ABI, prototipo x86, APIs Win32 y presentación AGC.
+El traductor acotado ejecutó en host 22 instrucciones del arranque original,
+incluido el retorno de su helper inicial; se detuvo en XOR no soportado.
+Se reprodujo con ASan/UBSan. Esto no acredita ejecución del juego en PS5 ni
+inicialización Win32. Detalles: `projects/prospero-win/docs/X86_EXECUTION.md`.
+
+Próximos pasos: ampliar y validar ejecución x86/ABI, APIs Win32 y presentación AGC.
 Audio y control partirán de los contratos validados de Xash3D; WinMM, mensajes
 Windows y MIDI necesitan adaptación. Licencia declarada LGPL-2.1-or-later;
 la extracción de componentes GPL de Xash3D requiere resolver su licencia.

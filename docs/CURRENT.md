@@ -222,12 +222,18 @@ mapping on PS5 in run
 0x01000000, 311296 reserved bytes, three verified sections, zero mismatches,
 one image released and clean BYE. Eight host DLL bindings remain unimplemented.
 The validator accepted --allow-i386 and --allow-wx; one 16 KiB page merges
-write/execute permissions. No guest instructions or graphics were executed.
+write/execute permissions. That mapping run executed no guest instructions or graphics.
+
+Subsequent bounded host translation executed 22 instructions from the original
+Pinball entry, including its initial helper's return, before stopping at
+unsupported XOR (EIP 0x01020fa1). The result reproduced under ASan/UBSan.
+This is not PS5 guest execution or Win32 startup: only synthetic stack/FS
+memory exists in the tracer. See `projects/prospero-win/docs/X86_EXECUTION.md`.
 
 Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
 does not eliminate x86 address/stack rewriting or establish a large guest
-working-set budget. Next: bounded execution/ABI tests, early x86 translator
-prototype and the Pinball Win32 surface. Reuse Xash3D audio/input contracts
+working-set budget. Next: extend the bounded x86 translator, validate it on
+hardware and implement the Pinball Win32 surface. Reuse Xash3D audio/input contracts
 with WinMM and Win32 adapters; resolve component licensing before extraction.
 
 Canonical status, artifact hashes and acceptance command:
