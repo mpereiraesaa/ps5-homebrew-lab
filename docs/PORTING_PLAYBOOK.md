@@ -102,14 +102,20 @@ as new facts appear. Full detail and evidence in `docs/FINDINGS.md`.
   downward and extends the length to match** — so a misaligned trim does
   not fail, it releases memory you are still using. Round every reservation
   up to whole pages before trimming it.
-- **Running 32-bit machine code is REFUSED.** `sysarch(I386_SET_LDT, ...)`
-  returns `EINVAL` from a title on FW 12.02, so no local descriptor can be
-  installed, 32-bit compatibility mode cannot be entered, and WoW64-style
-  ABI thunking is unavailable. Measured 2026-09-08 by `prospero-win`
-  gate 0.2a, whose probe completes the same round trip on an ordinary
-  x86-64 host, so the refusal is the platform's and not the stub's. A port
-  with a 32-bit payload needs JIT recompilation or a 64-bit-only scope.
-  Details in that project's `docs/COMPAT32_PHASE0A.md`.
+- **The LDT is unavailable, so 32-bit machine code cannot run.** Every
+  `sysarch` LDT operation returns `EINVAL` on FW 12.02 — reads and writes,
+  explicit indices and `LDT_AUTO_ALLOC` alike — while a control operation
+  (`AMD64_GET_FSBASE`) succeeds, so `sysarch` itself works and only the LDT
+  ops are refused. `machdep.max_ldt_segment`, the sysctl that would size
+  the table, does not exist (`ENOENT`), which points at the support being
+  compiled out rather than set to zero: there is no knob to turn on. The
+  matrix was run from `elfldr`, which is more privileged than a title, so
+  this is kernel-wide and not a sandbox restriction. Consequence:
+  compatibility mode cannot be entered, WoW64-style ABI thunking is out,
+  and a port with a 32-bit payload needs JIT recompilation or a 64-bit-only
+  scope. Measured 2026-09-08 by `prospero-win` gate 0.2a; details in its
+  `docs/COMPAT32_PHASE0A.md`, and the reusable probe is
+  `tools/ldt-probe/`.
   The mechanism, for whoever revisits this: a thread reaches compatibility
   mode only by far-jumping to a code descriptor with `L` clear and `D/B`
   set. User code cannot write a descriptor table, so the kernel has to
@@ -157,6 +163,34 @@ recognizes the pattern instead of re-deriving it.
 **Template:** *Symptom* (observable, incl. fault signature) · *False leads*
 (what looked plausible and was wrong) · *Actual cause* · *Fix* · *General rule*
 (what to check first next time) · *Reference* (project, PR, run id).
+
+### EINVAL read as a platform limit when the argument was wrong (prospero-win, 2026-09-08)
+
+- **Symptom:** `sysarch(I386_SET_LDT, ...)` returned `EINVAL` from a title,
+  and that was written up as "the firmware refuses LDT descriptors".
+- **Actual cause of the *evidence*:** the call asked for two descriptors in
+  one go with `LDT_AUTO_ALLOC`. FreeBSD's amd64 `amd64_set_ldt` honours that
+  sentinel only for a single descriptor; with `num=2` it takes the
+  range-check path, where `start=0xffffffff` is refused as `EINVAL`
+  regardless of policy. The errno was reporting a malformed argument, which
+  is exactly what `EINVAL` means, and the conclusion drawn from it was not
+  supported.
+- **What actually settled it:** three cheap additions. A **control**
+  operation known to work (`AMD64_GET_FSBASE` succeeded, proving `sysarch`
+  dispatches); the **full argument matrix** (the correct single-descriptor
+  call, explicit indices, and a pure `I386_GET_LDT` read all failed
+  identically, which is the signature of a zero-sized table rather than one
+  bad shape); and a **privilege comparison** (the same matrix from `elfldr`
+  behaves identically, so it is kernel-wide, not a sandbox rule). The
+  absent `machdep.max_ldt_segment` sysctl then explained why.
+- **General rule:** `EINVAL` is the weakest possible evidence of a platform
+  limit, because it is also what your own bad argument produces. Before
+  recording any refused platform call as a limit, add a control operation, a
+  matrix of argument shapes, and — where the environment allows it — the
+  same probe at a different privilege level. `EPERM` or `ENOSYS` would have
+  been worth more on their own; `EINVAL` is worth nothing until the
+  arguments are above suspicion.
+- **Reference:** `projects/prospero-win` gate 0.2a, `tools/ldt-probe/`.
 
 ### A misaligned munmap released live memory (prospero-win, 2026-09-08)
 
