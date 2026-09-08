@@ -238,6 +238,12 @@ Two are data exports and three are variadic; none are implemented by merely
 finding a declaration. The private report is under the main lab's ignored
 `research/gpu/captures/prospero-win/20260908-import-inventory/pinball.json`.
 See `projects/prospero-win/docs/IMPORT_PLAN.md` for subsystem and license review.
+The follow-up Wine audit covers export routing and source-reference leads
+for all 207 imports; its private report is `wine-audit-v2.json` in the same
+capture directory. Reviewed CRT requirements include x87 helpers, guest
+initializer callbacks and x86 SEH. No Wine implementation has been extracted
+yet. See `projects/prospero-win/docs/WINE_REUSE_AUDIT.md` for boundaries and
+known limitations of lexical source indexing.
 
 Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
 does not eliminate x86 address/stack rewriting or establish a large guest
