@@ -244,6 +244,10 @@ capture directory. Reviewed CRT requirements include x87 helpers, guest
 initializer callbacks and x86 SEH. No Wine implementation has been extracted
 yet. See `projects/prospero-win/docs/WINE_REUSE_AUDIT.md` for boundaries and
 known limitations of lexical source indexing.
+Shared integer cdecl/stdcall call frames and callback services now pass host
+tests, including a translated synthetic callback returning through the
+adapter. This does not implement a Win32 API or validate PS5 callbacks.
+Scope: `projects/prospero-win/docs/GUEST_ABI.md`.
 
 Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
 does not eliminate x86 address/stack rewriting or establish a large guest
