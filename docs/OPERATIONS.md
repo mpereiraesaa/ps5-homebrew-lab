@@ -81,6 +81,13 @@ nativo están validados en FW 12.02. El linker debe conservar congruencia de
   tanto `eboot.bin` como este sidecar. Los backups existen sólo durante la
   promoción y se eliminan al completarla; nunca se acumulan dentro del título.
 - `ps5logd` escucha TCP 9300 en el PC y conserva transcript más manifiesto.
+- El único transporte de archivos canónico es
+  `ps5-payload-dev/ftpsrv` en TCP 2121. Para verificar un fSELF, el helper
+  desactiva la conversión transparente con `SELF` en esa misma conexión y
+  exige tamaño y SHA-256 exactos de los bytes almacenados. `shsrv` en TCP 2323
+  sigue siendo un shell/launcher; no es un segundo FTP ni participa en la
+  verificación de uploads. El smoke read-only de FW 12.02 verificó de esta
+  forma tanto el `eboot.bin` como el `menu.prx` instalados de Xash3D.
 - El runtime no abre archivos de log, no usa USB/download0 y no necesita que
   el helper modifique mounts.
 - El supervisor valida HELLO/BYE, boot token, secuencia sin gaps, tamaño, hash
