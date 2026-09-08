@@ -41,11 +41,13 @@ gate de telemetría correlacionó 60.000 submits, timestamps GPU end-of-pipe,
 fences y eventos VideoOut exactos sin gaps ni regresiones. El cierre final
 retuvo `__assert`, `getpwuid` y `dladdr` como definiciones locales del port,
 probó sus contratos en FW 12.02 y cargó `c1a0` sin errores. La Fase 6 ya está
-activa: el loader híbrido y `filesystem_stdio` como PRX propio ya pasaron en
-FW 12.02. El módulo dinámico montó las 4.823 entradas, probó listing, lectura
-grande y path con case mixto, cargó `c1a0` y descargó con ownership exacto. El
-siguiente checkpoint convierte sólo el servidor; `ref_agc` llegará después de
-los módulos de engine, cada uno con su gate independiente.
+activa y tiene tres gates cerrados: el loader híbrido, `filesystem_stdio.prx`
+y el servidor HLSDK como PRX propio. La combinación dinámica montó las 4.823
+entradas, probó listing, lectura grande y path con case mixto; el servidor
+publicó 251 exports del engine, ejecutó sus constructores C++, cruzó la ABI en
+ambos sentidos, levantó `c1a0` y se descargó antes que el filesystem con
+ownership exacto. El siguiente checkpoint convierte sólo `menu`; después
+siguen `client` y `ref_agc`, cada uno con su gate independiente.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico
