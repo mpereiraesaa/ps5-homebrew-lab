@@ -231,6 +231,14 @@ ASan/UBSan. The tracer maps PE sections plus synthetic stack/FS regions;
 imports remain unbound. This is not PS5 guest execution or Win32 startup.
 See `projects/prospero-win/docs/X86_EXECUTION.md`.
 
+The next API work is inventory-first, not incremental runtime discovery.
+`inventory_imports.py` confirms 207 imports across eight DLLs, all with Wine
+spec declarations at commit 490f6d5dcbb2a5047345b8af88d114bbcaad69a8.
+Two are data exports and three are variadic; none are implemented by merely
+finding a declaration. The private report is under the main lab's ignored
+`research/gpu/captures/prospero-win/20260908-import-inventory/pinball.json`.
+See `projects/prospero-win/docs/IMPORT_PLAN.md` for subsystem and license review.
+
 Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
 does not eliminate x86 address/stack rewriting or establish a large guest
 working-set budget. Next: extend the bounded x86 translator, validate it on
