@@ -12,17 +12,17 @@ Reconciled: 2026-09-08. Hardware boundary: one PS5 on firmware 12.02.
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
-| 6 — Engine integration | Active, gates 1–5 closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI and GoldSrc client are hardware-proven; only `ref_agc` remains. |
-| 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
+| 6 — Engine integration | Complete, 6 gates closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI, GoldSrc client and RefAPI 18 `ref_agc` are hardware-proven with exact teardown. |
+| 7 — Playable and release | Active next | Live engine-entity rendering, gameplay/performance and level-transition soaks, clean reproducible release. |
 
 The Phase 1/2 implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
-the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 6
-client-PRX commit `3a30250`, which includes the dedicated title icon from
-`ea9be4b`; the preceding MainUI-PRX implementation is `9f783ec`.
+the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 6 final
+renderer commit `258fbe3`; the preceding client-PRX checkpoint is `3a30250`
+and includes the dedicated title icon from `ea9be4b`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
@@ -631,7 +631,32 @@ client ELF/fSELF hashes were
 transcript/manifest hashes were
 `95ce0a78d96f4f12a72097553d47329a98d35bd4ebf3b40e252d6964e0bd2524` /
 `3e92238bad943b6dc824b6e4d2001ab4a83e8cbf31f8ab43ea4f393ab129a366`.
-The five-file bundle is the rollback point for the independent `ref_agc` gate.
+The five-file bundle was the rollback point beneath the independent
+`ref_agc` gate.
+
+### Dynamic `ref_agc` PRX: closed (2026-09-08)
+
+Xash3D PR #18, merged as `258fbe3`, publishes RefAPI version 18 from
+`ref_agc.prx` and binds its live lifecycle/frame callbacks to the accepted
+Phase 4 native AGC backend. Engine run
+`20260908T191327933Z_PPSA99996_xash3d-engine_0x11059870e2628` started `c1a0`,
+bound engine mask 63 and observed 203,420 balanced begin/end callbacks,
+203,411 scene callbacks and one new-map callback.
+
+The correlated native stream
+`20260908T191327984Z_PPSA99996_ps5-xash3d_0x110598a25cd2f` started 51 ms
+later and presented 600 combined Phase 4 frames. Its final GPU hashes were
+`a9e62c5188ca6bf5` and `0044418de19349d8`, with 807,578 bright pixels, exact
+fence/VideoOut tokens, intact guards, six resources reclaimed and zero
+errors. Native teardown closed VideoOut, direct memory and AGC; the engine
+then unloaded server, menu, client, renderer and filesystem with active counts
+4, 3, 2, 1 and 0. Both logs ended with clean gap-free BYE.
+
+The renderer proof deliberately uses the enriched baked `c1a0e` Phase 4
+scene while the engine workload uses `c1a0`. Therefore this gate proves the
+RefAPI/module boundary and real native presentation, not yet arbitrary live
+engine-entity translation. That bridge, playable traversal, saves/transitions
+and release soaks are the Phase 7 boundary. Phase 6 is complete.
 
 ## Remote Play operating contract
 

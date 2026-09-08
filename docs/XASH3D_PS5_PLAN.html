@@ -125,12 +125,12 @@
 
 <div class="page">
 <header>
-  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-08 · rev 34</div>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-08 · rev 35</div>
   <h1>Xash3D on PS5</h1>
-  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. Phase 5 is complete, and Phase 6 has closed the application-owned loader, <code>filesystem_stdio</code>, HLSDK server, MainUI and GoldSrc <code>client.prx</code> gates independently on FW 12.02. The five-file client bundle is now the rollback point; the sole remaining Phase 6 checkpoint binds <code>ref_agc</code> without reopening those module boundaries.</p>
+  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. Phase 6 is complete: the application-owned loader, filesystem, HLSDK server, MainUI, GoldSrc client and RefAPI 18 <code>ref_agc</code> gates all passed independently and then together with exact ownership. Phase 7 now owns the live engine-entity rendering bridge, gameplay and release.</p>
   <div class="facts">
-    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 6 active · gates 1–5 closed</div></div>
-    <div class="fact"><div class="k">Latest gate</div><div class="v">GoldSrc client PRX · HW pass</div></div>
+    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 6 complete · 6 gates closed</div></div>
+    <div class="fact"><div class="k">Latest gate</div><div class="v">ref_agc PRX · 600 native frames</div></div>
     <div class="fact"><div class="k">Dataset</div><div class="v">4,741 files · 555.4 MB</div></div>
     <div class="fact"><div class="k">GPU target</div><div class="v">gfx1013 · AGC</div></div>
   </div>
@@ -143,15 +143,15 @@
   <a class="done" href="#p3"><span class="n">3</span><span class="t">Texture path</span></a>
   <a class="done" href="#p4"><span class="n">4</span><span class="t">GoldSrc render states</span></a>
   <a class="done" href="#p5"><span class="n">5</span><span class="t">Platform layer</span></a>
-  <a class="active" href="#p6"><span class="n">6</span><span class="t">Engine integration</span></a>
-  <a href="#p7"><span class="n">7</span><span class="t">Playable and release</span></a>
+  <a class="done" href="#p6"><span class="n">6</span><span class="t">Engine integration</span></a>
+  <a class="active" href="#p7"><span class="n">7</span><span class="t">Playable and release</span></a>
 </nav>
 <div class="legend"><span class="l-done">done</span><span class="l-active">in progress</span><span class="l-later">next</span></div>
 
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-08</div>
-  <h2 id="checkpoint-title">The GoldSrc client is a proven PRX; <code>ref_agc</code> is next</h2>
-  <p>Run <code>20260908T130114060Z_PPSA99996_xash3d-engine_0xfc0996a1effb</code> retained the proven filesystem/server/menu bundle and loaded the pinned HLSDK client through <code>/app0/sce_module/client.prx</code>: 48 descriptor entries, 42 actual GoldSrc exports, interface version 7, complete callback masks and explicit C++ lifecycle. The real <code>c1a0</code> workload performed one video init, 4,916 client frame calls, 4,907 successful HUD redraws and 4,800 non-black software presentations. Server, menu, client and filesystem then stopped and unloaded with active counts 3, 2, 1 and 0; result zero, 89 structured records, 115 raw lines, no errors/gaps and a clean BYE. This proves client execution but not native AGC presentation. Xash3D remains <code>PPSA99996</code>, frozen Gears remains <code>PPSA99997</code>, and obsolete <code>PPSA99998</code> remains absent.</p>
+  <h2 id="checkpoint-title">Phase 6 is complete; live engine-to-AGC rendering is next</h2>
+  <p>Correlated runs <code>20260908T191327933Z</code> and <code>20260908T191327984Z</code> began 51 ms apart. Xash loaded the full filesystem/server/menu/client/<code>ref_agc</code> PRX stack, started <code>c1a0</code>, bound RefAPI 18 with mask 63 and exercised 203,420 balanced begin/end callbacks. The native Phase 4 backend presented 600 combined frames with two nonzero GPU hashes, 807,578 bright pixels, exact fence/VideoOut tokens, intact guards and zero errors. Native resources closed exactly; the five PRXs then unloaded with active counts 4/3/2/1/0 and both streams ended in clean BYE. The renderer proof uses the enriched baked <code>c1a0e</code> scene, so arbitrary live engine-entity translation remains an explicit Phase 7 task. Xash3D remains <code>PPSA99996</code>, Gears <code>PPSA99997</code>, and obsolete <code>PPSA99998</code> remains absent.</p>
   <div class="grid">
     <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
     <div class="item"><div class="k">Dynamic proof</div><div class="v">8×8 patch/frame · guards stable · 10k</div></div>
@@ -179,13 +179,14 @@
     <div class="item"><div class="k">Thread/time proof</div><div class="v">2 workers · 32,768 locked · 128 sleeps · 0 errors</div></div>
     <div class="item"><div class="k">GPU/flip proof</div><div class="v">60k EOP writes · exact events · 0 gaps/regressions</div></div>
     <div class="item"><div class="k">Libc-shim proof</div><div class="v">3 local defs · 0 dynamic imports · c1a0 pass</div></div>
-    <div class="item"><div class="k">PRX proof</div><div class="v">loader + filesystem + server + menu + client · exact unload</div></div>
+    <div class="item"><div class="k">PRX proof</div><div class="v">filesystem + server + menu + client + ref_agc · exact unload</div></div>
     <div class="item"><div class="k">FS PRX proof</div><div class="v">4,823 index · 22 listed · 2.55 MB read</div></div>
-    <div class="item"><div class="k">Import ledger</div><div class="v">host 175 · FS 64 · server 43 · menu 46 · client 42 · 0 banned</div></div>
+    <div class="item"><div class="k">Import ledger</div><div class="v">host 175 · FS 64 · server 43 · menu 46 · client 42 · ref 91 · 0 banned</div></div>
     <div class="item"><div class="k">Server PRX proof</div><div class="v">251 exports · ABI 7 · init arrays · c1a0</div></div>
     <div class="item"><div class="k">Menu PRX proof</div><div class="v">16 + 12 callbacks · 5,127 redraws · non-black</div></div>
     <div class="item"><div class="k">Client PRX proof</div><div class="v">42 exports · ABI 7 · 4,916 frames · c1a0</div></div>
-    <div class="item"><div class="k">Next step</div><div class="v">Phase 6 · ref_agc as PRX</div></div>
+    <div class="item"><div class="k">ref_agc proof</div><div class="v">RefAPI 18 · 600 native frames · exact ownership</div></div>
+    <div class="item"><div class="k">Next step</div><div class="v">Phase 7 · live engine draws + gameplay</div></div>
   </div>
 </section>
 
@@ -352,14 +353,14 @@
 </section>
 
 <!-- PHASE 6 -->
-<section class="phase active" id="p6">
+<section class="phase done" id="p6">
   <div class="num">6</div>
   <div class="body">
     <div class="head">
       <h2>Engine integration</h2>
-      <div class="meta"><span class="pill active">in progress · gates 1–5 closed</span><span>≈ 2–3 weeks</span><span>Xash3D drives the renderer you already trust.</span></div>
+      <div class="meta"><span class="pill done">done · 6 gates closed</span><span>Xash3D drives the renderer you already trust.</span></div>
     </div>
-    <div class="visible"><b>Visible result.</b> Xash3D boots to its main menu on the PS5, then loads c1a0 through the engine and you play the tram ride.</div>
+    <div class="visible"><b>Visible result.</b> Xash3D loads its complete dynamic module stack while the native AGC backend presents the trusted Phase 4 composition on the PS5.</div>
     <ol class="steps">
       <li><b>Diagnostic head start only.</b> A static client harness already loaded enough of engine, <code>mainui</code>, hlsdk and null/software refs to expose the filesystem/import issue. It is evidence for Phase 5's platform contract, not a completed integration gate.</li>
       <li><b>Loader gate — complete.</b> The hybrid <code>COM_*</code> backend preserves proven static modules and loads safe names from <code>/app0/sce_module</code> through <code>sceKernelLoadStartModule</code>. It validates each <code>PRXDESC1</code> name/address against the module mappings, rejects duplicates and retains ownership across failed unload/rollback. Run <code>20260908T054317837Z</code> passed load, six exports, calls and exact unload; kernel <code>dlsym</code> and load-time <code>DT_NEEDED</code> are not part of the design.</li>
@@ -367,25 +368,26 @@
       <li><b>Server module — complete.</b> Run <code>20260908T082646982Z</code> loaded a 257-entry descriptor with 251 engine exports, proved ABI mask 7 plus two PRX-to-engine callbacks and spawned <code>c1a0</code> through the real HLSDK flow. A rejected run established that FW 12.02 does not run the module's C++ constructors for this path, so the idempotent lifecycle now executes <code>.init_array</code> forward and <code>.fini_array</code> reverse. Server stop/unload completed while the filesystem remained active; filesystem teardown then reached zero modules and a clean BYE.</li>
       <li><b>MainUI/menu module — complete.</b> Run <code>20260908T094038112Z</code> loaded upstream MainUI through <code>/app0/sce_module/menu.prx</code>, published all 16 base and 12 extended callbacks, ran its explicit C++ lifecycle and completed 5,127 redraws. The software framebuffer presented 5,100 non-black frames; this proves real UI execution but does not claim native AGC presentation on the TV. Server, menu and filesystem then stopped and unloaded in exact order with active counts 2, 1 and 0, balanced engine memory, zero errors and a gap-free BYE.</li>
       <li><b>Client module — complete.</b> Run <code>20260908T130114060Z</code> loaded the pinned HLSDK client through a 48-entry descriptor with 42 real exports, passed interface version 7 and callback masks 63/15, then exercised one video init, 4,916 frame callbacks and 4,907 HUD redraws while <code>c1a0</code> ran. Server, menu, client and filesystem unloaded in exact order with active counts 3, 2, 1 and 0, leaving a clean BYE.</li>
-      <li><b>Next: <code>ref_agc</code>.</b> Implement the ref API directly on the Phase 2 to 4 backend and ship it as its own PRX so the renderer iterates without relinking the engine. Preserve the five-file client rollback boundary, direct-memory generation/retirement rules and exact VideoOut ownership. No OpenGL emulation layer.</li>
-      <li>Engine platform hooks bound to Phase 5: input, sound, filesystem, memory, timing.</li>
-      <li>First boot: console visible, main menu drawn through the 2D path.<span class="gate"><b>Gate:</b> telemetry HELLO through menu draw, clean Close Game.</span></li>
-      <li>Load c1a0 through the engine. Compare the frame hash against the Phase 1 viewer for the same camera.</li>
-      <li>Save and load, level transitions, and the first full chapter.</li>
+      <li><b><code>ref_agc</code> module — complete.</b> Correlated runs <code>20260908T191327933Z</code>/<code>20260908T191327984Z</code> loaded RefAPI 18 from a 16-export PRX, exercised the live engine callback table and presented 600 native frames with nonzero GPU hashes/pixels, exact fence/VideoOut ownership and zero errors. Server, menu, client, renderer and filesystem unloaded with active counts 4/3/2/1/0.</li>
+      <li><b>Engine platform hooks — complete.</b> Input, sound, filesystem, memory and timing retain the accepted Phase 5 contracts under the dynamic stack.</li>
+      <li><b>Phase complete.</b> The module/ABI and native-presentation boundaries are closed. The baked <code>c1a0e</code> proof scene remains deliberately distinct from live engine entities, which move to Phase 7.</li>
     </ol>
   </div>
 </section>
 
 <!-- PHASE 7 -->
-<section class="phase" id="p7">
+<section class="phase active" id="p7">
   <div class="num">7</div>
   <div class="body">
     <div class="head">
       <h2>Playable and release</h2>
-      <div class="meta"><span class="pill later">next</span><span>≈ 1–2 weeks</span></div>
+      <div class="meta"><span class="pill active">next</span><span>≈ 1–2 weeks</span></div>
     </div>
     <div class="visible"><b>Visible result.</b> HL1 playable start to finish from a signed title, released from a clean checkout with hashes.</div>
     <ol class="steps">
+      <li>Translate the live engine world, entities, view state and 2D/UI lists into the proven AGC draw/resource contracts; do not fall back to an OpenGL emulation layer.</li>
+      <li>Boot to a native main menu, load <code>c1a0</code> through the engine and compare a fixed-camera frame against the Phase 1 viewer.</li>
+      <li>Prove DualSense gameplay through the tram ride, then save/load, level transitions and the first full chapter.</li>
       <li>Performance budget: 16.6 ms at 1080p on the heaviest retail map, measured with Phase 5 instrumentation.</li>
       <li>60k-frame soak in gameplay, plus a level-transition soak.</li>
       <li>Release packaging from a fresh clone, publication audit, no game data in any archive.</li>
@@ -417,19 +419,19 @@
     <thead><tr><th>Risk</th><th>Where it bites</th><th>Mitigation</th></tr></thead>
     <tbody>
       <tr><td>libc surface</td><td>Phase 5 platform closure</td><td>Closed: <code>__assert</code>, <code>getpwuid</code> and <code>dladdr</code> are project-owned local definitions, absent from dynamic imports and hardware-proven before a clean <code>c1a0</code> run. The evidence ledger rule remains: an SDK provider is only a hypothesis until a focused hardware smoke passes.</td></tr>
-      <tr><td>Own PRX modules</td><td>Phase 6 modular build</td><td>Loader, filesystem, HLSDK server, MainUI and GoldSrc client gates are closed in the real Xash <code>COM_*</code> path on FW 12.02. The client preserves interface 7, both callback directions, live video/HUD execution and exact four-module teardown; <code>ref_agc</code> is now the only remaining module boundary.</td></tr>
+      <tr><td>Own PRX modules</td><td>Phase 6 modular build</td><td>Closed: filesystem, HLSDK server, MainUI, GoldSrc client and RefAPI 18 renderer run through the real Xash <code>COM_*</code> path on FW 12.02 and unload exactly to zero.</td></tr>
       <tr><td>Cache coherence on dynamic uploads</td><td>Phase 3 lightmaps, Phase 4 skinning</td><td>Memory model written in Phase 2; readback of the updated region on every iteration.</td></tr>
       <tr><td>Command buffer capacity</td><td>Phase 1 step 4 onward</td><td>Size from draw count × 30 DWORDs; host test asserts before submit.</td></tr>
       <tr><td>Texture tiling topology</td><td>Phase 3 swizzled layout</td><td>Stay linear until frametime demands otherwise; real GB_ADDR_CONFIG still unknown.</td></tr>
-      <tr><td>Heap ceiling</td><td>Phase 6 renderer integration</td><td>Closed for the static engine by the Phase 5 root arena; bind real <code>ref_agc</code> resources to the same generation/retirement contract.</td></tr>
+      <tr><td>Heap ceiling</td><td>Phase 6 renderer integration</td><td>Closed for Phase 6: the engine root arena and native <code>ref_agc</code> direct-memory resources both tear down exactly after fence plus VideoOut retirement.</td></tr>
       <tr><td>Draw count</td><td>Phase 4 retail maps</td><td>Culling in Phase 4 step 8; measure before optimizing indexed paths further.</td></tr>
     </tbody>
   </table>
   </div>
 </section>
 
-<p>Revision 34 closes Phase 6 gate 5 after the client merge: <code>client.prx</code> preserves interface 7, both callback directions and the accepted filesystem/server/menu boundary while executing real video/HUD callbacks on <code>c1a0</code>. The resulting five-file bundle is the rollback point and <code>ref_agc</code> is the only remaining Phase 6 gate. Deployment verification used the canonical FTP helper's connection-local raw SELF mode plus exact size and SHA-256; no ELF-prefix assumption or <code>shsrv</code> fallback was used.</p>
-<footer>Revision 34 closes Phase 6 gate 5: <code>client.prx</code> exposes 42 real GoldSrc exports through a 48-entry descriptor, proves interface 7 plus both callback masks, initializes video, performs 4,916 client frames and 4,907 HUD redraws on <code>c1a0</code>, and unloads server/menu/client/filesystem with active counts 3/2/1/0. Revision 31 closes Phase 6 gate 3: <code>server.prx</code> exposes 251 engine exports through a 257-entry descriptor, proves both directions of the engine ABI, explicitly runs relocated C++ initializer/finalizer arrays, spawns <code>c1a0</code> with the dynamic filesystem and unloads in exact server-then-filesystem order. Revision 30 closes Phase 6 gate 2: <code>filesystem_stdio</code> loads as an eight-export application-owned PRX, mounts the complete 4,823-entry tree, proves listing, mixed-case lookup and a 2,546,336-byte map read, spawns <code>c1a0</code> through the still-static server and stops/unloads with exact ownership. A rejected private-arena diagnostic established that <code>LoadFileMalloc</code> must preserve its shared-libc cross-module ABI. Revision 29 closes Phase 6 gate 1 in the real engine: the hybrid Xash <code>COM_*</code> backend loads an application-owned PRX, validates six <code>PRXDESC1</code> exports, executes code/data and a kernel import, records FW 12.02's module-info/startup behavior and unloads with exact ownership; the normal no-probe engine regression remains clean. Revision 28 closes Phase 5: project-owned <code>__assert</code>, fixed <code>getpwuid</code> identity and deterministic <code>dladdr</code> fallback are local ELF definitions rather than dynamic imports; all three pass on FW 12.02 before a complete <code>c1a0</code> run with reproducible hashes, result zero and a clean BYE. Phase 6 engine integration is now active. Revision 27 closes GPU end-of-pipe and VideoOut timing: 60,000 correlated submit/timestamp/fence/event records pass with strict GPU-clock progress, zero gaps or ordering errors, the complete Phase 4 scene and reproducible artifact hashes. Revision 26 closes the thread/time gate: exact join/detach ownership, 32,768 mutex-protected increments, 8,192 monotonic reads and 128 measured sleeps pass on FW 12.02 with zero errors, followed by <code>c1a0</code>, exact memory teardown and a clean BYE. Revision 25 closes the direct-memory gate: one guarded 128 MiB fixed-VA root owns every C/C++ engine allocation, generation-tagged representative GPU resources retire and reclaim exactly, and the accepted FW 12.02 run finishes with intact guards, zero ownership errors and an empty root. Revision 24 reconciles the SceAudioOut checkpoint header, latest-gate and import-ledger summaries, and removes the duplicated direct-memory step. Revision 23 closes the native SceAudioOut gate: a producer/consumer ring, an exact 147/160 resampler, worker-owned handle lifetime, whole-grain submission with terminal-only zero-fill, a matching PCM hash and an audibly confirmed FW 12.02 run. Revision 22 closed the native ScePad gate with chronological batched reads, all six gameplay actions, exact ownership and an immutable FW 12.02 run. Revision 21 closed the full retail filesystem, recorded the <code>strcasestr</code> root cause and four successful libc smokes, and introduced the evidence-led import classification. Revision 18 records Phase 5 gate 1: the Xash3D FWGS engine boots on FW 12.02 in dedicated mode, spawns c1a0 with all entity classes and quits cleanly after 90 s. Revision 17 closes Phase 4 with the final 60,000-frame FW 12.02 ownership soak and zero errors. Revision 10 closed the identity split: Xash3D is <code>PPSA99996</code>, Gears remains <code>PPSA99997</code> and historical <code>PPSA99998</code> is uninstalled. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step closes with host tests and hardware evidence.</footer>
+<p>Revision 35 closes Phase 6 after the <code>ref_agc</code> merge: RefAPI 18 and its live engine callbacks run beside the accepted native Phase 4 backend for 600 frames with nonzero GPU readbacks, exact ownership and five-module teardown to zero. The plan now states the real boundary explicitly: the gate's renderer scene is baked <code>c1a0e</code>, while arbitrary live engine-entity translation and gameplay belong to Phase 7.</p>
+<footer>Revision 35 closes Phase 6 gate 6: paired engine/renderer runs start 51 ms apart, bind RefAPI 18 with engine mask 63, exercise 203,420 balanced begin/end callbacks, present 600 combined native frames with two nonzero GPU hashes and unload server/menu/client/renderer/filesystem at 4/3/2/1/0. Revision 34 closes Phase 6 gate 5: <code>client.prx</code> exposes 42 real GoldSrc exports through a 48-entry descriptor, proves interface 7 plus both callback masks, initializes video, performs 4,916 client frames and 4,907 HUD redraws on <code>c1a0</code>, and unloads server/menu/client/filesystem with active counts 3/2/1/0. Revision 31 closes Phase 6 gate 3: <code>server.prx</code> exposes 251 engine exports through a 257-entry descriptor, proves both directions of the engine ABI, explicitly runs relocated C++ initializer/finalizer arrays, spawns <code>c1a0</code> with the dynamic filesystem and unloads in exact server-then-filesystem order. Revision 30 closes Phase 6 gate 2: <code>filesystem_stdio</code> loads as an eight-export application-owned PRX, mounts the complete 4,823-entry tree, proves listing, mixed-case lookup and a 2,546,336-byte map read, spawns <code>c1a0</code> through the still-static server and stops/unloads with exact ownership. A rejected private-arena diagnostic established that <code>LoadFileMalloc</code> must preserve its shared-libc cross-module ABI. Revision 29 closes Phase 6 gate 1 in the real engine: the hybrid Xash <code>COM_*</code> backend loads an application-owned PRX, validates six <code>PRXDESC1</code> exports, executes code/data and a kernel import, records FW 12.02's module-info/startup behavior and unloads with exact ownership; the normal no-probe engine regression remains clean. Revision 28 closes Phase 5: project-owned <code>__assert</code>, fixed <code>getpwuid</code> identity and deterministic <code>dladdr</code> fallback are local ELF definitions rather than dynamic imports; all three pass on FW 12.02 before a complete <code>c1a0</code> run with reproducible hashes, result zero and a clean BYE. Revision 27 closes GPU end-of-pipe and VideoOut timing: 60,000 correlated submit/timestamp/fence/event records pass with strict GPU-clock progress, zero gaps or ordering errors, the complete Phase 4 scene and reproducible artifact hashes. Revision 26 closes the thread/time gate: exact join/detach ownership, 32,768 mutex-protected increments, 8,192 monotonic reads and 128 measured sleeps pass on FW 12.02 with zero errors, followed by <code>c1a0</code>, exact memory teardown and a clean BYE. Revision 25 closes the direct-memory gate: one guarded 128 MiB fixed-VA root owns every C/C++ engine allocation, generation-tagged representative GPU resources retire and reclaim exactly, and the accepted FW 12.02 run finishes with intact guards, zero ownership errors and an empty root. Revision 24 reconciles the SceAudioOut checkpoint header, latest-gate and import-ledger summaries, and removes the duplicated direct-memory step. Revision 23 closes the native SceAudioOut gate: a producer/consumer ring, an exact 147/160 resampler, worker-owned handle lifetime, whole-grain submission with terminal-only zero-fill, a matching PCM hash and an audibly confirmed FW 12.02 run. Revision 22 closed the native ScePad gate with chronological batched reads, all six gameplay actions, exact ownership and an immutable FW 12.02 run. Revision 21 closed the full retail filesystem, recorded the <code>strcasestr</code> root cause and four successful libc smokes, and introduced the evidence-led import classification. Revision 18 records Phase 5 gate 1: the Xash3D FWGS engine boots on FW 12.02 in dedicated mode, spawns c1a0 with all entity classes and quits cleanly after 90 s. Revision 17 closes Phase 4 with the final 60,000-frame FW 12.02 ownership soak and zero errors. Revision 10 closed the identity split: Xash3D is <code>PPSA99996</code>, Gears remains <code>PPSA99997</code> and historical <code>PPSA99998</code> is uninstalled. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step closes with host tests and hardware evidence.</footer>
 </div>
 </body>
 </html>

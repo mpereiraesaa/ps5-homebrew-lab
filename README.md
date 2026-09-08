@@ -40,17 +40,19 @@ y 128 muestras `nanosleep`/`usleep` sin errores ni despertares anticipados. El
 gate de telemetría correlacionó 60.000 submits, timestamps GPU end-of-pipe,
 fences y eventos VideoOut exactos sin gaps ni regresiones. El cierre final
 retuvo `__assert`, `getpwuid` y `dladdr` como definiciones locales del port,
-probó sus contratos en FW 12.02 y cargó `c1a0` sin errores. La Fase 6 ya está
-activa y tiene cuatro gates cerrados: el loader híbrido,
-`filesystem_stdio.prx`, el servidor HLSDK y MainUI como PRXs propios. La
+probó sus contratos en FW 12.02 y cargó `c1a0` sin errores. La Fase 6 está
+completa: loader híbrido, `filesystem_stdio.prx`, servidor HLSDK, MainUI,
+cliente GoldSrc y `ref_agc` funcionan como módulos propios. La
 combinación dinámica montó las 4.823
 entradas, probó listing, lectura grande y path con case mixto; el servidor
 publicó 251 exports del engine, ejecutó sus constructores C++, cruzó la ABI en
 ambos sentidos, levantó `c1a0` y se descargó antes que el filesystem con
 ownership exacto. MainUI publicó sus 16 callbacks base y 12 extendidos, se
 activó y redibujó 5.127 veces sobre un framebuffer software no negro. El
-siguiente checkpoint convierte sólo `client`; después sigue `ref_agc` como
-gate independiente y presentación nativa en TV.
+cliente pasó interface 7 y ambos sentidos de la ABI sobre `c1a0`; el gate
+final enlazó RefAPI 18 con el backend AGC, presentó 600 frames con hashes GPU
+no nulos y descargó los cinco PRXs exactamente. La Fase 7 conectará las
+entidades vivas del engine con esos draws para cerrar gameplay y release.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico
