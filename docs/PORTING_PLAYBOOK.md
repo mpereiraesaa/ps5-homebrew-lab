@@ -94,21 +94,31 @@ as new facts appear. Full detail and evidence in `docs/FINDINGS.md`.
   filesystem ELFs, **no** arbitrary `dlopen`; IPv6 via SDK `getaddrinfo`
   unusable. `dup`/`dup2` unavailable. (Cross-checked with BlackBear's
   `ps5-python/docs/ps5-limitations.md`.)
-- **Running 32-bit machine code is an OPEN QUESTION, not a closed door.**
-  Titles run in 64-bit long mode, and a thread reaches x86 compatibility
+- **The page size is 16 KiB, not 4 KiB**, measured through
+  `sysconf(_SC_PAGESIZE)` (which works) and confirmed by `mprotect`
+  behaviour. Anything that assumes 4 KiB will appear to work on a host and
+  fail here. In particular `munmap` and `mprotect` operate on 16 KiB
+  boundaries, and **FreeBSD's `munmap` truncates a misaligned address
+  downward and extends the length to match** — so a misaligned trim does
+  not fail, it releases memory you are still using. Round every reservation
+  up to whole pages before trimming it.
+- **Running 32-bit machine code is REFUSED.** `sysarch(I386_SET_LDT, ...)`
+  returns `EINVAL` from a title on FW 12.02, so no local descriptor can be
+  installed, 32-bit compatibility mode cannot be entered, and WoW64-style
+  ABI thunking is unavailable. Measured 2026-09-08 by `prospero-win`
+  gate 0.2a, whose probe completes the same round trip on an ordinary
+  x86-64 host, so the refusal is the platform's and not the stub's. A port
+  with a 32-bit payload needs JIT recompilation or a 64-bit-only scope.
+  Details in that project's `docs/COMPAT32_PHASE0A.md`.
+  The mechanism, for whoever revisits this: a thread reaches compatibility
   mode only by far-jumping to a code descriptor with `L` clear and `D/B`
-  set. User code cannot write a descriptor table, but on FreeBSD amd64 it
-  can ask the kernel to: `sysarch(I386_SET_LDT, ...)` (`amd64_set_ldt`)
-  exists for exactly this, and the pinned payload SDK declares it
-  (`x86/sysarch.h`, `SYS_sysarch` 165) along with `I386_SET_FSBASE` for
-  32-bit TLS. Whether Prospero still permits those operations from a
-  sandboxed title is **unmeasured** — a header declaration is even weaker
-  evidence than an export, so principle 1 applies twice over. Any port
-  with a 32-bit payload (a Win32 game, a vendor DLL such as `binkw32`)
-  should run that probe early: it is small, and its three outcomes each
-  decide the port's whole architecture. `prospero-win` owns the probe; see
-  its `docs/EXECUTION_MODEL.md` for the descriptor layout, the fallback
-  routes and why JIT recompilation is not the same thing as emulation.
+  set. User code cannot write a descriptor table, so the kernel has to
+  install one, and on FreeBSD amd64 `sysarch(I386_SET_LDT, ...)`
+  (`amd64_set_ldt`) exists for exactly that; the pinned payload SDK even
+  declares it (`x86/sysarch.h`, `SYS_sysarch` 165) alongside
+  `I386_SET_FSBASE` for 32-bit TLS. Those declarations describe FreeBSD,
+  not what Sony's kernel permits — a header declaration is weaker evidence
+  than an export, and here it turned out to be worth nothing at all.
 - Working, verified: `socket`/`bind`/`sendto`/`poll`, `pthread_*`,
   `clock_gettime`, `sceKernelOpen`/`Read`/`Write`/`Close`/`Stat`/`Getdents`,
   `strcasecmp`/`strncasecmp`/`strnlen`/`strlcpy`/`strlcat`. Xash3D run
@@ -147,6 +157,41 @@ recognizes the pattern instead of re-deriving it.
 **Template:** *Symptom* (observable, incl. fault signature) · *False leads*
 (what looked plausible and was wrong) · *Actual cause* · *Fix* · *General rule*
 (what to check first next time) · *Reference* (project, PR, run id).
+
+### A misaligned munmap released live memory (prospero-win, 2026-09-08)
+
+- **Symptom:** `SIGSEGV`, `code=1` (`SEGV_MAPERR`), `addr=0x200088000`,
+  `pc=0x20001c210` — a program counter inside a freshly mmap'd *data*
+  region, so execution had been transferred into memory that contains no
+  code. Reproducible, and only on the console: every host test passed.
+- **False leads:** the fault address equalled the `rsp` reported from
+  `uc_mcontext`, which reads as a stack overflow. It was not: a stack
+  anchor printed from `main` showed the real stack three orders of
+  magnitude away, at `0x7eeffbd54`. `mc_rsp` is simply not populated
+  reliably for a SEGV here, exactly as the Xash3D backend already warns.
+  `sysconf` was also suspected as an unmeasured import; it works and
+  returns 16384.
+- **Actual cause:** a reservation helper over-allocated, aligned, then
+  trimmed the padding with `munmap`. The reservation size came from a PE
+  image's `SizeOfImage`, which is section-aligned to 4 KiB — `0x7000` here
+  — so the tail address was not a multiple of the 16 KiB page. FreeBSD's
+  `munmap` truncates a misaligned address **down** and extends the length,
+  so instead of releasing padding it released the last three pages of the
+  live region. Later writes then ran off the end of a partially unmapped
+  reservation.
+- **Fix:** round the reservation up to whole pages before computing either
+  trim, so both ends fall on page boundaries.
+- **General rules:** (1) the page size here is 16 KiB, and any size derived
+  from another format's alignment — a PE section, an ELF segment, a texture
+  row — is not automatically a whole number of pages; (2) never ignore the
+  return value of `munmap`/`mprotect`, because the failure mode is silent
+  and delayed; (3) `mc_rsp` in a signal context is not trustworthy, so
+  print a stack anchor from a known frame before believing a stack
+  diagnosis; (4) stream evidence as it is produced — the first two runs
+  buffered their records and a crash took every one of them, leaving a
+  transcript that ended with no indication of where it stopped.
+- **Reference:** `projects/prospero-win`, gate 0.1, accepted run
+  `20260908T111650513Z_PPSA99995_prospero-win_0xf65743b2ac43`.
 
 ### strcasestr via libScePosixForWebKit is unusable (Xash3D, 2026-09-07)
 

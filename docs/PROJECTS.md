@@ -54,11 +54,15 @@ y se ejecuta directamente sobre Zen 2, mientras que la superficie de API que
 esos programas invocan se reimplementa de forma nativa. Identidad de
 desarrollo: `PPSA99995`.
 
-Fase 0.1 está completa en host y **pendiente en hardware**: lector PE mínimo
+La Fase 0.1 **pasó en FW 12.02 el 2026-09-08** (corrida
+`20260908T111650513Z_PPSA99995_prospero-win_0xf65743b2ac43`): lector PE mínimo
 sin dependencias del sistema operativo, planificación del layout mapeado,
 relocalización base, protecciones a la granularidad real de página y
-resolución recursiva de dependencias de terceros. La cadena `game.exe ->
-binkw32.dll -> msvcrt.dll` está probada con nueve suites C y cuatro de Python.
+resolución recursiva de dependencias de terceros. La consola mapeó un
+ejecutable de Windows y la DLL de terceros que importa, los rebasó fuera de
+su base preferida aplicando relocalizaciones, los verificó byte a byte,
+resolvió la cadena de dependencias y liberó todo: 25 registros, BYE sin gaps
+y `PW_EXIT result=0`.
 Los módulos Win32 (`kernel32`, `msvcrt`, `ddraw`...) nunca se cargan de disco:
 se registran como *host bindings* que la propia capa implementará. Ese reparto
 es el diseño completo del proyecto.

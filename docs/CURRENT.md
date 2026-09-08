@@ -182,11 +182,15 @@ reimplements the Windows API surface natively. It uses development identity
 `PPSA99997`.
 
 Phase 0.1 — parse, map, relocate, protect and recursively resolve
-third-party dependencies — is complete on the host and **not yet run on
-hardware**; `make check` includes its contracts and publication audit. The
-console gate, its `ps5log/1` record set and its fail-closed validator are
-specified in `projects/prospero-win/docs/PE_MAPPING_PHASE0.md`. Nothing in
-that project is described as proven on FW 12.02 until a manifest says so.
+third-party dependencies — **passed on FW 12.02 on 2026-09-08**, run
+`20260908T111650513Z_PPSA99995_prospero-win_0xf65743b2ac43`. The console
+mapped a Windows executable and the third-party DLL it imports, rebased both
+away from their preferred bases with relocations applied, verified both byte
+for byte, resolved the dependency chain, recorded `kernel32`/`msvcrt` as host
+bindings without reading them from disk, and released everything: 25 records,
+gap-free BYE, `PW_EXIT result=0`. `make check` includes its host contracts
+and publication audit; the evidence boundary is in
+`projects/prospero-win/docs/PE_MAPPING_PHASE0.md`.
 
 Two boundaries are documented there before any code depends on them.
 Executable memory needs the aliased write/execute path rather than a
@@ -196,15 +200,24 @@ an open question rather than a closed door: Zen 2 executes 32-bit
 instructions natively in compatibility mode, and reaching that mode needs a
 code descriptor the kernel installs through `sysarch(I386_SET_LDT, ...)`,
 which the pinned payload SDK declares but which no run has exercised on this
-firmware. Gate 0.2a is that probe. It is built and host-validated: on an
-ordinary x86-64 machine the descriptors install, the far transfer enters
-compatibility mode from a sealed non-writable code page, genuinely 32-bit
-instructions execute, and control returns — so what remains is the console
-measurement, not the design. The host run also established that the 64-bit
-stack pointer does not survive a crossing, which every future thunk has to
-handle. Its four possible console outcomes and what each one implies are in
-`projects/prospero-win/docs/COMPAT32_PHASE0A.md`. The project's licence is
-deliberately still open; see its `LICENSING.md`.
+firmware. Gate 0.2a asked it and the answer is **no**:
+`sysarch(I386_SET_LDT, ...)` returns `EINVAL` from a title, so no local
+descriptor can be installed and 32-bit compatibility mode cannot be entered.
+The same probe completes a full round trip on an ordinary x86-64 host, which
+is what makes the refusal attributable to the platform rather than to the
+stub. WoW64-style ABI thunking is therefore unavailable here, and reaching
+32-bit programs would require JIT recompilation or a 64-bit-only scope — an
+owner decision, now backed by a measurement. See
+`projects/prospero-win/docs/COMPAT32_PHASE0A.md`.
+
+Two platform facts from these runs are recorded in `PORTING_PLAYBOOK.md`
+because they apply to every port: the page size is 16 KiB, not 4 KiB, and
+FreeBSD's `munmap` truncates a misaligned address downward and extends the
+length, so a misaligned trim releases memory that is still in use. The
+16 KiB granularity also means a 4 KiB-aligned PE cannot keep W^X: a 28 KiB
+image occupies two protectable pages and one ends up writable and
+executable, which the validator refuses unless the operator acknowledges it.
+The project's licence is deliberately still open; see its `LICENSING.md`.
 
 ## Development policy
 
