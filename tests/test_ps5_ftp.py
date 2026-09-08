@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT / "tools"))
 
-from ps5_ftp import verify_remote_file  # noqa: E402
+from ps5_ftp import is_self_container, verify_remote_file  # noqa: E402
 
 
 class FakeFTP:
@@ -35,15 +35,21 @@ class FakeFTP:
 
 
 def main() -> int:
-    payload = b"signed-fself-bytes"
+    payload = b"\x54\x14\xf5\xee" + b"signed-fself-bytes"
     digest = hashlib.sha256(payload).hexdigest()
 
+    assert is_self_container(payload)
+    assert is_self_container(b"\x4f\x15\x3d\x1d-orbis-self")
+    assert not is_self_container(b"\x7fELF")
+
     enabled = FakeFTP(payload, conversion_enabled=True)
+    assert verify_remote_file(enabled, "/remote", len(payload), digest, True) == len(payload)
     assert verify_remote_file(enabled, "/remote", len(payload), digest, True) == len(payload)
     assert enabled.commands == ["SELF"]
     assert not enabled.conversion_enabled
 
     disabled = FakeFTP(payload, conversion_enabled=False)
+    verify_remote_file(disabled, "/remote", len(payload), digest, True)
     verify_remote_file(disabled, "/remote", len(payload), digest, True)
     assert disabled.commands == ["SELF", "SELF"]
     assert not disabled.conversion_enabled

@@ -21,7 +21,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ps5_ftp import verify_remote_file
+from ps5_ftp import is_self_container, verify_remote_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -234,7 +234,7 @@ class Supervisor:
         try:
             return verify_remote_file(
                 ftp, remote, len(local_data), hashlib.sha256(local_data).hexdigest(),
-                local_data.startswith(b"O\x15=\x1d"))
+                is_self_container(local_data))
         except (OSError, ftplib.Error, RuntimeError) as exc:
             raise SafetyStop(f"FTP content verification failed: {remote}") from exc
 

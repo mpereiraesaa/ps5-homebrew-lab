@@ -438,9 +438,15 @@ Xash3D debe apoyarse en `prx_load`, `prx_get_proc` y `prx_unload`.
 Observaciones operativas: `ftpsrv` convierte por defecto los fSELF a ELF al
 descargarlos, pero el comando `SELF` alterna ese modo por conexión. La
 verificación de subida lo deja desactivado y compara tamaño y SHA-256 exactos
-del fSELF almacenado, sin depender de `shsrv`; el klog en el puerto 3232 de la consola muestra señales y errores de
-`rtld`; la salida con `_exit` aparece como SIGSYS en klog aunque el shell
-vuelva al menú sin diálogo.
+del fSELF almacenado, sin depender de `shsrv`. Un smoke read-only sobre el FTP
+activo en FW 12.02 confirmó los artefactos del gate MainUI: `eboot.bin`,
+2.920.695 bytes y SHA-256
+`8bcd0033abb3230841467196adec209146c20b7b4ec3b3a3932b18df7c957680`;
+`menu.prx`, 590.734 bytes y SHA-256
+`ec496e4c978dbef7f12305134eb2ba441de2983f551c5ef853e7291c8045aa1b`.
+El klog en el puerto 3232 de la consola muestra señales y errores de `rtld`;
+la salida con `_exit` aparece como SIGSYS en klog aunque el shell vuelva al
+menú sin diálogo.
 
 ## Xash3D BSP y resource foundation (2026-09-06)
 
@@ -519,9 +525,10 @@ foundation:
 - El lld del SDK no sirve para `ld -r`: emite una sección de relocalización por
   grupo COMDAT y el enlace final la rechaza; el paso relocable usa el `ld.lld`
   del host y `llvm-objcopy -G lib_<módulo>_exports`.
-- `ftpsrv` devuelve los fSELF como ELF descifrado con los últimos 512 bytes
-  reescritos; `tools/deploy_title_ftp.py` verifica `eboot.bin` contra el ELF
-  enlazado por prefijo y el resto de archivos byte a byte.
+- `ftpsrv` devuelve por defecto los fSELF como ELF descifrado, pero su comando
+  `SELF` alterna ese comportamiento para la conexión actual. Todos los helpers
+  de deploy lo dejan en modo raw y verifican tamaño y SHA-256 exactos del
+  contenedor almacenado, tanto para `eboot.bin` como para cada PRX firmado.
 
 Contraste con las limitaciones publicadas por BlackBear para su port de
 CPython (`blackbearreloaded/ps5-python`, `docs/ps5-limitations.md`): coinciden
