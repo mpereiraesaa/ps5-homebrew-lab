@@ -224,10 +224,10 @@ one image released and clean BYE. Eight host DLL bindings remain unimplemented.
 The validator accepted --allow-i386 and --allow-wx; one 16 KiB page merges
 write/execute permissions. That mapping run executed no guest instructions or graphics.
 
-Subsequent bounded host translation executed 26 instructions from the original
+Subsequent bounded host translation executed 44 instructions from the original
 Pinball entry plus GetModuleHandleA(NULL), returning the mapped base 0x01000000.
 It now binds 207 imports (205 function tokens, two CRT data words) and stops
-at a 16-bit memory compare (EIP 0x01020fac). The result reproduced under
+at the pending CRT API `__set_app_type` (dispatcher token 0xe0000550). The result reproduced under
 ASan/UBSan. Other handlers remain pending; binding is not implementation.
 This is not PS5 guest execution or completed Win32 startup.
 See `projects/prospero-win/docs/X86_EXECUTION.md`.

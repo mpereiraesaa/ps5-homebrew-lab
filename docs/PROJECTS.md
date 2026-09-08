@@ -62,9 +62,9 @@ Base 0x01000000, 311296 bytes reservados, tres secciones verificadas sin
 discrepancias y cierre limpio. Una página de 16 KiB combina permisos WX.
 Las ocho DLLs se clasificaron como interfaces host aún sin implementar.
 
-El traductor acotado ejecutó en host 26 instrucciones del arranque original
+El traductor acotado ejecutó en host 44 instrucciones del arranque original
 y GetModuleHandleA(NULL). Enlaza 205 funciones y dos datos; los demás handlers
-siguen pendientes. Se detiene en una comparación de memoria de 16 bits.
+siguen pendientes. Se detiene en la API CRT pendiente `__set_app_type`.
 Se reprodujo con ASan/UBSan. Esto no acredita ejecución del juego en PS5 ni
 inicialización Win32. Detalles: `projects/prospero-win/docs/X86_EXECUTION.md`.
 
