@@ -81,10 +81,21 @@ ejecutan instrucciones genuinamente de 32 bits y el control vuelve; lo que
 falta es la medida en consola, no el diseño. Esa corrida también estableció
 que el puntero de pila de 64 bits no sobrevive al cruce, algo que cualquier
 thunk futuro debe manejar. Si el probe pasa en consola, los juegos de 32 bits
-corren de forma nativa mediante ABI thunking estilo WoW64, con cero emulación
-de instrucciones; si falla, sólo quedan la recompilación JIT —que tampoco es
-emulación, pero altera la ruta de instrucciones— o restringir el alcance a
-programas de 64 bits. Mientras no haya medida, el loader reporta `native=0`
+corrían de forma nativa mediante ABI thunking estilo WoW64. El probe se
+ejecutó y **falló**: todas las operaciones LDT devuelven `EINVAL`, también
+con privilegio elevado y con una operación de control que sí funciona, y el
+sysctl que dimensiona la tabla no existe. No hay ruta nativa para 32 bits en
+este firmware.
+
+Alcance decidido: **se soportan 32 y 64 bits**. El código de 64 bits se
+ejecuta nativo; el de 32 bits pasa por un traductor JIT de misma ISA, que es
+la Fase 4 del roadmap y va deliberadamente después de que un programa de 64
+bits funcione de extremo a extremo. Sus prerrequisitos están medidos: una
+dirección baja se concede si se pide, así que los punteros del guest pueden
+vivir bajo 4 GiB y los operandos de memoria no necesitan reescritura; un
+título obtiene 256 MiB contiguos ahí; y `mprotect` a lectura-escritura-
+ejecución funciona, así que la caché de código no necesita doble mapeo.
+Licencia: LGPL-2.1-or-later. Mientras no haya medida, el loader reporta `native=0`
 para una imagen `i386` y el validador rechaza la corrida salvo `--allow-i386`.
 El razonamiento completo, junto con el motivo por el que el contrato de
 memoria lleva dos alias (escritura y ejecución) desde el primer día, está en

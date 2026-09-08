@@ -205,10 +205,19 @@ firmware. Gate 0.2a asked it and the answer is **no**:
 descriptor can be installed and 32-bit compatibility mode cannot be entered.
 The same probe completes a full round trip on an ordinary x86-64 host, which
 is what makes the refusal attributable to the platform rather than to the
-stub. WoW64-style ABI thunking is therefore unavailable here, and reaching
-32-bit programs would require JIT recompilation or a 64-bit-only scope — an
-owner decision, now backed by a measurement. See
+stub. WoW64-style ABI thunking is therefore unavailable here. See
 `projects/prospero-win/docs/COMPAT32_PHASE0A.md`.
+
+The scope decision that followed is settled: **both 32-bit and 64-bit
+programs are supported.** 64-bit code executes natively; 32-bit code goes
+through a same-ISA JIT translator, which is Phase 4 of that project's
+roadmap and is deliberately sequenced after a 64-bit program works end to
+end. Its platform prerequisites were measured rather than assumed: a low
+address is grantable on request so guest pointers can live below 4 GiB and
+memory operands need no rewriting, a title gets 256 MiB contiguous there,
+and `mprotect` to read-write-execute succeeds so a code cache needs no
+double mapping. The project is licensed LGPL-2.1-or-later; the reasoning,
+including why 2.1 rather than 3, is in its `LICENSING.md`.
 
 Two platform facts from these runs are recorded in `PORTING_PLAYBOOK.md`
 because they apply to every port: the page size is 16 KiB, not 4 KiB, and
@@ -217,7 +226,7 @@ length, so a misaligned trim releases memory that is still in use. The
 16 KiB granularity also means a 4 KiB-aligned PE cannot keep W^X: a 28 KiB
 image occupies two protectable pages and one ends up writable and
 executable, which the validator refuses unless the operator acknowledges it.
-The project's licence is deliberately still open; see its `LICENSING.md`.
+
 
 ## Development policy
 
