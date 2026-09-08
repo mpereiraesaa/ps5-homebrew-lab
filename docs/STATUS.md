@@ -7,9 +7,9 @@
 > frames. Para trabajo vigente usar `CURRENT.md`; los nombres Stage A–I son
 > historia experimental bajo `legacy/`.
 
-## Observabilidad vigente
+## Observabilidad histórica de PPSA99998
 
-`PPSA99998` usa `ps5log/1` estructurado sobre TCP, sin archivos de log en la
+`PPSA99998` usó `ps5log/1` estructurado sobre TCP, sin archivos de log en la
 consola ni mounts USB. La regresión pre-entry `0x80aa001a` era un bug del linker:
 usaba el file offset de `.got` como comienzo de RELRO, aunque la región empieza
 en `.data.rel.ro`. Al crecer el binario con el logger podía producir un

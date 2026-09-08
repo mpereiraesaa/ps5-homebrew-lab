@@ -22,6 +22,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from ps5_ftp import is_self_container, verify_remote_file
+
 
 def _lab_root() -> Path:
     """Directory holding `elf-arsenal`, `rehd_mods` and the lab checkout.
@@ -248,45 +250,14 @@ class Supervisor:
 
     def verify_ftp_file(self, ftp: ftplib.FTP, local: Path,
                         remote: str) -> int:
-        """Verify an upload despite the PS5 FTP server's SELF transformation."""
+        """Verify exact stored bytes, including signed SELF containers."""
         local_data = local.read_bytes()
-        if local_data.startswith(b"O\x15=\x1d"):
-            remote_size = self.shsrv_file_size(remote)
-            if remote_size != len(local_data):
-                raise SafetyStop(f"shsrv size verification failed: {remote}")
-            return remote_size
-
-        remote_data = bytearray()
-        ftp.retrbinary(f"RETR {remote}", remote_data.extend)
-        if (len(remote_data) != len(local_data) or
-                hashlib.sha256(remote_data).digest() !=
-                hashlib.sha256(local_data).digest()):
-            raise SafetyStop(f"FTP content verification failed: {remote}")
-        return len(remote_data)
-
-    def shsrv_file_size(self, path: str) -> int:
-        """Return a stored file size using shsrv's read-only stat command."""
-        data = bytearray()
-        with socket.create_connection(
-                (self.host, REQUIRED_PORTS["shsrv"]), self.timeout) as sock:
-            sock.settimeout(self.timeout)
-            while b"$ " not in data and len(data) < 16384:
-                data.extend(sock.recv(4096))
-            sock.sendall(f"stat {path}\n".encode("ascii"))
-            response_start = len(data)
-            while len(data) < 32768:
-                chunk = sock.recv(4096)
-                if not chunk:
-                    break
-                data.extend(chunk)
-                if b"$ " in data[response_start:]:
-                    break
-        text = data[response_start:].decode("utf-8", "replace")
-        match = re.search(r"(?:^|\n)size: (\d+)(?:\r?$|\n)", text,
-                          re.MULTILINE)
-        if not match:
-            raise SafetyStop(f"shsrv stat was not parseable: {path}")
-        return int(match.group(1))
+        try:
+            return verify_remote_file(
+                ftp, remote, len(local_data), hashlib.sha256(local_data).hexdigest(),
+                is_self_container(local_data))
+        except (OSError, ftplib.Error, RuntimeError) as exc:
+            raise SafetyStop(f"FTP content verification failed: {remote}") from exc
 
     def shsrv_command(self, command: str, timeout: float = 20.0) -> str:
         if not re.fullmatch(r"hbldr /data/homebrew/bin/[A-Za-z0-9._-]+", command):

@@ -27,9 +27,10 @@ completed all six hardware gates before merging through
 `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264`. The
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
-history of `projects/ps5-xash3d`, which this laboratory now pins at merged
-Phase 6 filesystem-PRX commit `0d1f0e0` (the dedicated identity began at
-`c09318f`).
+history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 6
+client-PRX commit `3a30250`, which includes the dedicated title icon from
+`ea9be4b`; the preceding MainUI-PRX implementation is `9f783ec` and the
+dedicated identity began at `c09318f`.
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -149,8 +150,43 @@ filesystem state remained valid, `module_stop` and unload both returned zero,
 no dynamic handles remained and the engine arena closed exactly. The accepted
 allocator contract keeps `LoadFileMalloc` on process libc because its buffer
 crosses into host `COM_FreeFile`; a rejected private-arena diagnostic made
-that boundary observable through `SIGABRT`. The next isolated checkpoint
-converts only the server while preserving the proven dynamic filesystem.
+that boundary observable through `SIGABRT`.
+
+Phase 6 gate 3 is closed in merged Xash3D PR #13 (`cbc5948`). Accepted run
+`20260908T082646982Z_PPSA99996_xash3d-engine_0xed0f9a243abc` loaded both
+`filesystem_stdio.prx` and `server.prx`. The server descriptor exposed 257
+entries, including 251 engine exports; its ABI table mask was 7 and two
+non-mutating PRX-to-engine callback smokes passed before the unmodified HLSDK
+registration and map flow spawned `c1a0`, loaded the graph and started the
+four-player server. An earlier deterministic fault at the first real cvar
+registration established that application-owned PRXs cannot assume C++
+constructors have run on FW 12.02: the generated lifecycle now executes the
+relocated `.init_array` forward and `.fini_array` reverse. After the bounded
+15-second run, server stop/unload returned zero while the filesystem remained
+active; filesystem stop/unload then returned zero with no modules active and
+the engine arena balanced.
+
+Phase 6 gate 4 is closed in merged Xash3D PR #14 (`9f783ec`). Accepted run
+`20260908T094038112Z_PPSA99996_xash3d-engine_0xf1174a815840` loaded MainUI as
+`menu.prx` on top of the filesystem/server checkpoint. Its 16 base and 12
+extended callbacks passed with complete engine masks, explicit C++ lifecycle,
+one activation and 5,127 redraws. The software framebuffer presented 5,100
+non-black frames; this proves UI execution but not yet AGC presentation on the
+TV. Server, menu and filesystem unloaded in order with active counts 2, 1 and
+0, zero structured errors and a clean BYE.
+
+Phase 6 gate 5 is closed in merged Xash3D PR #17 (`3a30250`). Accepted run
+`20260908T130114060Z_PPSA99996_xash3d-engine_0xfc0996a1effb` loaded the pinned
+HLSDK client as `/app0/sce_module/client.prx` on top of the accepted
+filesystem/server/menu bundle. Its 48-entry descriptor exposed 42 actual
+GoldSrc exports, interface version 7 and both callback masks (63 host, 15
+module) passed, and both PRX-to-engine smokes completed. The real `c1a0`
+workload performed one video init, 4,916 client frame callbacks, 4,907
+successful HUD redraws and 4,800 non-black software presentations. Server,
+menu, client and filesystem stopped/unloaded with active counts 3, 2, 1 and 0;
+89 structured records and 115 raw lines ended with result zero, no errors,
+gaps or oversized records, and a clean BYE. The five-file bundle is now the
+rollback point; `ref_agc` is the only remaining Phase 6 conversion.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
@@ -245,6 +281,9 @@ executable, which the validator refuses unless the operator acknowledges it.
 ## Canonical tooling
 
 - `projects/logging_server`: structured `ps5log/1` telemetry.
+- `tools/ps5_ftp.py`: the single FTP transport contract. Deploy helpers switch
+  `ps5-payload-dev/ftpsrv` to raw SELF mode on their own connection and verify
+  the stored fSELF/PRX by exact size and SHA-256; an ELF prefix is not proof.
 - `tools/ps5_remoteplay.py`: pinned Headless LinkDev build/pairing plus
   Chiaki stream, screenshot and MP4 capture.
 - `tools/night_supervisor.py`: exact launch/close and guarded operational

@@ -12,7 +12,7 @@ Reconciled: 2026-09-08. Hardware boundary: one PS5 on firmware 12.02.
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
-| 6 — Engine integration | Active, gates 1–2 closed | Hybrid `COM_*` loader and dynamic `filesystem_stdio` are hardware-proven; server, menu, client and `ref_agc` conversions remain. |
+| 6 — Engine integration | Active, gates 1–5 closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI and GoldSrc client are hardware-proven; only `ref_agc` remains. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
 The Phase 1/2 implementation was merged through
@@ -20,8 +20,9 @@ The Phase 1/2 implementation was merged through
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
-the laboratory submodule `projects/ps5-xash3d` now pins the merged Phase 6
-filesystem-PRX commit `0d1f0e0`.
+the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 6
+client-PRX commit `3a30250`, which includes the dedicated title icon from
+`ea9be4b`; the preceding MainUI-PRX implementation is `9f783ec`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
@@ -542,8 +543,95 @@ PRX ELF/fSELF SHA-256:
 transcript/manifest SHA-256:
 `808cc9a79c3892829f38f8865b9405d055a31c7aff37aa3571db14fdcdc09efb` /
 `26752b034280ed22d99bc3112d2407e939729b85cc72df90e45f2962f338bf45`.
-The next gate converts only the server while retaining this dynamic filesystem
-checkpoint.
+
+### Dynamic server PRX: closed (2026-09-08)
+
+Xash3D PR #13, merged as `cbc5948`, removes the HLSDK server from the host and
+packages it beside the already dynamic filesystem. Its generated descriptor
+contains 257 entries: 251 engine exports, two bounded ABI probes and lifecycle
+state/start/stop exports. The host retained no static filesystem or server
+fallback for the accepted build.
+
+Rejected run `20260908T081747518Z_PPSA99996_xash3d-engine_0xec9200150ba2`
+isolated a real module-lifecycle rule. Six `CVarGetPointer` callbacks worked,
+but the first `CVarRegister(&build_commit)` received `name=NULL` because the
+two relocated `.init_array` entries had not run. The generated module startup
+now invokes constructors forward and shutdown invokes finalizers reverse,
+both idempotently. This corrected the fault without changing HLSDK source or
+replacing a Prospero library.
+
+Accepted run
+`20260908T082646982Z_PPSA99996_xash3d-engine_0xed0f9a243abc` loaded four
+server segments and all 257 descriptor entries, reported 251 engine exports,
+proved ABI mask 7 and passed two non-mutating callbacks from PRX code into the
+engine. The dynamic filesystem retained its 4,823-entry index, mixed-case
+768-byte palette lookup and 2,546,336-byte `c1a0.bsp` read. The real HLSDK flow
+then emitted `Spawn Server: c1a0`, loaded the graph and started a four-player
+server. After 15 seconds, server stop/unload returned zero with the filesystem
+still active; filesystem stop/unload then returned zero with no modules active,
+exact arena teardown and a gap-free BYE.
+
+Host ELF/fSELF SHA-256:
+`10284d275fa5ec6cdbd194b9682d0b7ab5c813ebe69d86aceffc8a3a200478c5` /
+`53548f84c50942e49edeeee0ce2d1283db5fa3286a9c76d71f0070bb1b43488a`;
+server ELF/fSELF SHA-256:
+`26eb2e10b966918692e378166307bb4ac3b52bc76f2a0dccc4cbe26266e889a5` /
+`c3aa4956510f9e638cedaa54178f5fb313a76eb7601336cc39180b22bad9295c`;
+transcript/manifest SHA-256:
+`69cb7dd0f0fb5dacfde1de0486c183da63b6b5a11643dcfbde2860b6a9bb5a3f` /
+`fe73667d6a764d5e5e363afcd2cd75b29232e3d2cc4c498e4ce7c1c6a4435428`.
+This remains the rollback point beneath the accepted MainUI gate.
+
+### Dynamic MainUI menu PRX: closed (2026-09-08)
+
+Xash3D PR #14, merged as `9f783ec`, packages pinned upstream MainUI as
+`menu.prx` while retaining the dynamic filesystem/server pair. Accepted run
+`20260908T094038112Z_PPSA99996_xash3d-engine_0xf1174a815840` proved all 16
+base and 12 extended callbacks, engine masks 63 and 15, explicit C++ startup,
+activation and 5,127 redraws. Its software framebuffer presented 5,100
+non-black frames with final hash `b12dbb47c69ddcb2`. This is the first real UI
+module gate, but TV-visible presentation remains scoped to `ref_agc`.
+
+The client startup also retained the server ABI probes. Shutdown unloaded
+server, menu and filesystem in order with active counts 2, 1 and 0. The run
+ended with exact memory teardown, 73 structured records, 77 raw lines, zero
+errors/gaps and a clean BYE. Host ELF/fSELF hashes were
+`8bb9e1106db5c6394b0a4bd65c9509f9f9a2db0b91d1e2c14ab0f9d5bc8cf9b8` /
+`8bcd0033abb3230841467196adec209146c20b7b4ec3b3a3932b18df7c957680`;
+menu ELF/fSELF hashes were
+`64099d2824a41580d482435a5c567ef30bcecf9e868463c915b5cf3c5697686d` /
+`ec496e4c978dbef7f12305134eb2ba441de2983f551c5ef853e7291c8045aa1b`.
+This remains the standalone visible-menu proof beneath the accepted client
+gate.
+
+### Dynamic GoldSrc client PRX: closed (2026-09-08)
+
+Xash3D PR #17, merged as `3a30250`, packages the pinned HLSDK client as
+`client.prx` while preserving the dynamic filesystem/server/menu bundle.
+Accepted run
+`20260908T130114060Z_PPSA99996_xash3d-engine_0xfc0996a1effb` loaded four
+client mappings and a 48-entry descriptor containing 42 actual GoldSrc
+exports. Interface version 7, host callback mask 63, module callback mask 15
+and two non-mutating PRX-to-engine smokes all passed.
+
+The gate entered the real `c1a0` workload so the client performed one video
+init, 4,916 frame callbacks and 4,907 successful HUD redraws. The software
+backend presented 4,800 non-black frames with final hash
+`3af6afa7ee47ec93`; native TV presentation remains scoped to `ref_agc`.
+Server, menu, client and filesystem then stopped/unloaded with active counts
+3, 2, 1 and 0. The bounded run ended with result zero, 89 structured records,
+115 raw lines, zero errors/gaps/oversized records and a clean BYE.
+
+Host ELF/fSELF hashes were
+`d461cdecc461f0b5472b082b2580b2748f1161e65aa66cba0b0b6c8e26a0d736` /
+`9d215b914097a007f5f8b6f69ab8f92481c8341e5090bb5ccc64e81adeb854ef`;
+client ELF/fSELF hashes were
+`70b54c8628eab934d1cef3d3cb0c2baa177a3a2ddde5e2cf01daddb81e045ba4` /
+`9600971dcc1dcf4b6e5d1f90b05b54bc3dabd4cfb50eb8a4a5f2b89a3abd321a`;
+transcript/manifest hashes were
+`95ce0a78d96f4f12a72097553d47329a98d35bd4ebf3b40e252d6964e0bd2524` /
+`3e92238bad943b6dc824b6e4d2001ab4a83e8cbf31f8ab43ea4f393ab129a366`.
+The five-file bundle is the rollback point for the independent `ref_agc` gate.
 
 ## Remote Play operating contract
 

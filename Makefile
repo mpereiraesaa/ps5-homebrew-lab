@@ -27,6 +27,7 @@ telemetry-check:
 
 remoteplay-check:
 	python3 tests/test_ps5_remoteplay.py
+	python3 tests/test_ps5_ftp.py
 
 prospero-win-check:
 	$(MAKE) -C $(PROSPEROWIN) all

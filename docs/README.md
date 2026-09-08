@@ -7,14 +7,15 @@ link to private captures or firmware-derived material.
 ## Start here
 
 - `CURRENT.md` — canonical implementation and current development policy.
-- `STATUS.md` — confirmed current state and active technical boundary.
+- `STATUS.md` — chronological Stage A–I record; historical where it references
+  the retired `PPSA99998` host.
 - `ROADMAP.md` — milestone order and remaining hardware gates.
 - `PROJECTS.md` — active projects, reusable components and deferred work.
 - `PORTING_PLAYBOOK.md` — cross-project rules for porting third-party code
   to native PS5; read it before starting a new port.
 - `OPERATIONS.md` — build, validation, deployment and safe cleanup procedures.
-- `OBSERVABILITY.md` — contrato TCP `ps5log/1`, estado del bloqueo nativo,
-  manifiestos y clasificación.
+- `OBSERVABILITY.md` — contrato TCP `ps5log/1` y evidencia histórica del host
+  retirado, con manifiestos y clasificación.
 - `REMOTEPLAY.md` — pairing, streaming, screenshots and video capture through
   Headless LinkDev and Chiaki.
 - `XASH3D_PS5_PLAN.html` — visual phase plan from the proven AGC renderer to a

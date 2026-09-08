@@ -9,7 +9,7 @@
 - FTP anónimo `2121`, `shsrv` `2323`, `elfldr` `9021` y `ps5debug`.
 - Pasar la consola con `--host`; no fijar aquí IP ni credenciales.
 
-## Ruta AGC vigente
+## Ruta AGC histórica
 
 ```text
 build auditado -> /data/homebrew/PPSA99998
@@ -81,6 +81,14 @@ nativo están validados en FW 12.02. El linker debe conservar congruencia de
   tanto `eboot.bin` como este sidecar. Los backups existen sólo durante la
   promoción y se eliminan al completarla; nunca se acumulan dentro del título.
 - `ps5logd` escucha TCP 9300 en el PC y conserva transcript más manifiesto.
+- El único transporte de archivos canónico es
+  `ps5-payload-dev/ftpsrv` en TCP 2121. Para verificar un fSELF, el helper
+  desactiva la conversión transparente con `SELF` en esa misma conexión y
+  exige tamaño y SHA-256 exactos de los bytes almacenados. `shsrv` en TCP 2323
+  sigue siendo un shell/launcher; no es un segundo FTP ni participa en la
+  verificación de uploads. El gate `client.prx` verificó así, antes de una
+  única promoción transaccional, `eboot.bin`, `filesystem_stdio.prx`,
+  `server.prx`, `menu.prx` y `client.prx` por tamaño y SHA-256 exactos.
 - El runtime no abre archivos de log, no usa USB/download0 y no necesita que
   el helper modifique mounts.
 - El supervisor valida HELLO/BYE, boot token, secuencia sin gaps, tamaño, hash
