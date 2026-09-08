@@ -1,6 +1,6 @@
 # Current development boundary
 
-Last reconciled: 2026-09-07. Tested console firmware: PS5 12.02.
+Last reconciled: 2026-09-08. Tested console firmware: PS5 12.02.
 
 ## Canonical implementation
 
@@ -28,7 +28,7 @@ completed all six hardware gates before merging through
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
 history of `projects/ps5-xash3d`, which this laboratory now pins at merged
-Phase 4 commit `38c6a38` (the dedicated identity began at `c09318f`).
+Phase 6 loader commit `af99dcd` (the dedicated identity began at `c09318f`).
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -125,9 +125,19 @@ project-owned `__assert`, `getpwuid` and `dladdr` definitions while importing
 none of them dynamically. Its assert formatter/reporter policy, stable `ps5`
 identity and zeroed `dladdr`/`argv[0]` fallback all passed before the complete
 `c1a0` workload; 30 records ended without gaps or errors in a clean BYE. The
-ELF/fSELF hashes reproduced exactly. Phase 5 is complete. Client/menu
-integration, `ref_null`/`ref_soft`, `ref_agc` and application-owned PRX
-conversion are Phase 6 work and the next checkpoint.
+ELF/fSELF hashes reproduced exactly. Phase 5 is complete.
+
+Phase 6 gate 1 is closed in merged Xash3D PR #11 (`af99dcd`). Run
+`20260908T054317837Z_PPSA99996_xash3d-engine_0xe423c3826406` exercised the
+real Xash `COM_*` API against an application-owned PRX: four mapped segments,
+six validated `PRXDESC1` exports, expected missing-symbol behavior, code/data
+calls, a kernel import and reverse function naming, followed by exact unload
+and zero active handles. FW 12.02 cleared the module-info size word and did not
+automatically mutate the probe through its ELF entry, so the loader accepts
+the measured zero/`0x160` shape and modules expose explicit idempotent startup.
+The same run spawned `c1a0` and closed cleanly; a no-probe production
+regression passed afterward. The next isolated checkpoint converts only
+`filesystem_stdio`, keeping the server static until its own gate.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
@@ -183,13 +193,13 @@ before restart. The normal workflow does not focus, acknowledge or click the
 
 ## Application-owned modules
 
-Runtime loading of application-owned PRX modules is validated on FW 12.02
-(see `FINDINGS.md`, "Módulos PRX propios"). The tooling lives in the
-native-foundation fork, branch `exp/prx-module`: `ps5-native-tool link
---module`, `tools/build-module.sh` and `modules/prx_loader.h`. The hardware
-gate lives in the Gears repository branch `exp/prx-gate`. Load-time
-`DT_NEEDED` binding and `sceKernelDlsym` are not available for these modules;
-symbol resolution goes through the module's export descriptor.
+Runtime loading of application-owned PRX modules is now validated both by the
+original spike and inside Xash's real `COM_*` path on FW 12.02 (see
+`FINDINGS.md`, "Módulos PRX propios", and Xash3D PR #11). The public builder
+pins the native-foundation fork's `exp/prx-module` tooling and uses
+`ps5-native-tool link --module`. Load-time `DT_NEEDED` binding and
+`sceKernelDlsym` are not available for these modules; symbol resolution goes
+through each module's range-checked `PRXDESC1` export descriptor.
 
 ## Historical boundary
 
