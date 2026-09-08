@@ -62,11 +62,11 @@ Base 0x01000000, 311296 bytes reservados, tres secciones verificadas sin
 discrepancias y cierre limpio. Una página de 16 KiB combina permisos WX.
 Las ocho DLLs se clasificaron como interfaces host aún sin implementar.
 
-El traductor acotado ejecutó en host 85 instrucciones del arranque original,
-GetModuleHandleA(NULL), __set_app_type, los dos getters CRT, _controlfp e _initterm. Enlaza 205 funciones y dos datos;
+El traductor acotado ejecutó en host 95 instrucciones del arranque original,
+GetModuleHandleA(NULL), __set_app_type, los dos getters CRT, _controlfp, _initterm y __getmainargs. Enlaza 205 funciones y dos datos;
 los getters de modos CRT tienen pruebas unitarias y los demás handlers
-siguen pendientes. Se detiene en `__getmainargs`. Los callbacks
-de inicialización tienen evidencia sintética traducida, aún no del juego original.
+siguen pendientes. Se detiene dentro de un callback de inicialización original,
+que aún no retornó; la evidencia de callbacks completos sigue siendo sintética.
 Esto no acredita ejecución del juego en PS5 ni
 inicialización Win32. Detalles: `projects/prospero-win/docs/X86_EXECUTION.md`.
 
