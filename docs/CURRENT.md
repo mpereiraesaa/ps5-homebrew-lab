@@ -224,11 +224,12 @@ one image released and clean BYE. Eight host DLL bindings remain unimplemented.
 The validator accepted --allow-i386 and --allow-wx; one 16 KiB page merges
 write/execute permissions. That mapping run executed no guest instructions or graphics.
 
-Subsequent bounded host translation executed 22 instructions from the original
-Pinball entry, including its initial helper's return, before stopping at
-unsupported XOR (EIP 0x01020fa1). The result reproduced under ASan/UBSan.
-This is not PS5 guest execution or Win32 startup: only synthetic stack/FS
-memory exists in the tracer. See `projects/prospero-win/docs/X86_EXECUTION.md`.
+Subsequent bounded host translation executed 25 instructions from the original
+Pinball entry, including its initial helper's return and an IAT load, before
+stopping at an indirect call (EIP 0x01020faa). The result reproduced under
+ASan/UBSan. The tracer maps PE sections plus synthetic stack/FS regions;
+imports remain unbound. This is not PS5 guest execution or Win32 startup.
+See `projects/prospero-win/docs/X86_EXECUTION.md`.
 
 Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
 does not eliminate x86 address/stack rewriting or establish a large guest
