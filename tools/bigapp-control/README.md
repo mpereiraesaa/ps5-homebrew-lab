@@ -11,6 +11,8 @@ compiled into it and refuses operations outside that identity.
   public demo identity `PPSA99997`.
 - `launch-xash3d.elf` / `close-xash3d.elf`: operate only the PS5 Xash3D
   development identity `PPSA99996`.
+- `launch-prospero-win.elf` / `close-prospero-win.elf`: operate only the
+  Win32 compatibility layer identity `PPSA99995`.
 
 Closing uses `sceSystemServiceKillApp` and polls for completion. It never sends
 signals to arbitrary processes, never kills system processes, never replaces a
