@@ -236,6 +236,14 @@ have host unit coverage. Other handlers remain pending; binding is not implement
 This is not PS5 guest execution or completed Win32 startup.
 See `projects/prospero-win/docs/X86_EXECUTION.md`.
 
+Ghidra startup survey: file-backed imported bytes match the private target.
+Entry, main startup, window procedure and message-pump roots are identified;
+callback-inclusive reachability is materially larger than entry-only reachability.
+Window creation reaches audio/table initialization, so these dependencies must
+be planned together. Six subsystem packages and evidence limits are recorded in
+`projects/prospero-win/docs/STARTUP_ANALYSIS.md`. This is static analysis, not
+new hardware or application-startup execution evidence.
+
 The next API work is inventory-first, not incremental runtime discovery.
 `inventory_imports.py` confirms 207 imports across eight DLLs, all with Wine
 spec declarations at commit 490f6d5dcbb2a5047345b8af88d114bbcaad69a8.
