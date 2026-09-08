@@ -9,7 +9,7 @@
 - FTP anónimo `2121`, `shsrv` `2323`, `elfldr` `9021` y `ps5debug`.
 - Pasar la consola con `--host`; no fijar aquí IP ni credenciales.
 
-## Ruta AGC vigente
+## Ruta AGC histórica
 
 ```text
 build auditado -> /data/homebrew/PPSA99998
