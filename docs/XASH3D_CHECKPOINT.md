@@ -12,7 +12,7 @@ Reconciled: 2026-09-08. Hardware boundary: one PS5 on firmware 12.02.
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
-| 6 — Engine integration | Active, gates 1–3 closed | Hybrid `COM_*` loader plus dynamic `filesystem_stdio` and HLSDK server are hardware-proven; menu, client and `ref_agc` conversions remain. |
+| 6 — Engine integration | Active, gates 1–4 closed | Hybrid `COM_*` loader plus dynamic filesystem, server and MainUI are hardware-proven; client and `ref_agc` conversions remain. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
 The Phase 1/2 implementation was merged through
@@ -21,7 +21,7 @@ path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
 the laboratory submodule `projects/ps5-xash3d` now pins the merged Phase 6
-server-PRX commit `cbc5948`.
+MainUI-PRX commit `9f783ec`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
@@ -579,8 +579,28 @@ server ELF/fSELF SHA-256:
 transcript/manifest SHA-256:
 `69cb7dd0f0fb5dacfde1de0486c183da63b6b5a11643dcfbde2860b6a9bb5a3f` /
 `fe73667d6a764d5e5e363afcd2cd75b29232e3d2cc4c498e4ce7c1c6a4435428`.
-The next gate converts only `menu` while retaining this accepted
-executable/filesystem/server rollback point.
+This remains the rollback point beneath the accepted MainUI gate.
+
+### Dynamic MainUI menu PRX: closed (2026-09-08)
+
+Xash3D PR #14, merged as `9f783ec`, packages pinned upstream MainUI as
+`menu.prx` while retaining the dynamic filesystem/server pair. Accepted run
+`20260908T094038112Z_PPSA99996_xash3d-engine_0xf1174a815840` proved all 16
+base and 12 extended callbacks, engine masks 63 and 15, explicit C++ startup,
+activation and 5,127 redraws. Its software framebuffer presented 5,100
+non-black frames with final hash `b12dbb47c69ddcb2`. This is the first real UI
+module gate, but TV-visible presentation remains scoped to `ref_agc`.
+
+The client startup also retained the server ABI probes. Shutdown unloaded
+server, menu and filesystem in order with active counts 2, 1 and 0. The run
+ended with exact memory teardown, 73 structured records, 77 raw lines, zero
+errors/gaps and a clean BYE. Host ELF/fSELF hashes were
+`8bb9e1106db5c6394b0a4bd65c9509f9f9a2db0b91d1e2c14ab0f9d5bc8cf9b8` /
+`8bcd0033abb3230841467196adec209146c20b7b4ec3b3a3932b18df7c957680`;
+menu ELF/fSELF hashes were
+`64099d2824a41580d482435a5c567ef30bcecf9e868463c915b5cf3c5697686d` /
+`ec496e4c978dbef7f12305134eb2ba441de2983f551c5ef853e7291c8045aa1b`.
+The next gate converts only `client` while preserving this rollback point.
 
 ## Remote Play operating contract
 
