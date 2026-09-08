@@ -94,14 +94,21 @@ as new facts appear. Full detail and evidence in `docs/FINDINGS.md`.
   filesystem ELFs, **no** arbitrary `dlopen`; IPv6 via SDK `getaddrinfo`
   unusable. `dup`/`dup2` unavailable. (Cross-checked with BlackBear's
   `ps5-python/docs/ps5-limitations.md`.)
-- **User mode is 64-bit only, and a title cannot change that.** Entering
-  x86 compatibility mode needs a 32-bit code-segment descriptor in the
-  GDT/LDT, which is kernel state no title can install. Any port whose
-  payload is 32-bit machine code (a Win32 game, a 32-bit plugin, a vendor
-  DLL) can be parsed, mapped and relocated but never entered; it needs
-  static recompilation or instruction translation, which is a scope
-  decision, not a bug to fix later. Recorded from `prospero-win` Phase 0;
-  see its `docs/EXECUTION_MODEL.md`.
+- **Running 32-bit machine code is an OPEN QUESTION, not a closed door.**
+  Titles run in 64-bit long mode, and a thread reaches x86 compatibility
+  mode only by far-jumping to a code descriptor with `L` clear and `D/B`
+  set. User code cannot write a descriptor table, but on FreeBSD amd64 it
+  can ask the kernel to: `sysarch(I386_SET_LDT, ...)` (`amd64_set_ldt`)
+  exists for exactly this, and the pinned payload SDK declares it
+  (`x86/sysarch.h`, `SYS_sysarch` 165) along with `I386_SET_FSBASE` for
+  32-bit TLS. Whether Prospero still permits those operations from a
+  sandboxed title is **unmeasured** — a header declaration is even weaker
+  evidence than an export, so principle 1 applies twice over. Any port
+  with a 32-bit payload (a Win32 game, a vendor DLL such as `binkw32`)
+  should run that probe early: it is small, and its three outcomes each
+  decide the port's whole architecture. `prospero-win` owns the probe; see
+  its `docs/EXECUTION_MODEL.md` for the descriptor layout, the fallback
+  routes and why JIT recompilation is not the same thing as emulation.
 - Working, verified: `socket`/`bind`/`sendto`/`poll`, `pthread_*`,
   `clock_gettime`, `sceKernelOpen`/`Read`/`Write`/`Close`/`Stat`/`Getdents`,
   `strcasecmp`/`strncasecmp`/`strnlen`/`strlcpy`/`strlcat`. Xash3D run

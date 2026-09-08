@@ -63,15 +63,22 @@ Los módulos Win32 (`kernel32`, `msvcrt`, `ddraw`...) nunca se cargan de disco:
 se registran como *host bindings* que la propia capa implementará. Ese reparto
 es el diseño completo del proyecto.
 
-Frontera documentada antes de escribir código que dependa de ella: la consola
-ejecuta sólo código de usuario de 64 bits, así que una imagen `i386` se parsea
-y se mapea pero no puede entrar en ejecución sin traducción de instrucciones.
-El loader lo reporta (`native=0`) y el validador rechaza la corrida salvo
-`--allow-i386`. Elegir entre restringir el alcance a programas de 64 bits,
-recompilación estática o una capa de traducción es una decisión del propietario
-y está planteada en `projects/prospero-win/docs/EXECUTION_MODEL.md`, junto con
-el motivo por el que el contrato de memoria lleva dos alias (escritura y
-ejecución) desde el primer día.
+Frontera documentada antes de escribir código que dependa de ella. Ejecutar
+código de 32 bits —la mayor parte del catálogo objetivo— es una pregunta
+abierta, no una puerta cerrada: Zen 2 ejecuta instrucciones de 32 bits de
+forma nativa en modo compatibilidad, y entrar en ese modo exige un descriptor
+de segmento de código que el kernel instala mediante
+`sysarch(I386_SET_LDT, ...)`. El SDK de payload fijado declara esa llamada,
+pero ninguna corrida la ha ejercitado en este firmware, así que el gate 0.2a
+es exactamente ese probe. Si pasa, los juegos de 32 bits corren de forma
+nativa mediante ABI thunking estilo WoW64, con cero emulación de
+instrucciones; si falla, sólo quedan la recompilación JIT —que tampoco es
+emulación, pero altera la ruta de instrucciones— o restringir el alcance a
+programas de 64 bits. Mientras no haya medida, el loader reporta `native=0`
+para una imagen `i386` y el validador rechaza la corrida salvo `--allow-i386`.
+El razonamiento completo, junto con el motivo por el que el contrato de
+memoria lleva dos alias (escritura y ejecución) desde el primer día, está en
+`projects/prospero-win/docs/EXECUTION_MODEL.md`.
 
 La licencia sigue abierta a propósito: es una capa de compatibilidad destinada
 a combinarse en runtime con código propietario, el caso que llevó a Wine de

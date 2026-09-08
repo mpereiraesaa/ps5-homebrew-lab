@@ -188,11 +188,18 @@ console gate, its `ps5log/1` record set and its fail-closed validator are
 specified in `projects/prospero-win/docs/PE_MAPPING_PHASE0.md`. Nothing in
 that project is described as proven on FW 12.02 until a manifest says so.
 
-Two boundaries are documented there before any code depends on them: the
-console runs 64-bit user code only, so `i386` images map but cannot execute
-without instruction translation, and executable memory needs the aliased
-write/execute path rather than a protection transition. The project's licence
-is deliberately still open; see its `LICENSING.md`.
+Two boundaries are documented there before any code depends on them.
+Executable memory needs the aliased write/execute path rather than a
+protection transition, so the project's memory contract carries both aliases
+from the start. And running 32-bit code — most of the intended catalogue — is
+an open question rather than a closed door: Zen 2 executes 32-bit
+instructions natively in compatibility mode, and reaching that mode needs a
+code descriptor the kernel installs through `sysarch(I386_SET_LDT, ...)`,
+which the pinned payload SDK declares but which no run has exercised on this
+firmware. Gate 0.2a is that probe, and it decides whether 32-bit games are
+reachable through WoW64-style ABI thunking with zero instruction emulation or
+only through JIT recompilation. The project's licence is deliberately still
+open; see its `LICENSING.md`.
 
 ## Development policy
 
