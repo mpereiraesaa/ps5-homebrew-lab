@@ -248,6 +248,9 @@ Shared integer cdecl/stdcall call frames and callback services now pass host
 tests, including a translated synthetic callback returning through the
 adapter. This does not implement a Win32 API or validate PS5 callbacks.
 Scope: `projects/prospero-win/docs/GUEST_ABI.md`.
+The shared PE32 import binder also passes synthetic function/data, ordinal
+and failure-atomicity tests. It does not yet bind the original Pinball run;
+the reviewed runtime resolver/catalog is still pending.
 
 Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
 does not eliminate x86 address/stack rewriting or establish a large guest
