@@ -12,7 +12,7 @@ Reconciled: 2026-09-08. Hardware boundary: one PS5 on firmware 12.02.
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
-| 6 — Engine integration | Active / next | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
+| 6 — Engine integration | Active, gate 1 closed | Hybrid `COM_*` PRX loader is hardware-proven; filesystem, server, menu, client and `ref_agc` conversions remain. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
 The Phase 1/2 implementation was merged through
@@ -20,8 +20,8 @@ The Phase 1/2 implementation was merged through
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
-the laboratory submodule `projects/ps5-xash3d` now pins the merged Phase 5
-closure commit `a2cb856`.
+the laboratory submodule `projects/ps5-xash3d` now pins the merged Phase 6
+loader-gate commit `af99dcd`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
@@ -471,6 +471,44 @@ applies.
 Client/menu integration, `ref_null`/`ref_soft`, `ref_agc` and conversion of
 engine modules to application-owned PRXs are Phase 6. The early static client
 harness remains useful diagnostic evidence, but does not close a Phase 6 gate.
+
+### Application-owned PRX loader: closed (2026-09-08)
+
+Xash3D PR #11, merged as `af99dcd`, replaces the static-only library adapter
+with a hybrid backend. Exact static names keep the Phase 5 filesystem/server
+path unchanged; other safe names map to `/app0/sce_module/<name>.prx`, load
+through `sceKernelLoadStartModule`, resolve a range-checked `PRXDESC1` table
+from `sceKernelGetModuleInfo` mappings and unload through
+`sceKernelStopUnloadModule`. Bad ranges, unterminated names, duplicate exports
+and invalid counts fail closed. A failed unload or rollback retains the handle
+for an explicit shutdown retry.
+
+Accepted run
+`20260908T054317837Z_PPSA99996_xash3d-engine_0xe423c3826406` loaded four
+segments and six exports, rejected one missing symbol, computed 42, observed
+two calls including `sceKernelUsleep`, read version `0x10000`, round-tripped a
+function name and released the module with active count zero. FW 12.02 returned
+module info successfully with its input size word cleared and left
+`auto_started=0`; explicit idempotent `module_start` returned zero and set the
+probe state to one. The engine then loaded the static modules, spawned `c1a0`
+for 15 seconds and emitted a clean BYE with 31 structured records, 40 console
+lines, no gaps and no errors.
+
+Gate ELF/fSELF SHA-256:
+`1c8fd80e7cbcdadc4a03cb96449d1d49544c7b9741f229ede40255bb43034f6e` /
+`c67f1cb7f1bd9e966d9364dec9ad9388afb89ee0bb07ee3091443a0e45f85b8f`;
+transcript/manifest SHA-256:
+`ebbec4fb52731b11726da8e246c41bf9400c5a13103a16cc4ad7fef1e461bfe1` /
+`7d09166be6700f0f6f9076fc824fde63b48170ca5e2b39d0ac08be12d74f7c4c`.
+The immutable validator accepted `--prx-gate`.
+
+Normal regression run
+`20260908T054524368Z_PPSA99996_xash3d-engine_0xe441394ac877` packaged no
+probe (`prx_gate=0`), loaded the complete retail tree and `c1a0` through the
+static fallback, and closed cleanly. The probe and all transactional deployment
+files were removed afterward. The next gate converts only
+`filesystem_stdio`, proving listing, large reads, case handling and
+`gfx/palette.lmp` through the PRX while leaving the server static.
 
 ## Remote Play operating contract
 

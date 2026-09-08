@@ -40,8 +40,11 @@ y 128 muestras `nanosleep`/`usleep` sin errores ni despertares anticipados. El
 gate de telemetría correlacionó 60.000 submits, timestamps GPU end-of-pipe,
 fences y eventos VideoOut exactos sin gaps ni regresiones. El cierre final
 retuvo `__assert`, `getpwuid` y `dladdr` como definiciones locales del port,
-probó sus contratos en FW 12.02 y cargó `c1a0` sin errores. La Fase 6 —PRX
-propios y `ref_agc`— es el siguiente checkpoint.
+probó sus contratos en FW 12.02 y cargó `c1a0` sin errores. La Fase 6 ya está
+activa: el loader híbrido de Xash pasó carga, resolución validada de seis
+exports, llamadas y descarga exacta de un PRX propio en FW 12.02. El siguiente
+checkpoint convierte sólo `filesystem_stdio`; `ref_agc` llegará después de
+los módulos de engine, cada uno con su gate independiente.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico
