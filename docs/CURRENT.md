@@ -28,9 +28,9 @@ completed all six hardware gates before merging through
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
 history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 6
-client-PRX commit `3a30250`, which includes the dedicated title icon from
-`ea9be4b`; the preceding MainUI-PRX implementation is `9f783ec` and the
-dedicated identity began at `c09318f`.
+final `ref_agc` commit `258fbe3`; the preceding client-PRX checkpoint is
+`3a30250`, the dedicated title icon entered at `ea9be4b`, and the dedicated
+identity began at `c09318f`.
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -186,7 +186,22 @@ successful HUD redraws and 4,800 non-black software presentations. Server,
 menu, client and filesystem stopped/unloaded with active counts 3, 2, 1 and 0;
 89 structured records and 115 raw lines ended with result zero, no errors,
 gaps or oversized records, and a clean BYE. The five-file bundle is now the
-rollback point; `ref_agc` is the only remaining Phase 6 conversion.
+rollback point beneath the final renderer conversion.
+
+Phase 6 gate 6 is closed in merged Xash3D PR #18 (`258fbe3`). Correlated runs
+`20260908T191327933Z_PPSA99996_xash3d-engine_0x11059870e2628` and
+`20260908T191327984Z_PPSA99996_ps5-xash3d_0x110598a25cd2f` began 51 ms apart.
+The engine loaded the complete filesystem/server/menu/client/renderer PRX
+stack, started `c1a0`, bound RefAPI 18 with engine mask 63 and observed
+203,420 balanced begin/end callbacks, 203,411 scene callbacks and one new-map
+callback. The native Phase 4 backend presented 600 combined frames with GPU
+hashes `a9e62c5188ca6bf5` and `0044418de19349d8`, 807,578 bright pixels,
+exact fence/VideoOut tokens, intact guards and zero errors. Native teardown
+closed VideoOut, direct memory and AGC; server, menu, client, renderer and
+filesystem then unloaded with active counts 4, 3, 2, 1 and 0. Both streams
+ended with clean gap-free BYE, and the deterministic rebuild reproduced the
+accepted host, renderer and asset hashes. Phase 6 is complete. Phase 7 owns
+live engine-entity-to-AGC translation, gameplay, transitions and release.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
