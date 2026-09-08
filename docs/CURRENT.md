@@ -27,9 +27,10 @@ completed all six hardware gates before merging through
 `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264`. The
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
-history of `projects/ps5-xash3d`. This laboratory now pins documentation-
-reconciled commit `3c80830`; the merged Phase 6 MainUI-PRX implementation is
-commit `9f783ec` (the dedicated identity began at `c09318f`).
+history of `projects/ps5-xash3d`. This laboratory now pins title-icon commit
+`ea9be4b`, built on documentation reconciliation `3c80830`; the merged Phase 6
+MainUI-PRX implementation is commit `9f783ec` (the dedicated identity began at
+`c09318f`).
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
