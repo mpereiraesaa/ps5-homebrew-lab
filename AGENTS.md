@@ -44,8 +44,12 @@
 ## Repository workflow
 
 - Public application work belongs in independent repositories under `projects/`;
-  `ps5-agc-gears` is the frozen graphics demo and `ps5-xash3d` is the active
-  renderer integration.
+  `ps5-agc-gears` is the frozen graphics demo, `ps5-xash3d` is the active
+  renderer integration and `prospero-win` is the active Win32 compatibility
+  layer.
+- Windows binaries are private build inputs for `prospero-win`. Never commit a
+  game executable, a vendor DLL or a staged `win/` directory; its publication
+  audit rejects any tracked file that begins with a DOS header.
 - Both the lab and public projects use topic branches and pull requests; never
   push changes directly to `main`.
 - Keep third-party source and generated artifacts out of the lab repository.

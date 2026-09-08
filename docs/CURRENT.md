@@ -172,6 +172,28 @@ local definitions plus the accepted hardware probe. Raw lists, the evidence
 ledger and reproduction scripts live under
 `research/xash3d/` and the pinned `ps5-xash3d` submodule.
 
+## Win32 compatibility layer
+
+`projects/prospero-win` is a second active application project, independent
+of the renderer line: a zero-emulation Win32 compatibility layer that
+manually maps classic PC programs into the console's address space and
+reimplements the Windows API surface natively. It uses development identity
+`PPSA99995`, distinct from Xash3D's `PPSA99996` and the frozen Gears demo's
+`PPSA99997`.
+
+Phase 0.1 — parse, map, relocate, protect and recursively resolve
+third-party dependencies — is complete on the host and **not yet run on
+hardware**; `make check` includes its contracts and publication audit. The
+console gate, its `ps5log/1` record set and its fail-closed validator are
+specified in `projects/prospero-win/docs/PE_MAPPING_PHASE0.md`. Nothing in
+that project is described as proven on FW 12.02 until a manifest says so.
+
+Two boundaries are documented there before any code depends on them: the
+console runs 64-bit user code only, so `i386` images map but cannot execute
+without instruction translation, and executable memory needs the aliased
+write/execute path rather than a protection transition. The project's licence
+is deliberately still open; see its `LICENSING.md`.
+
 ## Development policy
 
 - `main` is protected and receives changes only through pull requests.

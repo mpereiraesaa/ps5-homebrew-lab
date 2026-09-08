@@ -45,6 +45,39 @@ facades de enlace para `libSceAgc`/`libSceAgcDriver`, manifiesto de NIDs y test
 host. Los builds del laboratorio consumen esa capa en vez de depender del stub
 copiado desde un proyecto tercero.
 
+## Capa de compatibilidad Win32 — activa
+
+`projects/prospero-win` es una capa de compatibilidad Win32 de cero emulación
+para PS5: los programas clásicos de PC no se interpretan ni se recompilan, su
+código máquina se mapea manualmente en el espacio de direcciones de la consola
+y se ejecuta directamente sobre Zen 2, mientras que la superficie de API que
+esos programas invocan se reimplementa de forma nativa. Identidad de
+desarrollo: `PPSA99995`.
+
+Fase 0.1 está completa en host y **pendiente en hardware**: lector PE mínimo
+sin dependencias del sistema operativo, planificación del layout mapeado,
+relocalización base, protecciones a la granularidad real de página y
+resolución recursiva de dependencias de terceros. La cadena `game.exe ->
+binkw32.dll -> msvcrt.dll` está probada con nueve suites C y cuatro de Python.
+Los módulos Win32 (`kernel32`, `msvcrt`, `ddraw`...) nunca se cargan de disco:
+se registran como *host bindings* que la propia capa implementará. Ese reparto
+es el diseño completo del proyecto.
+
+Frontera documentada antes de escribir código que dependa de ella: la consola
+ejecuta sólo código de usuario de 64 bits, así que una imagen `i386` se parsea
+y se mapea pero no puede entrar en ejecución sin traducción de instrucciones.
+El loader lo reporta (`native=0`) y el validador rechaza la corrida salvo
+`--allow-i386`. Elegir entre restringir el alcance a programas de 64 bits,
+recompilación estática o una capa de traducción es una decisión del propietario
+y está planteada en `projects/prospero-win/docs/EXECUTION_MODEL.md`, junto con
+el motivo por el que el contrato de memoria lleva dos alias (escritura y
+ejecución) desde el primer día.
+
+La licencia sigue abierta a propósito: es una capa de compatibilidad destinada
+a combinarse en runtime con código propietario, el caso que llevó a Wine de
+GPL a LGPL. El razonamiento y los candidatos están en
+`projects/prospero-win/LICENSING.md`.
+
 ## Observabilidad Remote Play — activa
 
 `tools/ps5_remoteplay.py` integra Headless LinkDev y Chiaki como tooling del

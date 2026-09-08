@@ -94,6 +94,14 @@ as new facts appear. Full detail and evidence in `docs/FINDINGS.md`.
   filesystem ELFs, **no** arbitrary `dlopen`; IPv6 via SDK `getaddrinfo`
   unusable. `dup`/`dup2` unavailable. (Cross-checked with BlackBear's
   `ps5-python/docs/ps5-limitations.md`.)
+- **User mode is 64-bit only, and a title cannot change that.** Entering
+  x86 compatibility mode needs a 32-bit code-segment descriptor in the
+  GDT/LDT, which is kernel state no title can install. Any port whose
+  payload is 32-bit machine code (a Win32 game, a 32-bit plugin, a vendor
+  DLL) can be parsed, mapped and relocated but never entered; it needs
+  static recompilation or instruction translation, which is a scope
+  decision, not a bug to fix later. Recorded from `prospero-win` Phase 0;
+  see its `docs/EXECUTION_MODEL.md`.
 - Working, verified: `socket`/`bind`/`sendto`/`poll`, `pthread_*`,
   `clock_gettime`, `sceKernelOpen`/`Read`/`Write`/`Close`/`Stat`/`Getdents`,
   `strcasecmp`/`strncasecmp`/`strnlen`/`strlcpy`/`strlcat`. Xash3D run
