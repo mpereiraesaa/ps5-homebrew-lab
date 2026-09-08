@@ -51,8 +51,14 @@ ownership exacto. MainUI publicó sus 16 callbacks base y 12 extendidos, se
 activó y redibujó 5.127 veces sobre un framebuffer software no negro. El
 cliente pasó interface 7 y ambos sentidos de la ABI sobre `c1a0`; el gate
 final enlazó RefAPI 18 con el backend AGC, presentó 600 frames con hashes GPU
-no nulos y descargó los cinco PRXs exactamente. La Fase 7 conectará las
-entidades vivas del engine con esos draws para cerrar gameplay y release.
+no nulos y descargó los cinco PRXs exactamente. La Fase 7 está activa: el
+primer checkpoint ya extrae el mundo `c1a0` vivo del engine y somete 17.245
+vértices, 29.565 índices y 3.695 superficies mediante AGC, con las 164
+referencias de textura resueltas y teardown exacto. Una captura sincronizada
+con el título activo sigue completamente negra, de modo que esto prueba
+residencia, bindings y submission, pero todavía no presentación visible. El
+gate inmediato es hacer reconocible ese frame antes de sumar lightmaps,
+cielo/agua, entidades, 2D/UI, gameplay y release.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico

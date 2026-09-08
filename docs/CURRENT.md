@@ -1,6 +1,6 @@
 # Current development boundary
 
-Last reconciled: 2026-09-08. Tested console firmware: PS5 12.02.
+Last reconciled: 2026-09-09. Tested console firmware: PS5 12.02.
 
 ## Canonical implementation
 
@@ -27,10 +27,11 @@ completed all six hardware gates before merging through
 `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264`. The
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
-history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 6
-final `ref_agc` commit `258fbe3`; the preceding client-PRX checkpoint is
-`3a30250`, the dedicated title icon entered at `ea9be4b`, and the dedicated
-identity began at `c09318f`.
+history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 7
+live-world checkpoint `bd4b250`; the Phase 6 final `ref_agc` checkpoint is
+`258fbe3`, the preceding client-PRX checkpoint is `3a30250`, the dedicated
+title icon entered at `ea9be4b`, and the dedicated identity began at
+`c09318f`.
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -202,6 +203,20 @@ filesystem then unloaded with active counts 4, 3, 2, 1 and 0. Both streams
 ended with clean gap-free BYE, and the deterministic rebuild reproduced the
 accepted host, renderer and asset hashes. Phase 6 is complete. Phase 7 owns
 live engine-entity-to-AGC translation, gameplay, transitions and release.
+
+Phase 7 gate 1 is active in merged Xash3D PR #19 (`bd4b250`). Correlated runs
+`20260908T232706159Z_PPSA99996_xash3d-engine_0x11e30bf78529b` and
+`20260908T232706214Z_PPSA99996_ps5-xash3d_0x11e30c30c3800` began 55 ms apart
+and matched 1,076 frame serials. The engine supplied the parsed `c1a0` world;
+the renderer staged 17,245 vertices, 29,565 indices and 3,695 surface draws,
+resolved all 164 world texture references, submitted native AGC work with
+nonzero readback hashes and zero structured errors, reclaimed eight parent
+resources and unloaded the five PRXs exactly. A synchronized CLI Remote Play
+capture while `PPSA99996` was active was fully black. This checkpoint proves
+live extraction, direct-memory residency, descriptor binding, draw submission
+and teardown—not visible sampling. The immediate gate is a recognizable
+controlled live-world frame and fixed-camera comparison before lightmaps,
+sky/turbulent semantics, entities and 2D/UI.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
