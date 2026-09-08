@@ -224,11 +224,12 @@ one image released and clean BYE. Eight host DLL bindings remain unimplemented.
 The validator accepted --allow-i386 and --allow-wx; one 16 KiB page merges
 write/execute permissions. That mapping run executed no guest instructions or graphics.
 
-Subsequent bounded host translation executed 25 instructions from the original
-Pinball entry, including its initial helper's return and an IAT load, before
-stopping at an indirect call (EIP 0x01020faa). The result reproduced under
-ASan/UBSan. The tracer maps PE sections plus synthetic stack/FS regions;
-imports remain unbound. This is not PS5 guest execution or Win32 startup.
+Subsequent bounded host translation executed 26 instructions from the original
+Pinball entry plus GetModuleHandleA(NULL), returning the mapped base 0x01000000.
+It now binds 207 imports (205 function tokens, two CRT data words) and stops
+at a 16-bit memory compare (EIP 0x01020fac). The result reproduced under
+ASan/UBSan. Other handlers remain pending; binding is not implementation.
+This is not PS5 guest execution or completed Win32 startup.
 See `projects/prospero-win/docs/X86_EXECUTION.md`.
 
 The next API work is inventory-first, not incremental runtime discovery.
@@ -248,9 +249,10 @@ Shared integer cdecl/stdcall call frames and callback services now pass host
 tests, including a translated synthetic callback returning through the
 adapter. This does not implement a Win32 API or validate PS5 callbacks.
 Scope: `projects/prospero-win/docs/GUEST_ABI.md`.
-The shared PE32 import binder also passes synthetic function/data, ordinal
-and failure-atomicity tests. It does not yet bind the original Pinball run;
-the reviewed runtime resolver/catalog is still pending.
+The shared PE32 import binder passes synthetic function/data, ordinal and
+failure-atomicity tests and is integrated in the original Pinball host trace.
+The catalog and narrow first API case are in `src/pw_win32.c`; full subsystem
+implementations and console integration remain pending.
 
 Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
 does not eliminate x86 address/stack rewriting or establish a large guest
