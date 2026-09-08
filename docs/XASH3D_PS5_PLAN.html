@@ -125,12 +125,12 @@
 
 <div class="page">
 <header>
-  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-08 · rev 27</div>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-08 · rev 28</div>
   <h1>Xash3D on PS5</h1>
-  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. Phase 4 is complete; Phase 5 has closed engine bootstrap, the full retail filesystem, native batched ScePad input, native SceAudioOut PCM output, direct-memory ownership, threads/monotonic time and correlated GPU/flip timing. The remaining non-drawing platform layer is the three project-owned libc shims and the final incremental pass.</p>
+  <p class="lede">From the hardware-proven AGC renderer to a GoldSrc engine running natively on firmware 12.02. Phase 5 is complete: engine bootstrap, the full retail filesystem, native ScePad and SceAudioOut, direct-memory ownership, threads/monotonic time, GPU/flip timing and the three project-owned libc shims all have accepted FW 12.02 evidence. Phase 6 now joins that platform layer to application-owned PRX modules and <code>ref_agc</code>.</p>
   <div class="facts">
-    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 5 · GPU/flip timing closed</div></div>
-    <div class="fact"><div class="k">Latest gate</div><div class="v">60,000 EOP/flip records · HW pass</div></div>
+    <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 5 complete · Phase 6 next</div></div>
+    <div class="fact"><div class="k">Latest gate</div><div class="v">3 local libc shims · HW pass</div></div>
     <div class="fact"><div class="k">Dataset</div><div class="v">4,741 files · 555.4 MB</div></div>
     <div class="fact"><div class="k">GPU target</div><div class="v">gfx1013 · AGC</div></div>
   </div>
@@ -142,16 +142,16 @@
   <a class="done" href="#p2"><span class="n">2</span><span class="t">Resource foundation</span></a>
   <a class="done" href="#p3"><span class="n">3</span><span class="t">Texture path</span></a>
   <a class="done" href="#p4"><span class="n">4</span><span class="t">GoldSrc render states</span></a>
-  <a class="active" href="#p5"><span class="n">5</span><span class="t">Platform layer</span></a>
-  <a href="#p6"><span class="n">6</span><span class="t">Engine integration</span></a>
+  <a class="done" href="#p5"><span class="n">5</span><span class="t">Platform layer</span></a>
+  <a class="active" href="#p6"><span class="n">6</span><span class="t">Engine integration</span></a>
   <a href="#p7"><span class="n">7</span><span class="t">Playable and release</span></a>
 </nav>
 <div class="legend"><span class="l-done">done</span><span class="l-active">in progress</span><span class="l-later">next</span></div>
 
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-08</div>
-  <h2 id="checkpoint-title">The Phase 5 GPU/flip timing contract is closed</h2>
-  <p>The accepted run <code>20260907T225446311Z_PPSA99996_ps5-xash3d_0xcdd8ce3a668a</code> correlated 60,000 CPU submits, raw GPU end-of-pipe writes, ownership-fence observations and exact VideoOut events with 59,999 strict clock changes and zero regression, order error, sequence gap or renderer error. Submit-to-fence averaged 16,823,795 ns, submit-to-flip 32,754,596 ns and the CPU-observed fence-to-flip interval 15,930,800 ns; raw GPU ticks remain a separate clock domain. The complete Phase 4 scene, exact ownership and guards survived the soak, the artifact hashes reproduced exactly, and cleanup left no remote transaction files. This keeps real <code>ref_agc</code> binding in Phase 6. Xash3D remains <code>PPSA99996</code>, frozen Gears remains <code>PPSA99997</code>, and obsolete <code>PPSA99998</code> remains absent.</p>
+  <h2 id="checkpoint-title">Phase 5 is closed; engine integration is next</h2>
+  <p>The final run <code>20260907T235551519Z_PPSA99996_xash3d-engine_0xd12e2a9238fb</code> proved local project-owned <code>__assert</code>, <code>getpwuid</code> and <code>dladdr</code> semantics without dynamically importing those names, then indexed the full asset tree, loaded <code>c1a0</code> for 30 seconds and ended with 30 gap-free records, result zero and a clean BYE. Its ELF and fSELF hashes reproduced exactly. Together with the prior filesystem, ScePad, SceAudioOut, direct-memory, thread/time and 60,000-frame GPU/flip gates, this completes the non-drawing platform layer. Phase 6 begins with the application-owned module loader and <code>ref_agc</code>. Xash3D remains <code>PPSA99996</code>, frozen Gears remains <code>PPSA99997</code>, and obsolete <code>PPSA99998</code> remains absent.</p>
   <div class="grid">
     <div class="item"><div class="k">Phase 1 proof</div><div class="v">3,611 draws · 164 textures · 60k frames</div></div>
     <div class="item"><div class="k">Dynamic proof</div><div class="v">8×8 patch/frame · guards stable · 10k</div></div>
@@ -178,8 +178,9 @@
     <div class="item"><div class="k">Direct-memory proof</div><div class="v">128 MiB · 35.6 MB peak · 4/4 reclaimed · 0 live</div></div>
     <div class="item"><div class="k">Thread/time proof</div><div class="v">2 workers · 32,768 locked · 128 sleeps · 0 errors</div></div>
     <div class="item"><div class="k">GPU/flip proof</div><div class="v">60k EOP writes · exact events · 0 gaps/regressions</div></div>
+    <div class="item"><div class="k">Libc-shim proof</div><div class="v">3 local defs · 0 dynamic imports · c1a0 pass</div></div>
     <div class="item"><div class="k">Import ledger</div><div class="v">171 imports · 35 pass · 3 guarded · 133 exported-only</div></div>
-    <div class="item"><div class="k">Next step</div><div class="v">libc shims → final Phase 5 pass</div></div>
+    <div class="item"><div class="k">Next step</div><div class="v">Phase 6 · own PRX loader → ref_agc</div></div>
   </div>
 </section>
 
@@ -321,12 +322,12 @@
 </section>
 
 <!-- PHASE 5 -->
-<section class="phase active" id="p5">
+<section class="phase done" id="p5">
   <div class="num">5</div>
   <div class="body">
     <div class="head">
       <h2>Platform layer</h2>
-      <div class="meta"><span class="pill active">in progress</span><span>≈ 1 week</span><span>Everything the engine needs that is not drawing. Bootstrap, filesystem, ScePad, SceAudioOut, direct-memory, thread/time and GPU/flip timing checkpoints have passed FW 12.02.</span></div>
+      <div class="meta"><span class="pill done">complete</span><span>Everything the engine needs that is not drawing passed FW 12.02.</span></div>
     </div>
     <div class="visible"><b>Visible result.</b> The real engine has a hardware-proven PS5 platform contract: retail assets load reliably, DualSense drives the canonical actions, audio streams without underruns, large allocations and GPU resources have exact direct-memory ownership, and timing telemetry measures the real frame and flip path.</div>
     <ol class="steps">
@@ -338,20 +339,20 @@
       <li><b>Done.</b> Replace the interim large-allocation router with one guarded 128 MiB fixed-VA direct-memory arena for every C/C++ engine allocation, plus generation-tagged active/retiring/reclaimed ownership for representative command, buffer, texture and depth resources.<span class="gate"><b>Gate:</b> run <code>20260907T212512180Z_PPSA99996_xash3d-engine_0xc8f58f777975</code>: <code>c1a0</code>, 20,687 allocations, 1,091 reallocations, 35,632,245-byte peak, 4/4 GPU retire/reclaim pairs, all guards intact, zero ownership errors, exact one-shot root teardown and zero live bytes.</span></li>
       <li><b>Done.</b> Threads and time: two distinct workers with exact join/detach ownership, one mutex-protected 32,768-count workload, 8,192 monotonic reads and measured <code>nanosleep</code>/<code>usleep</code> granularity at 1/2/5/10 ms.<span class="gate"><b>Gate:</b> run <code>20260907T220548886Z_PPSA99996_xash3d-engine_0xcb2ce47a2f65</code>: create/join/detach 2/1/1, zero lifecycle/mutex errors, 8,191 positive clock advances, 128 sleep samples with zero errors/early wakes, <code>c1a0</code>, exact memory teardown and gap-free BYE.</span></li>
       <li><b>Done.</b> Frametime instrumentation: a selector-3 raw GPU end-of-pipe write before <code>SetFlip</code> is correlated with the CPU submit boundary, the existing selector-2 ownership fence and the exact VideoOut event. The old frame-minus-one deadline interpretation is replaced by separately named CPU-observed latencies; no frequency is invented for the GPU clock.<span class="gate"><b>Gate:</b> run <code>20260907T225446311Z_PPSA99996_ps5-xash3d_0xcdd8ce3a668a</code>: 60,000 consecutive records/writes, 59,999 strict GPU-clock changes, zero regressions/order errors/gaps, complete Phase 4 scene, exact ownership, intact guards and clean BYE.</span></li>
-      <li><b>Next.</b> Project-owned shims for <code>__assert</code>, fixed or SceUserService-backed identity instead of <code>getpwuid</code>, and logging that does not depend on <code>dladdr</code>. Keep system implementations only when a real hardware smoke test supports them.<span class="gate"><b>Gate:</b> host tests, zero banned imports and clean FW 12.02 execution.</span></li>
-      <li><b>Phase closure.</b> Re-run all platform gates incrementally with immutable hashes, structured telemetry, exact ownership/teardown, zero errors and visual/audio/input evidence where applicable; publish the evidence boundary and integrate by PR.</li>
+      <li><b>Done.</b> Project-owned shims for <code>__assert</code>, fixed non-security identity through <code>getpwuid</code>, and deterministic zeroed <code>dladdr</code> fallback. The release gate rejects any dynamic import of the three and requires their local definitions; crash logging remains on kernel module-list APIs.<span class="gate"><b>Gate:</b> run <code>20260907T235551519Z_PPSA99996_xash3d-engine_0xd12e2a9238fb</code>: all three probes pass, complete <code>c1a0</code>, result 0, 30 gap-free records and clean BYE; ELF/fSELF hashes reproduced exactly.</span></li>
+      <li><b>Phase complete.</b> Every platform gate passed incrementally with host tests, immutable hashes, structured FW 12.02 telemetry, exact ownership/teardown, zero errors and visual/audio/input evidence where applicable.</li>
     </ol>
     <p><b>Phase boundary.</b> Client/menu integration, <code>ref_null</code>/<code>ref_soft</code>, <code>ref_agc</code> and conversion of engine modules to application-owned PRXs belong to Phase 6. The early static client harness was useful diagnostic evidence for filesystem and imports, but it does not close any Phase 6 integration gate. Game switching through <code>execv</code> is impossible on PS5 (no process execution), so any <code>-game</code> change stays in-process.</p>
   </div>
 </section>
 
 <!-- PHASE 6 -->
-<section class="phase" id="p6">
+<section class="phase active" id="p6">
   <div class="num">6</div>
   <div class="body">
     <div class="head">
       <h2>Engine integration</h2>
-      <div class="meta"><span class="pill later">next</span><span>≈ 2–3 weeks</span><span>Xash3D drives the renderer you already trust.</span></div>
+      <div class="meta"><span class="pill active">next</span><span>≈ 2–3 weeks</span><span>Xash3D drives the renderer you already trust.</span></div>
     </div>
     <div class="visible"><b>Visible result.</b> Xash3D boots to its main menu on the PS5, then loads c1a0 through the engine and you play the tram ride.</div>
     <ol class="steps">
@@ -406,7 +407,7 @@
   <table>
     <thead><tr><th>Risk</th><th>Where it bites</th><th>Mitigation</th></tr></thead>
     <tbody>
-      <tr><td>libc surface</td><td>Phase 5 platform closure</td><td>Close <code>__assert</code>, <code>getpwuid</code> and <code>dladdr</code> with project-owned shims. The thread/time gate ELF declares 171 dynamic imports with none banned; its artifact-specific evidence ledger holds 35 hardware-pass entries, 3 hardware-fail/guarded and 133 exported-only. An SDK provider is a hypothesis until a focused FW 12.02 smoke test passes.</td></tr>
+      <tr><td>libc surface</td><td>Phase 5 platform closure</td><td>Closed: <code>__assert</code>, <code>getpwuid</code> and <code>dladdr</code> are project-owned local definitions, absent from dynamic imports and hardware-proven before a clean <code>c1a0</code> run. The evidence ledger rule remains: an SDK provider is only a hypothesis until a focused hardware smoke passes.</td></tr>
       <tr><td>Own PRX modules</td><td>Phase 6 modular build</td><td>Closed by the Phase 1 spike: runtime load, descriptor resolution and unload proven on hardware. Remaining constraint: TLS in modules only general-dynamic; every module must ship a <code>PRXDESC1</code> descriptor.</td></tr>
       <tr><td>Cache coherence on dynamic uploads</td><td>Phase 3 lightmaps, Phase 4 skinning</td><td>Memory model written in Phase 2; readback of the updated region on every iteration.</td></tr>
       <tr><td>Command buffer capacity</td><td>Phase 1 step 4 onward</td><td>Size from draw count × 30 DWORDs; host test asserts before submit.</td></tr>
@@ -418,7 +419,7 @@
   </div>
 </section>
 
-<footer>Revision 27 closes GPU end-of-pipe and VideoOut timing: 60,000 correlated submit/timestamp/fence/event records pass with strict GPU-clock progress, zero gaps or ordering errors, the complete Phase 4 scene and reproducible artifact hashes; the three project-owned libc shims are now the next Phase 5 gate. Revision 26 closes the thread/time gate: exact join/detach ownership, 32,768 mutex-protected increments, 8,192 monotonic reads and 128 measured sleeps pass on FW 12.02 with zero errors, followed by <code>c1a0</code>, exact memory teardown and a clean BYE. Revision 25 closes the direct-memory gate: one guarded 128 MiB fixed-VA root owns every C/C++ engine allocation, generation-tagged representative GPU resources retire and reclaim exactly, and the accepted FW 12.02 run finishes with intact guards, zero ownership errors and an empty root. Revision 24 reconciles the SceAudioOut checkpoint header, latest-gate and import-ledger summaries, and removes the duplicated direct-memory step. Revision 23 closes the native SceAudioOut gate: a producer/consumer ring, an exact 147/160 resampler, worker-owned handle lifetime, whole-grain submission with terminal-only zero-fill, a matching PCM hash and an audibly confirmed FW 12.02 run. Revision 22 closed the native ScePad gate with chronological batched reads, all six gameplay actions, exact ownership and an immutable FW 12.02 run. Revision 21 closed the full retail filesystem, recorded the <code>strcasestr</code> root cause and four successful libc smokes, and introduced the evidence-led import classification. Revision 18 records Phase 5 gate 1: the Xash3D FWGS engine boots on FW 12.02 in dedicated mode, spawns c1a0 with all entity classes and quits cleanly after 90 s. Revision 17 closes Phase 4 with the final 60,000-frame FW 12.02 ownership soak and zero errors. Revision 10 closed the identity split: Xash3D is <code>PPSA99996</code>, Gears remains <code>PPSA99997</code> and historical <code>PPSA99998</code> is uninstalled. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step closes with host tests and hardware evidence.</footer>
+<footer>Revision 28 closes Phase 5: project-owned <code>__assert</code>, fixed <code>getpwuid</code> identity and deterministic <code>dladdr</code> fallback are local ELF definitions rather than dynamic imports; all three pass on FW 12.02 before a complete <code>c1a0</code> run with reproducible hashes, result zero and a clean BYE. Phase 6 engine integration is now active. Revision 27 closes GPU end-of-pipe and VideoOut timing: 60,000 correlated submit/timestamp/fence/event records pass with strict GPU-clock progress, zero gaps or ordering errors, the complete Phase 4 scene and reproducible artifact hashes. Revision 26 closes the thread/time gate: exact join/detach ownership, 32,768 mutex-protected increments, 8,192 monotonic reads and 128 measured sleeps pass on FW 12.02 with zero errors, followed by <code>c1a0</code>, exact memory teardown and a clean BYE. Revision 25 closes the direct-memory gate: one guarded 128 MiB fixed-VA root owns every C/C++ engine allocation, generation-tagged representative GPU resources retire and reclaim exactly, and the accepted FW 12.02 run finishes with intact guards, zero ownership errors and an empty root. Revision 24 reconciles the SceAudioOut checkpoint header, latest-gate and import-ledger summaries, and removes the duplicated direct-memory step. Revision 23 closes the native SceAudioOut gate: a producer/consumer ring, an exact 147/160 resampler, worker-owned handle lifetime, whole-grain submission with terminal-only zero-fill, a matching PCM hash and an audibly confirmed FW 12.02 run. Revision 22 closed the native ScePad gate with chronological batched reads, all six gameplay actions, exact ownership and an immutable FW 12.02 run. Revision 21 closed the full retail filesystem, recorded the <code>strcasestr</code> root cause and four successful libc smokes, and introduced the evidence-led import classification. Revision 18 records Phase 5 gate 1: the Xash3D FWGS engine boots on FW 12.02 in dedicated mode, spawns c1a0 with all entity classes and quits cleanly after 90 s. Revision 17 closes Phase 4 with the final 60,000-frame FW 12.02 ownership soak and zero errors. Revision 10 closed the identity split: Xash3D is <code>PPSA99996</code>, Gears remains <code>PPSA99997</code> and historical <code>PPSA99998</code> is uninstalled. Durations are estimates at one developer with console access. Order inside a phase is the intended iteration order; each step closes with host tests and hardware evidence.</footer>
 </div>
 </body>
 </html>

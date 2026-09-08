@@ -20,8 +20,9 @@ sprites/partículas, Studio animado, brush entities y visibilidad; una corrida
 integrada final mantuvo agua, vidrio, efectos, Studio y HUD durante 60.000
 frames con ownership exacto y cero errores.
 
-La Fase 5 está en curso con engine bootstrap, filesystem completo, ScePad,
-SceAudioOut, memoria directa, threads/reloj y telemetría GPU/flip ya cerrados. El backend de input consume lotes
+La Fase 5 está completa: engine bootstrap, filesystem completo, ScePad,
+SceAudioOut, memoria directa, threads/reloj, telemetría GPU/flip y los tres
+shims propios ya están cerrados. El backend de input consume lotes
 cronológicos de hasta 64 registros y traduce el DualSense a los eventos
 canónicos de Xash3D; la
 corrida aceptada probó movimiento, cámara, salto, agacharse, usar y disparar,
@@ -37,9 +38,10 @@ gate de threads probó dos workers distintos con ownership `join`/`detach`
 exacto, 32.768 incrementos protegidos, 8.192 lecturas monotónicas sin regresión
 y 128 muestras `nanosleep`/`usleep` sin errores ni despertares anticipados. El
 gate de telemetría correlacionó 60.000 submits, timestamps GPU end-of-pipe,
-fences y eventos VideoOut exactos sin gaps ni regresiones. El siguiente gate
-son los tres shims propios: `__assert`, identidad sin `getpwuid` y logging sin
-`dladdr`.
+fences y eventos VideoOut exactos sin gaps ni regresiones. El cierre final
+retuvo `__assert`, `getpwuid` y `dladdr` como definiciones locales del port,
+probó sus contratos en FW 12.02 y cargó `c1a0` sin errores. La Fase 6 —PRX
+propios y `ref_agc`— es el siguiente checkpoint.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico

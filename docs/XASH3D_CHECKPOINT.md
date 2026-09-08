@@ -11,8 +11,8 @@ Reconciled: 2026-09-08. Hardware boundary: one PS5 on firmware 12.02.
 | 2 — Resource foundation | Complete | Fence-retired pool, two-slot transient ring, V#/T#/S#, per-frame constants, two pipeline permutations, cache contract and a clean 60,000-frame gate. |
 | 3 — Texture path | Complete, 6 gates closed | Dynamic lightmap, deterministic mips/filtering, alpha test, sky, exact accounting and the final 60,000-frame soak are hardware-proven. |
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
-| 5 — Platform layer | In progress; bootstrap + filesystem + ScePad + SceAudioOut + direct memory + threads/time + GPU/flip timing closed | The engine boots, the retail tree passes and every completed platform surface has an exact lifecycle. A 60,000-frame run correlated GPU EOP writes with fences and exact VideoOut events. Remaining: the three project-owned libc shims and final pass. |
-| 6 — Engine integration | Later | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
+| 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
+| 6 — Engine integration | Active / next | Modular Xash3D boot with `ref_agc`, menu, client, server and filesystem PRX modules. |
 | 7 — Playable and release | Later | Gameplay/performance and level-transition soaks, clean reproducible release. |
 
 The Phase 1/2 implementation was merged through
@@ -20,8 +20,8 @@ The Phase 1/2 implementation was merged through
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
-the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 5
-GPU/flip timing commit `cd57ab8`.
+the laboratory submodule `projects/ps5-xash3d` now pins the merged Phase 5
+closure commit `a2cb856`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2
@@ -388,7 +388,7 @@ Scope stayed PCM only. AJM and AAC/MP3/Opus decode, AudioOut2, Audio3d, NGS2,
 AudioIn and Chiaki capture remain out, and the link now rejects an artifact
 that imports any of them.
 
-## Remaining Phase 5 closure
+## Final Phase 5 closure
 
 ### Direct-memory checkpoint: closed (2026-09-07)
 
@@ -445,11 +445,28 @@ The gate ended with `gpu-flip-timing-soak-complete`; its ELF/fSELF hashes
 `fdb489280c1bac1f2489f0449bbf8f914eaf7b4cb2f8436ea11d59abaa72e798`
 were reproduced exactly after the hardware run.
 
-1. Project-owned shims for `__assert`, fixed or SceUserService-backed identity
-   instead of `getpwuid`, and logging without `dladdr`.
-2. A final incremental FW 12.02 pass over every gate with host tests,
-   structured telemetry, immutable hashes, exact ownership/teardown, zero
-   errors and visual/audio/input evidence where applicable.
+### Project-owned libc shims: closed (2026-09-08 local)
+
+Xash3D PR #10, merged as `a2cb856`, isolates the three narrow compatibility
+semantics in `libc_shims_ps5.c`. Its release gate refuses dynamic imports of
+`__assert`, `getpwuid` or `dladdr` and requires all three local definitions in
+the full symbol table. Host tests pin assertion formatting/truncation, uid
+propagation and the zeroed address-info fallback.
+
+Accepted run
+`20260907T235551519Z_PPSA99996_xash3d-engine_0xd12e2a9238fb` proved the
+project-owned assertion reporter policy, stable `ps5` identity for uid `0xff`
+and deterministic `dladdr` zero/`argv[0]` fallback, then indexed the complete
+asset tree, loaded `c1a0` for 30 seconds and returned result zero. Its 30
+structured records had no gap or error and ended in the normal clean BYE.
+ELF/fSELF SHA-256:
+`b87e61fc52230d2503290f92942fe2ab4b7d58730929bd30765aaaa926f957d0` /
+`14c7c9e13d668ed782a2d98a19ada2e21f2003a8d8e7dccf52085a291096e569`;
+both reproduced exactly after the hardware run.
+
+This final incremental pass closes Phase 5. Every platform gate now has host
+contracts, immutable FW 12.02 evidence and exact ownership/teardown where it
+applies.
 
 Client/menu integration, `ref_null`/`ref_soft`, `ref_agc` and conversion of
 engine modules to application-owned PRXs are Phase 6. The early static client
