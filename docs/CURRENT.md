@@ -224,7 +224,7 @@ one image released and clean BYE. Eight host DLL bindings remain unimplemented.
 The validator accepted --allow-i386 and --allow-wx; one 16 KiB page merges
 write/execute permissions. That mapping run executed no guest instructions or graphics.
 
-Subsequent bounded host translation executed 325 instructions (4096-event limit) from the original
+Subsequent bounded host translation executed 329 instructions (4096-event limit) from the original
 Pinball entry plus GetModuleHandleA(NULL), returning the mapped base 0x01000000,
 and the CRT state setter __set_app_type, both mode-pointer getters, _controlfp, _initterm and __getmainargs.
 It now binds 207 imports (205 function tokens, two CRT data words) and stops

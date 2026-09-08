@@ -62,7 +62,7 @@ Base 0x01000000, 311296 bytes reservados, tres secciones verificadas sin
 discrepancias y cierre limpio. Una página de 16 KiB combina permisos WX.
 Las ocho DLLs se clasificaron como interfaces host aún sin implementar.
 
-El traductor acotado ejecutó en host 325 instrucciones del arranque original (límite de 4096 eventos),
+El traductor acotado ejecutó en host 329 instrucciones del arranque original (límite de 4096 eventos),
 GetModuleHandleA(NULL), __set_app_type, los dos getters CRT, _controlfp, _initterm y __getmainargs. Enlaza 205 funciones y dos datos;
 los getters de modos CRT tienen pruebas unitarias y los demás handlers
 siguen pendientes. El callback original ya retorna junto con su _initterm;
