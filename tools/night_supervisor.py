@@ -12,6 +12,7 @@ import argparse
 import ftplib
 import hashlib
 import json
+import os
 import re
 import socket
 import struct
@@ -22,7 +23,26 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[2]
+def _lab_root() -> Path:
+    """Directory holding `elf-arsenal`, `rehd_mods` and the lab checkout.
+
+    In a normal checkout that is two levels above this file. A git worktree
+    lives beside the checkout rather than inside it, so the shared payload
+    directory is located by walking up instead of assuming a depth, and
+    PS5_LAB_ROOT overrides both. Getting this wrong makes the supervisor
+    report a missing payload while pointing at a path that never existed.
+    """
+    override = os.environ.get("PS5_LAB_ROOT")
+    if override:
+        return Path(override).resolve()
+    here = Path(__file__).resolve()
+    for candidate in here.parents:
+        if (candidate / "elf-arsenal").is_dir():
+            return candidate
+    return here.parents[2]
+
+
+ROOT = _lab_root()
 sys.path.insert(0, str(ROOT / "rehd_mods"))
 sys.path.insert(0, str(ROOT / "homebrew_ps5" / "research" / "gpu" / "tools"))
 try:
@@ -991,6 +1011,29 @@ class Supervisor:
                 return
         raise SafetyStop(f"{title_id} launch was not observed")
 
+    def checked_launch_transient(self, title_id: str) -> None:
+        """Launch a title that runs a bounded gate and exits on its own.
+
+        checked_launch() waits to observe the title as the active BigApp,
+        which a gate finishing in about a second never satisfies. The safety
+        preconditions are identical — health, and no BigApp already active —
+        but completion evidence comes from the ps5log manifest instead of
+        from catching the process alive. Nothing here infers success from the
+        launch call itself.
+        """
+        helpers = {"PPSA99995": "launch-prospero-win.elf"}
+        if title_id not in helpers:
+            raise SafetyStop(
+                f"title is not transient-launch-allowlisted: {title_id}")
+        self.require_bigapp(None)
+        output = self.run_elfldr(HELPERS / helpers[title_id])
+        match = re.search(r"launch rc=0x([0-9a-fA-F]{8})", output)
+        if not match or int(match.group(1), 16) >= 0x80000000:
+            raise SafetyStop("launch helper did not report success")
+        self.record("launch_requested_transient", title_id=title_id,
+                    rc=match.group(1),
+                    note="completion is proven by the ps5log manifest")
+
     def checked_restart_shadowmount(self) -> None:
         """Restart ShadowMountPlus through its supported single-instance path.
 
@@ -1726,7 +1769,7 @@ def main() -> int:
         elif args.action == "launch-agc-native-sce":
             sup.checked_launch("PPSA99998")
         elif args.action == "launch-prospero-win":
-            sup.checked_launch("PPSA99995")
+            sup.checked_launch_transient("PPSA99995")
         elif args.action == "close-prospero-win":
             sup.checked_close("PPSA99995")
         elif args.action == "launch-xash3d":
