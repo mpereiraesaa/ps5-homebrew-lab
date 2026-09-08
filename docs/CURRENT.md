@@ -27,10 +27,10 @@ completed all six hardware gates before merging through
 `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264`. The
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
-history of `projects/ps5-xash3d`. This laboratory now pins title-icon commit
-`ea9be4b`, built on documentation reconciliation `3c80830`; the merged Phase 6
-MainUI-PRX implementation is commit `9f783ec` (the dedicated identity began at
-`c09318f`).
+history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 6
+client-PRX commit `3a30250`, which includes the dedicated title icon from
+`ea9be4b`; the preceding MainUI-PRX implementation is `9f783ec` and the
+dedicated identity began at `c09318f`.
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -173,8 +173,20 @@ extended callbacks passed with complete engine masks, explicit C++ lifecycle,
 one activation and 5,127 redraws. The software framebuffer presented 5,100
 non-black frames; this proves UI execution but not yet AGC presentation on the
 TV. Server, menu and filesystem unloaded in order with active counts 2, 1 and
-0, zero structured errors and a clean BYE. The next isolated checkpoint
-converts only `client` while preserving this rollback point.
+0, zero structured errors and a clean BYE.
+
+Phase 6 gate 5 is closed in merged Xash3D PR #17 (`3a30250`). Accepted run
+`20260908T130114060Z_PPSA99996_xash3d-engine_0xfc0996a1effb` loaded the pinned
+HLSDK client as `/app0/sce_module/client.prx` on top of the accepted
+filesystem/server/menu bundle. Its 48-entry descriptor exposed 42 actual
+GoldSrc exports, interface version 7 and both callback masks (63 host, 15
+module) passed, and both PRX-to-engine smokes completed. The real `c1a0`
+workload performed one video init, 4,916 client frame callbacks, 4,907
+successful HUD redraws and 4,800 non-black software presentations. Server,
+menu, client and filesystem stopped/unloaded with active counts 3, 2, 1 and 0;
+89 structured records and 115 raw lines ended with result zero, no errors,
+gaps or oversized records, and a clean BYE. The five-file bundle is now the
+rollback point; `ref_agc` is the only remaining Phase 6 conversion.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
