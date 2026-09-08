@@ -70,9 +70,15 @@ forma nativa en modo compatibilidad, y entrar en ese modo exige un descriptor
 de segmento de código que el kernel instala mediante
 `sysarch(I386_SET_LDT, ...)`. El SDK de payload fijado declara esa llamada,
 pero ninguna corrida la ha ejercitado en este firmware, así que el gate 0.2a
-es exactamente ese probe. Si pasa, los juegos de 32 bits corren de forma
-nativa mediante ABI thunking estilo WoW64, con cero emulación de
-instrucciones; si falla, sólo quedan la recompilación JIT —que tampoco es
+es exactamente ese probe. Está construido y validado en host: en una máquina
+x86-64 corriente los descriptores se instalan, el far transfer entra en modo
+compatibilidad desde una página de código ya sellada como no escribible, se
+ejecutan instrucciones genuinamente de 32 bits y el control vuelve; lo que
+falta es la medida en consola, no el diseño. Esa corrida también estableció
+que el puntero de pila de 64 bits no sobrevive al cruce, algo que cualquier
+thunk futuro debe manejar. Si el probe pasa en consola, los juegos de 32 bits
+corren de forma nativa mediante ABI thunking estilo WoW64, con cero emulación
+de instrucciones; si falla, sólo quedan la recompilación JIT —que tampoco es
 emulación, pero altera la ruta de instrucciones— o restringir el alcance a
 programas de 64 bits. Mientras no haya medida, el loader reporta `native=0`
 para una imagen `i386` y el validador rechaza la corrida salvo `--allow-i386`.

@@ -196,10 +196,15 @@ an open question rather than a closed door: Zen 2 executes 32-bit
 instructions natively in compatibility mode, and reaching that mode needs a
 code descriptor the kernel installs through `sysarch(I386_SET_LDT, ...)`,
 which the pinned payload SDK declares but which no run has exercised on this
-firmware. Gate 0.2a is that probe, and it decides whether 32-bit games are
-reachable through WoW64-style ABI thunking with zero instruction emulation or
-only through JIT recompilation. The project's licence is deliberately still
-open; see its `LICENSING.md`.
+firmware. Gate 0.2a is that probe. It is built and host-validated: on an
+ordinary x86-64 machine the descriptors install, the far transfer enters
+compatibility mode from a sealed non-writable code page, genuinely 32-bit
+instructions execute, and control returns — so what remains is the console
+measurement, not the design. The host run also established that the 64-bit
+stack pointer does not survive a crossing, which every future thunk has to
+handle. Its four possible console outcomes and what each one implies are in
+`projects/prospero-win/docs/COMPAT32_PHASE0A.md`. The project's licence is
+deliberately still open; see its `LICENSING.md`.
 
 ## Development policy
 
