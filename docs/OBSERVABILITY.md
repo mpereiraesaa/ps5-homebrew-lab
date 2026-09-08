@@ -1,6 +1,12 @@
 # Logging y observabilidad AGC
 
-`ps5log/1` sobre TCP es el contrato vigente para la telemetría de `PPSA99998`.
+> **Registro histórico:** el flujo `PPSA99998` descrito aquí documenta las
+> etapas nativas A–I y ya no es un título instalado. Los títulos vigentes son
+> Xash3D (`PPSA99996`) y Gears (`PPSA99997`); `CURRENT.md` define la política
+> canónica actual.
+
+`ps5log/1` sobre TCP continúa siendo el protocolo vigente. Su uso con
+`PPSA99998` en las secciones siguientes es evidencia histórica.
 Escribir logs en USB, `/download0` o cualquier otro filesystem de la consola
 está deprecado. Cliente, servidor e integración nativa están validados.
 

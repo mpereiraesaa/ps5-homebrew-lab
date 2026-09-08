@@ -20,8 +20,9 @@ The Phase 1/2 implementation was merged through
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
-the laboratory submodule `projects/ps5-xash3d` now pins the merged Phase 6
-MainUI-PRX commit `9f783ec`.
+the laboratory submodule `projects/ps5-xash3d` now pins documentation-
+reconciled commit `3c80830`; the merged Phase 6 MainUI-PRX implementation is
+commit `9f783ec`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
 ## Evidence closing Phase 2

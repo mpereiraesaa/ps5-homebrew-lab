@@ -27,9 +27,9 @@ completed all six hardware gates before merging through
 `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264`. The
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
-history of `projects/ps5-xash3d`, which this laboratory now pins at merged
-Phase 6 MainUI-PRX commit `9f783ec` (the dedicated identity began at
-`c09318f`).
+history of `projects/ps5-xash3d`. This laboratory now pins documentation-
+reconciled commit `3c80830`; the merged Phase 6 MainUI-PRX implementation is
+commit `9f783ec` (the dedicated identity began at `c09318f`).
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -212,6 +212,9 @@ ledger and reproduction scripts live under
 ## Canonical tooling
 
 - `projects/logging_server`: structured `ps5log/1` telemetry.
+- `tools/ps5_ftp.py`: the single FTP transport contract. Deploy helpers switch
+  `ps5-payload-dev/ftpsrv` to raw SELF mode on their own connection and verify
+  the stored fSELF/PRX by exact size and SHA-256; an ELF prefix is not proof.
 - `tools/ps5_remoteplay.py`: pinned Headless LinkDev build/pairing plus
   Chiaki stream, screenshot and MP4 capture.
 - `tools/night_supervisor.py`: exact launch/close and guarded operational
