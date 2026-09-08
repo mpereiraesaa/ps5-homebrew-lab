@@ -94,6 +94,27 @@ as new facts appear. Full detail and evidence in `docs/FINDINGS.md`.
   filesystem ELFs, **no** arbitrary `dlopen`; IPv6 via SDK `getaddrinfo`
   unusable. `dup`/`dup2` unavailable. (Cross-checked with BlackBear's
   `ps5-python/docs/ps5-limitations.md`.)
+- **`MAP_FIXED` silently replaces live mappings, and `MAP_EXCL` is
+  ignored.** Measured: two `MAP_FIXED|MAP_EXCL` requests for the same
+  address both succeeded, and a plain `MAP_FIXED` over a live mapping
+  overwrote its contents. FreeBSD's `MAP_EXCL` exists precisely to make a
+  fixed request fail rather than clobber, and it does not work here, so
+  `MAP_FIXED` is unusable unless the range has been proven free first.
+  Prefer the **hint form** — a plain `mmap` with an address argument and no
+  `MAP_FIXED` — which cannot displace anything, is honoured exactly when the
+  range is available, and can simply be checked afterwards.
+- **Low addresses are freely available, and `MAP_32BIT` is not.** The low
+  4 GiB of a process is nearly empty — the image occupies roughly
+  `0x400000`–`0x584000` and essentially nothing else — and a hint anywhere
+  above that is granted exactly, up to at least **3 GiB contiguous** below
+  4 GiB. `MAP_32BIT` is ignored and returns high memory. `KERN_PROC_VMMAP`
+  via `sysctl` works and is the way to see the layout before asking.
+  Relevant to any port whose payload uses 32-bit pointers.
+- **A low mapping can be made executable, including writable and
+  executable together.** `mprotect` to `r-x` and to `rwx` both succeeded on
+  an anonymous low mapping. Measured in an `elfldr` payload, which is more
+  privileged than a title; confirm in the context that will actually run
+  before depending on it.
 - **The page size is 16 KiB, not 4 KiB**, measured through
   `sysconf(_SC_PAGESIZE)` (which works) and confirmed by `mprotect`
   behaviour. Anything that assumes 4 KiB will appear to work on a host and
