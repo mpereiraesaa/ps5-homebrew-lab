@@ -54,11 +54,12 @@ final enlazó RefAPI 18 con el backend AGC, presentó 600 frames con hashes GPU
 no nulos y descargó los cinco PRXs exactamente. La Fase 7 está activa: el
 primer checkpoint ya extrae el mundo `c1a0` vivo del engine y somete 17.245
 vértices, 29.565 índices y 3.695 superficies mediante AGC, con las 164
-referencias de textura resueltas y teardown exacto. Una captura sincronizada
-con el título activo sigue completamente negra, de modo que esto prueba
-residencia, bindings y submission, pero todavía no presentación visible. El
-gate inmediato es hacer reconocible ese frame antes de sumar lightmaps,
-cielo/agua, entidades, 2D/UI, gameplay y release.
+referencias de textura resueltas y teardown exacto. El A/B de FW 12.02 aisló
+un handoff de scheduler de 10 ms después de inicializar la cámara viva: el
+artefacto final muestra el interior texturizado del tranvía en una captura
+sincronizada con `PPSA99996` activo. El gate inmediato es sumar lightmaps y
+semánticas nativas de cielo/agua antes de traducir entidades, viewmodel,
+2D/UI, gameplay y release.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico
