@@ -13,17 +13,18 @@ Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
 | 6 — Engine integration | Complete, 6 gates closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI, GoldSrc client and RefAPI 18 `ref_agc` are hardware-proven with exact teardown. |
-| 7 — Playable and release | Active, live special surfaces closed | Live `c1a0` geometry, base textures, engine lightmaps, six-sided sky and turbulent surfaces are native AGC output with exact ownership; entities/viewmodel, 2D/UI, gameplay/performance, transition soaks and release remain open. |
+| 7 — Playable and release | Active, live 2D closed | Live `c1a0` geometry, base textures, engine lightmaps, six-sided sky, turbulent surfaces and console/HUD/font/fill lists are native AGC output with exact ownership; entities/viewmodel, native MainUI presentation, gameplay/performance, transition soaks and release remain open. |
 
 The Phase 1/2 implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
-the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 7
-live-special-surface checkpoint `77c742a`; the preceding live-lightmap
-checkpoint is `4f9d38d`, the preceding compositor-visible world checkpoint is
-`cdcce91`, the preceding live-world submission checkpoint is `bd4b250`, and
+the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 7 live-2D
+checkpoint `0bdcbfb`; the preceding live-special-surface checkpoint is
+`77c742a`, the preceding live-lightmap checkpoint is `4f9d38d`, the preceding
+compositor-visible world checkpoint is `cdcce91`, the preceding live-world
+submission checkpoint is `bd4b250`, and
 the Phase 6 final renderer checkpoint is `258fbe3`, the
 preceding client-PRX checkpoint is `3a30250`,
 and includes the dedicated title icon from `ea9be4b`.
@@ -740,7 +741,43 @@ indices with geometry hash `e7fd75bb4ee4188d`, texture hash
 `e97b5c8ba780c902` and engine time advancing from 0 to 26,942 ms. GPU texture
 sync completed 478 creates with zero errors; eight parent resources were
 reclaimed, engine live bytes returned to zero and the five PRXs unloaded in
-exact order. Entities, viewmodel and 2D/UI are the next translation boundary.
+exact order. At that checkpoint entities, viewmodel and 2D/UI remained open;
+the following gate closes the 2D part of that boundary.
+
+### Phase 7 live 2D composition (2026-09-09)
+
+Xash3D PR #23, merged as `0bdcbfb`, closes native live console/HUD/font/fill
+translation. The consumer executes `R_Set2DMode`, `R_DrawStretchPic` and
+`FillRGBA` in exact producer order after world and special-surface passes,
+copies both color APIs, resolves live texture handles, and emits orthographic
+transient vertices, indices, constants and descriptor tables. Only consecutive
+commands with equal texture and blend identity batch together. Alpha, additive
+and opaque paths use the proven `screen_2d` pipeline; fill uses one transient
+white texel. No OpenGL emulation layer is present. A maximum-capacity host test
+fits all 4,096 producer slots and 4,095 alternating drawable batches in either
+1 MiB transient slot.
+
+Accepted correlated runs
+`20260909T060525224Z_PPSA99996_xash3d-engine_0x133ed1bbb4d07` and
+`20260909T060525280Z_PPSA99996_ps5-xash3d_0x133ed1efb02b5` began 56 ms apart
+and passed 1,044 matched frames. Exactly 333 frames carried live 2D draws:
+61,316 quads became 367,896 indices and 610 ordered batches, with peak three
+batches per frame. The producer emitted 63,395 commands, including 2,079 mode
+commands; all textures resolved and aggregate command hash was
+`177a07fa2fd9e5b1`. Both framebuffer slots hashed `49b1297de5cef0a0`, the
+aggregate frame hash was `a3219a480a7a1c41`, eight resources retired, guards
+remained intact, all five PRXs unloaded exactly and both streams ended clean
+and gap-free.
+
+The 20-second 1080p CLI Remote Play recording has SHA-256
+`5bcdd2772f5d3d29baae61a659ca19af9c079061f69b79f58dc479e70dce6aa0`;
+its accepted frame visibly shows the translucent Xash console, engine text and
+localized overlay over the live tram interior. The engine/ref transcript
+hashes are respectively
+`f637d76cc88698869bd2fa9ba8234a2bcd5a8c6d0ac06c090a836e370423baaf`
+and `5eab062c4e38b56208754d7804ab94a9610658b5c79c58ee77bd675b2f3388c6`.
+This closes live 2D composition, not native MainUI main-menu presentation.
+Entities, viewmodel and the native main menu are the next translation boundary.
 
 ## Remote Play operating contract
 

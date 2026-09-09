@@ -76,8 +76,11 @@ python3 tools/ps5_remoteplay.py stop-stream
 isolated CLI stream, terminates only that confined process and verifies that
 its windows disappear. It never activates the dialog, clicks `OK`, moves the
 pointer or depends on focus. `stream` performs the same stale-process cleanup
-automatically before reusing the registered console entry. Neither action
-pairs or re-registers the console.
+automatically before reusing the registered console entry. If one healthy
+isolated CLI stream is already active, `stream` returns that existing window
+instead of launching a duplicate. It fails closed if several stream windows
+exist or if the sole window belongs to a process outside the helper's exact
+CLI contract. Neither action pairs or re-registers the console.
 
 `acknowledge-quit` remains available only as an explicit compatibility tool for
 an operator who deliberately wants the Qt dialog's normal `OK` action. It is

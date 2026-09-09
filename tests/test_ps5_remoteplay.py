@@ -80,6 +80,37 @@ def main() -> int:
         MODULE, "chiaki_windows", return_value=[]
     ):
         assert MODULE.ended_cli_stream_pid() is None
+        assert MODULE.active_cli_stream_window() is None
+    with mock.patch.object(
+        MODULE, "chiaki_windows", return_value=["4242"]
+    ), mock.patch.object(
+        MODULE, "window_pid", return_value=31337
+    ), mock.patch.object(
+        MODULE, "is_cli_chiaki_stream_process", return_value=True
+    ):
+        assert MODULE.active_cli_stream_window() == "4242"
+    with mock.patch.object(
+        MODULE, "chiaki_windows", return_value=["4242"]
+    ), mock.patch.object(
+        MODULE, "window_pid", return_value=31337
+    ), mock.patch.object(
+        MODULE, "is_cli_chiaki_stream_process", return_value=False
+    ):
+        try:
+            MODULE.active_cli_stream_window()
+        except SystemExit as exc:
+            assert "not launched by the isolated" in str(exc)
+        else:
+            raise AssertionError("non-CLI active stream was not rejected")
+    with mock.patch.object(
+        MODULE, "chiaki_windows", return_value=["4242", "4343"]
+    ):
+        try:
+            MODULE.active_cli_stream_window()
+        except SystemExit as exc:
+            assert "multiple active" in str(exc)
+        else:
+            raise AssertionError("ambiguous active streams were not rejected")
     with mock.patch.object(
         MODULE, "chiaki_windows", return_value=["4242"]
     ), mock.patch.object(
@@ -113,6 +144,19 @@ def main() -> int:
     ):
         assert MODULE.stop_ended_cli_stream(2.0)
         terminate.assert_called_once_with(31337, 2.0)
+    stream_args = mock.Mock(cleanup_wait=2.0)
+    with mock.patch.object(
+        MODULE, "require_program", return_value="/usr/bin/xdotool"
+    ), mock.patch.object(
+        MODULE, "stop_ended_cli_stream", return_value=False
+    ), mock.patch.object(
+        MODULE, "active_cli_stream_window", return_value="4242"
+    ), mock.patch.object(
+        MODULE, "isolated_chiaki_stream_process",
+        side_effect=AssertionError("must reuse the verified active stream"),
+    ), mock.patch("builtins.print") as printed:
+        MODULE.start_stream(stream_args)
+        printed.assert_called_once_with("4242")
     sample = """[General]\nversion=2\n\n[registered_hosts]\n1\\rp_key=@ByteArray(first)\n1\\rp_regist_key=@ByteArray(first-reg)\n1\\server_nickname=PS5-816\n1\\target=1000100\n2\\rp_key=@ByteArray(second)\n2\\rp_regist_key=@ByteArray(second-reg)\n2\\server_nickname=PS5-054\n2\\target=1000100\nsize=2\n\n[settings]\nresolution=720p\n"""
     with tempfile.TemporaryDirectory() as directory:
         source = Path(directory) / "source.conf"
