@@ -55,11 +55,13 @@ no nulos y descargó los cinco PRXs exactamente. La Fase 7 está activa: el
 primer checkpoint ya extrae el mundo `c1a0` vivo del engine y somete 17.245
 vértices, 29.565 índices y 3.695 superficies mediante AGC, con las 164
 referencias de textura resueltas y teardown exacto. El A/B de FW 12.02 aisló
-un handoff de scheduler de 10 ms después de inicializar la cámara viva: el
-artefacto final muestra el interior texturizado del tranvía en una captura
-sincronizada con `PPSA99996` activo. El gate inmediato es sumar lightmaps y
-semánticas nativas de cielo/agua antes de traducir entidades, viewmodel,
-2D/UI, gameplay y release.
+un handoff de scheduler de 10 ms después de inicializar la cámara viva. El
+checkpoint siguiente construye el atlas de lightmaps desde los lightstyles del
+engine, lo aloja en direct memory y enlaza los pipelines AGC nativos: 3.695
+draws lightmapped y 1.075 frames emparejados pasaron con imagen visible,
+ownership exacto y cero errores. El gate inmediato es sumar semánticas nativas
+de cielo/agua antes de traducir entidades, viewmodel, 2D/UI, gameplay y
+release.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico

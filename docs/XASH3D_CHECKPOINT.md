@@ -13,7 +13,7 @@ Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
 | 6 — Engine integration | Complete, 6 gates closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI, GoldSrc client and RefAPI 18 `ref_agc` are hardware-proven with exact teardown. |
-| 7 — Playable and release | Active, visible-world gate closed | Live `c1a0` geometry and base textures are compositor-visible with exact ownership; lightmaps/special surfaces, entities/viewmodel, 2D/UI, gameplay/performance, transition soaks and release remain open. |
+| 7 — Playable and release | Active, live-lightmap gate closed | Live `c1a0` geometry, base textures and engine lightmaps are compositor-visible with exact ownership; special surfaces, entities/viewmodel, 2D/UI, gameplay/performance, transition soaks and release remain open. |
 
 The Phase 1/2 implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
@@ -21,9 +21,10 @@ path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
 the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 7
-compositor-visible world checkpoint `cdcce91`; the preceding live-world
-submission checkpoint is `bd4b250`, and the Phase 6 final renderer checkpoint
-is `258fbe3`, the preceding client-PRX checkpoint is `3a30250`,
+live-lightmap checkpoint `4f9d38d`; the preceding compositor-visible world
+checkpoint is `cdcce91`, the preceding live-world submission checkpoint is
+`bd4b250`, and the Phase 6 final renderer checkpoint is `258fbe3`, the
+preceding client-PRX checkpoint is `3a30250`,
 and includes the dedicated title icon from `ea9be4b`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
@@ -680,8 +681,36 @@ zero renderer errors. The synchronized 1920×1080 capture, taken after
 `PPSA99996` launch verification, visibly shows the textured tram interior and
 has SHA-256
 `1ee3578b517bee368f72805d3a9ecd339a5f7de65de462bbefd7a6d7a19c1850`.
-This closes live base-texture sampling and compositor presentation. Lightmaps,
-native sky/turbulent semantics, entities, viewmodel and 2D/UI remain open.
+This closes live base-texture sampling and compositor presentation. At that
+checkpoint, lightmaps, native sky/turbulent semantics, entities, viewmodel and
+2D/UI were still open.
+
+### Phase 7 live engine lightmaps (2026-09-09)
+
+Xash3D PR #21, merged as `4f9d38d`, closes live lightmap construction,
+residency, native pipeline binding and compositor-visible sampling. The
+producer combines active GoldSrc lightstyle planes through the engine gamma
+table, packs a deterministic owned atlas with duplicated one-texel gutters and
+publishes normalized UVs. The consumer stores the RGBA8 atlas in the existing
+32 MiB direct-memory world arena and reuses the Phase 2–4 native opaque and
+alpha-test lightmap pipelines; no OpenGL emulation layer was introduced.
+
+Final correlated FW 12.02 runs
+`20260909T022301539Z_PPSA99996_xash3d-engine_0x127ca54ee550a` and
+`20260909T022301592Z_PPSA99996_ps5-xash3d_0x127ca581d165f` began 53 ms apart
+and passed 1,075 matched frames. All 3,695 draws were lightmapped. The
+1024x256 atlas used 1,048,576 bytes, contained 186,051 nonzero texels and
+produced common engine/renderer frame hash `a3219a480a7a1c41`. The run
+reclaimed all eight parent allocations, recorded zero renderer errors and
+unloaded the five PRXs in order to zero. The launch-verified 1920x1080 CLI
+Remote Play capture has SHA-256
+`2b8bd9ea8dd5345463f7bd9363ee79df36ae77af76cc635c54b8859699cdbfd7`.
+
+Black images taken before this run were rejected after a PS home screenshot
+proved that the CLI Chiaki stream itself was stale; they are not renderer
+evidence. A separately verified live-stream no-lightmap control was visibly
+unlit. Native sky/turbulent semantics, entities, viewmodel and 2D/UI remain
+open.
 
 ## Remote Play operating contract
 
