@@ -391,6 +391,17 @@ port's PHASE7_BASELINE_REGRESSION for artifact/run identities and resource proof
 Full Studio fidelity, viewmodel, chapter-title blending and live-client audio
 remain open: graphics runs use XASH_AUDIO=0. This does not close Phase 7.
 
+## Phase 7 texture-memory policy — 2026-09-09
+
+Pinned Xash3D `70ebea8` (merged PR #26), memory task accepted.
+
+Plan revision 43 replaces the fixed texture test budget with measured explicit
+or automatic startup capacity. The explicit 256-MiB run passes 1,999 frames;
+the automatic run passes 10,994 frames and exact resource teardown. Host tests
+cover allocation rollback and cache exhaustion. See XASH3D_CHECKPOINT and the
+port's PHASE7_TEXTURE_MEMORY_POLICY for full evidence and limitations.
+Next: HUD/font blending, game audio, Studio/viewmodel, optional valve_hd QA.
+
 ## Historical boundary
 
 The former Phase 0 and Stages A–I proved the path from direct memory and simple

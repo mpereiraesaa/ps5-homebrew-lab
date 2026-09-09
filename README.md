@@ -73,6 +73,10 @@ Studio animados, corrige la oclusión negra del fondo y el movimiento STEP, y
 mejora el filtrado de modelos. La validación final completa 10.997 frames y
 nueve recursos reclamados con cero errores y teardown exacto. Quedan Studio completo, viewmodel, mezcla del
 título de capítulo, audio del juego, cámara fija, gameplay, rendimiento y soaks.
+El presupuesto de texturas ya es configurable y se calcula con memoria
+disponible medida: 256 MiB explícitos y el modo automático tienen evidencia
+en consola. El plan rev 43 y el checkpoint separan capacidad reservada de
+texturas residentes; no se promete crecimiento dinámico ni soporte HD validado.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico
