@@ -13,12 +13,39 @@ Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
 | 6 — Engine integration | Complete, 6 gates closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI, GoldSrc client and RefAPI 18 `ref_agc` are hardware-proven with exact teardown. |
-| 7 — Playable and release | Active, live-effects checkpoint | HUD/fonts/fades, NPC lighting/NPOT/chrome, viewmodel events/reload and tested live effects accepted; return transition, pistol/crowbar and DualSense aim have operator QA. Transition-aware validation, Host_Error recovery, remaining Studio/effects coverage, game audio, HD-pack QA, gameplay/performance, soaks and release remain open. |
+| 7 — Playable and release | Active, recovery checkpoint | HUD/fonts/fades, NPC lighting/NPOT/chrome, viewmodel events/reload and tested live effects accepted; explicit round-trip validation and controlled Host_Error recovery pass. Remaining Studio/effects coverage, game audio, HD-pack QA, gameplay/performance, longer soaks and release remain open. |
 
-## Latest checkpoint — plan rev 47, 2026-09-09
+## Latest checkpoint — plan rev 48, 2026-09-09
+
+Integrated through [port PR #30](https://github.com/mpereiraesaa/ps5-xash3d/pull/30),
+commit `2caa49e59f274e3cdd249d560e6fe23210fda039`, pinned by the lab submodule.
+
+The unchanged accepted `c1a0 -> c1a0d -> c1a0` pair now passes the explicit
+multi-map contract: 10,810 frames, three ordered engine captures/GPU publications.
+Single-map mode remains strict and no longer confuses map-name prefixes.
+
+Controlled recovery is separately hardware/operator accepted. Engine
+`20260909T185435450Z_PPSA99996_xash3d-engine_0x15de625771803` and renderer
+`20260909T185435571Z_PPSA99996_ps5-xash3d_0x15de62b04835c` pass 10,825 frames,
+one named expected Host_Error, zero renderer errors, nine reclaims, intact guards
+and exact teardown. World clear serial 1099/revision 2 has zero resident bytes,
+2D presentation continues, and the map reloads at serial 1700/revision 3.
+Operator confirmed visible recovery and working movement/look. The first
+diagnostic attempt had an unavailable command and does not count as recovery.
+
+Diagnostic SELF: `2690f0ceca419a7025b6a6326144b652d277d00e0bc20f3f885a9d279f9def3c`.
+Normal SELF `6445127bd600a19b4af405ef9eeda12de6c95a7ce1a5ad479ac184baa774f16b`
+was restored by exact FTP hashes at 18:58 UTC without relaunch. Renderer remains
+`d7003f1c56e84cc91bcc78d7f7e7e300b8e612b42881d2fbed7ddc23c3c89386`.
+The build remains timed/audio-off and no-grant; this is not a release package.
+Remaining Studio/effects parity, audio, optional HD packs, gameplay/performance,
+longer transition soaks and release remain open. This proves the named recovery
+path, not arbitrary failures. Full detail is in the port's Studio checkpoint.
+
+## Previous checkpoint — plan rev 47, 2026-09-09
 
 Integrated through [port PR #29](https://github.com/mpereiraesaa/ps5-xash3d/pull/29),
-commit `47f331516d98e9dc94744b7ca1dbff85f0ccb0aa`, pinned by the lab submodule.
+commit `47f331516d98e9dc94744b7ca1dbff85f0ccb0aa`, the preceding lab pin.
 
 Tested live effects are accepted: viewmodel events/reload, muzzleflash, wall
 marks, particles/tracers, blood and sprite lighting. The operator accepted
