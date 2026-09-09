@@ -63,12 +63,14 @@ ownership exacto y cero errores. El checkpoint fusionado siguiente añade el
 skybox vivo de seis caras y el warp turbulento clásico dirigido por el tiempo
 del engine, sin emulación OpenGL: 1.616 frames emparejados probaron 158
 superficies sky, seis draws de cubo y 35 draws turbulentos, con ocho recursos
-reclamados y cero errores. El checkpoint fusionado más reciente traduce las
-listas 2D vivas en orden de fuente: 61.316 quads formaron 610 batches nativos
-durante 1.044 frames emparejados, con todos los handles resueltos, evidencia
-visual directa, ocho recursos reclamados y cero errores. El trabajo inmediato
-es traducir entidades y viewmodel y presentar el menú principal nativo antes
-de gameplay, rendimiento, transiciones, soaks y release.
+reclamados y cero errores. El checkpoint 2D traduce las listas vivas en orden
+de fuente: 61.316 quads formaron 610 batches nativos durante 1.044 frames
+emparejados. El checkpoint fusionado más reciente presenta MainUI mediante AGC
+durante 223 frames y luego encola `map c1a0` dentro del mismo proceso: el mapa
+aparece en el serial 224, con vídeo directo de ambos estados, ocho recursos
+reclamados y teardown exacto. El trabajo inmediato es traducir entidades y
+viewmodel antes de la comparación de cámara fija, gameplay, rendimiento,
+transiciones, soaks y release.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico

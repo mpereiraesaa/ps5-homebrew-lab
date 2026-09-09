@@ -48,6 +48,20 @@ python3 tools/ps5_remoteplay.py record-demo --name "Xash3D Phase 5"
 python3 tools/ps5_remoteplay.py stop-stream
 ```
 
+Before a hardware-evidence launch, require an actually decoded frame rather
+than trusting the existence of the X11 process/window:
+
+```sh
+python3 tools/ps5_remoteplay.py screenshot --require-decoded \
+  --wait 10 --output /absolute/private/preflight.png
+```
+
+This repeatedly captures the exact stream window and measures normalized RGB
+signal until it exceeds the fail-closed black-frame threshold. It neither
+activates the stream nor moves focus or the pointer. Retain the resulting image
+as the visual preflight; a live process with a black decoder surface is not
+valid capture evidence.
+
 `stream` invokes Chiaki's console mode directly and opens only
 `Chiaki | Stream`; the discovery/client window is not required. Chiaki 2.1.1
 incorrectly stops after the first non-matching registered nickname and its

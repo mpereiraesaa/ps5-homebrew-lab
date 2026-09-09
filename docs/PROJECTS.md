@@ -35,9 +35,11 @@ errores. El checkpoint `77c742a` añade skybox vivo de seis caras y 35 draws
 turbulentos animados por el tiempo del engine; pasó 1.616 frames, ocho reclaims
 y teardown exacto, sin capa de emulación OpenGL. El checkpoint `0bdcbfb`
 traduce las listas 2D vivas en orden: 61.316 quads, 367.896 índices y 610
-batches pasaron 1.044 frames emparejados con evidencia visual, ownership exacto
-y cero errores. Siguen entidades, viewmodel, presentación nativa del menú
-principal, gameplay, rendimiento, transiciones, soaks y release.
+batches pasaron 1.044 frames emparejados con evidencia visual. El checkpoint
+`a975b86` presenta MainUI por AGC durante 223 frames y luego carga `c1a0`
+mediante el command buffer del engine; el serial de mapa 1 aparece en el serial
+renderer 224 y el vídeo muestra ambos estados. Siguen entidades, viewmodel,
+gameplay, rendimiento, transiciones, soaks y release.
 
 Identidades instaladas: Xash3D usa `PPSA99996` y la demo Gears usa
 `PPSA99997`, cada una con helpers exactos independientes. El host histórico
@@ -100,8 +102,8 @@ Plan vigente: `docs/XASH3D_PS5_PLAN.html`; checkpoint textual:
 engine conserva su identidad `PPSA99996` y carga filesystem, servidor, MainUI,
 cliente y renderer como PRXs propios, con lifecycle explícito, callbacks ABI
 probados y teardown ordenado. La Fase 7 ya presenta el mundo, texturas base,
-lightmaps, skybox, superficies turbulentas y listas 2D vivos; el trabajo
-inmediato es entidades, viewmodel y el menú principal nativo.
+lightmaps, skybox, superficies turbulentas, listas 2D y MainUI vivos, con
+transición nativa al mapa; el trabajo inmediato es entidades y viewmodel.
 
 Half-Life requiere datos originales que no forman parte del código del engine
 y nunca deben incorporarse a repositorios ni artefactos públicos.
