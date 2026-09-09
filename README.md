@@ -73,11 +73,14 @@ Studio animados, corrige la oclusión negra del fondo y el movimiento STEP, y
 mejora el filtrado de modelos. La validación final completa 10.997 frames y
 nueve recursos reclamados con cero errores y teardown exacto. PR #27
 (`4726bd3`) cierra además la mezcla del título, fuentes y fades con aceptación
-visual y 10.993 frames limpios. Siguen Studio lighting/viewmodel, después audio
+visual y 10.993 frames limpios. El checkpoint rev 46 añade iluminación/chrome
+de NPCs, corrección NPOT, retorno entre mapas y viewmodel básico; el perfil
+DualSense v5 fija R2 como ataque y apuntado radial a 140/105 grados/s.
+Quedan efectos/cobertura restante de Studio/viewmodel, después audio
 del juego, cámara fija, gameplay, rendimiento y soaks.
 El presupuesto de texturas ya es configurable y se calcula con memoria
 disponible medida: 256 MiB explícitos y el modo automático tienen evidencia
-en consola. El plan rev 45 y el checkpoint separan capacidad reservada de
+en consola. El plan rev 46 y el checkpoint separan capacidad reservada de
 texturas residentes; no se promete crecimiento dinámico ni soporte HD validado.
 
 La identidad de consola también está separada y validada: Xash3D usa
