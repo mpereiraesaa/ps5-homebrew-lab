@@ -38,8 +38,9 @@ traduce las listas 2D vivas en orden: 61.316 quads, 367.896 índices y 610
 batches pasaron 1.044 frames emparejados con evidencia visual. El checkpoint
 `a975b86` presenta MainUI por AGC durante 223 frames y luego carga `c1a0`
 mediante el command buffer del engine; el serial de mapa 1 aparece en el serial
-renderer 224 y el vídeo muestra ambos estados. Siguen entidades, viewmodel,
-gameplay, rendimiento, transiciones, soaks y release.
+renderer 224 y el vídeo muestra ambos estados. El checkpoint posterior añade
+brush transforms, primeros NPCs Studio, mipmaps y movimiento STEP fluido. Quedan
+Studio completo, viewmodel, mezcla HUD, audio del juego, gameplay y soaks.
 
 Identidades instaladas: Xash3D usa `PPSA99996` y la demo Gears usa
 `PPSA99997`, cada una con helpers exactos independientes. El host histórico
@@ -103,7 +104,8 @@ engine conserva su identidad `PPSA99996` y carga filesystem, servidor, MainUI,
 cliente y renderer como PRXs propios, con lifecycle explícito, callbacks ABI
 probados y teardown ordenado. La Fase 7 ya presenta el mundo, texturas base,
 lightmaps, skybox, superficies turbulentas, listas 2D y MainUI vivos, con
-transición nativa al mapa; el trabajo inmediato es entidades y viewmodel.
+transición nativa al mapa, brush transforms y primeros NPCs Studio. El trabajo
+inmediato es completar Studio/viewmodel y validar mezcla HUD y audio del juego.
 
 Half-Life requiere datos originales que no forman parte del código del engine
 y nunca deben incorporarse a repositorios ni artefactos públicos.
