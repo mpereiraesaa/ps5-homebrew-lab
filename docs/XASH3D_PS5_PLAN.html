@@ -150,11 +150,11 @@
 
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-09</div>
-  <h2 id="checkpoint-title">HUD title/resource QA accepted · Studio before audio</h2>
-  <p>Revision 45 records operator acceptance of the transparent chapter title and the fix for the white-scene flash: native background/world binds explicitly reset opaque blending instead of inheriting additive HUD state. Corrected paired runs <code>20260909T134011789Z</code>/<code>20260909T134011848Z</code> pass 10,992 frames, nine exact reclaims, intact guards, zero errors and clean BYEs. Full artifact identities are in <code>docs/XASH3D_CHECKPOINT.md</code> and the port's <code>docs/PHASE7_HUD_FONT_BLEND.md</code>. <b>The complete HUD gate remains open:</b> controlled font-mode/multiplicative-fade coverage and PR/lab integration remain. Accepted title, movement and resource tests need no repetition for that reason. The lab still pins accepted <code>70ebea8</code>; this documentation does not promote the candidate.</p>
+  <h2 id="checkpoint-title">HUD/fonts/fades accepted · Studio lighting/viewmodel next</h2>
+  <p>Revision 45 records operator acceptance of the transparent chapter title, removal of the white-scene flash, all three font modes and both alpha/multiplicative fades through real engine paths. Native background/world binds explicitly reset opaque blending instead of inheriting additive HUD state. Corrected normal runs pass 10,992 frames; final controlled runs <code>20260909T140302704Z</code>/<code>20260909T140302761Z</code> pass 10,993 frames, nine exact reclaims, intact guards, zero errors and clean BYEs. All observation stages and renderer mode counters are present. The normal non-probe build was restored with exact FTP hashes, without another launch. Full identities and evidence are in <code>docs/XASH3D_CHECKPOINT.md</code> and the port's <code>docs/PHASE7_HUD_FONT_BLEND.md</code>. No Remote Play was needed; Phase 7 remains open.</p>
   <ol aria-label="Current five-task order">
     <li>Measured/configurable texture memory policy — complete.</li>
-    <li>HUD/fonts/fades — finish remaining coverage and integration.</li>
+    <li>HUD/fonts/fades — complete; accepted PR #27 merged as <code>4726bd3</code>, now the lab pin.</li>
     <li>Studio lighting/viewmodel — lighting, chrome, controllers, animation transitions and viewmodel; preserve smooth NPC walking.</li>
     <li>Real game audio — <code>XASH_AUDIO=1</code>, ambience/NPC/effects, audible evidence, ring telemetry and exact teardown.</li>
     <li>Optional <code>valve_hd</code> — mount precedence, fallback, resource and performance validation.</li>
@@ -397,12 +397,12 @@
   <div class="body">
     <div class="head">
       <h2>Playable and release</h2>
-      <div class="meta"><span class="pill active">in progress · live NPC checkpoint</span><span>World/menu, brush transforms and animated Studio NPCs visible; full Studio, viewmodel, HUD blend and game audio pending.</span></div>
+      <div class="meta"><span class="pill active">in progress · Studio fidelity next</span><span>World/menu, brush transforms, animated NPCs and HUD blending accepted; full Studio, viewmodel and game audio pending.</span></div>
     </div>
     <div class="visible"><b>Visible result.</b> HL1 playable start to finish from a signed title, released from a clean checkout with hashes.</div>
     <ol class="steps">
       <li><b>In progress.</b> Native MainUI reaches <code>c1a0</code>; live brush transforms and first animated Studio NPCs now have operator evidence. Background color no longer occludes distant geometry, opaque Studio textures have mip/trilinear filtering, and STEP interpolation restores fluid NPC walking. Complete Studio fidelity and viewmodel next; do not fall back to an OpenGL emulation layer.</li>
-      <li><b>In progress.</b> Chapter-title transparency and the white-scene flash fix have operator acceptance and a clean resource regression. Finish controlled font-mode/multiplicative-fade coverage and integrate, then improve Studio lighting/viewmodel before validating live game audio separately: graphics runs use <code>XASH_AUDIO=0</code>. After full entities/viewmodel, compare a fixed-camera frame against the Phase 1 viewer.</li>
+      <li><b>HUD accepted.</b> Chapter-title transparency, the white-scene flash fix and controlled font-mode/multiplicative-fade coverage have operator acceptance and clean paired resource regressions. Improve Studio lighting/viewmodel next, before validating live game audio separately: graphics runs use <code>XASH_AUDIO=0</code>. After full entities/viewmodel, compare a fixed-camera frame against the Phase 1 viewer.</li>
       <li>Prove DualSense gameplay through the tram ride, then save/load, level transitions and the first full chapter.</li>
       <li>Performance budget: 16.6 ms at 1080p on the heaviest retail map, measured with Phase 5 instrumentation.</li>
       <li>60k-frame soak in gameplay, plus a level-transition soak.</li>
