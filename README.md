@@ -59,8 +59,12 @@ un handoff de scheduler de 10 ms después de inicializar la cámara viva. El
 checkpoint siguiente construye el atlas de lightmaps desde los lightstyles del
 engine, lo aloja en direct memory y enlaza los pipelines AGC nativos: 3.695
 draws lightmapped y 1.075 frames emparejados pasaron con imagen visible,
-ownership exacto y cero errores. El gate inmediato es sumar semánticas nativas
-de cielo/agua antes de traducir entidades, viewmodel, 2D/UI, gameplay y
+ownership exacto y cero errores. El checkpoint fusionado siguiente añade el
+skybox vivo de seis caras y el warp turbulento clásico dirigido por el tiempo
+del engine, sin emulación OpenGL: 1.616 frames emparejados probaron 158
+superficies sky, seis draws de cubo y 35 draws turbulentos, con ocho recursos
+reclamados y cero errores. El trabajo inmediato es traducir entidades,
+viewmodel y 2D/UI antes de gameplay, rendimiento, transiciones, soaks y
 release.
 
 La identidad de consola también está separada y validada: Xash3D usa

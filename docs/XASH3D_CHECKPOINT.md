@@ -13,7 +13,7 @@ Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
 | 6 — Engine integration | Complete, 6 gates closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI, GoldSrc client and RefAPI 18 `ref_agc` are hardware-proven with exact teardown. |
-| 7 — Playable and release | Active, live-lightmap gate closed | Live `c1a0` geometry, base textures and engine lightmaps are compositor-visible with exact ownership; special surfaces, entities/viewmodel, 2D/UI, gameplay/performance, transition soaks and release remain open. |
+| 7 — Playable and release | Active, live special surfaces closed | Live `c1a0` geometry, base textures, engine lightmaps, six-sided sky and turbulent surfaces are native AGC output with exact ownership; entities/viewmodel, 2D/UI, gameplay/performance, transition soaks and release remain open. |
 
 The Phase 1/2 implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
@@ -21,9 +21,10 @@ path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
 the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 7
-live-lightmap checkpoint `4f9d38d`; the preceding compositor-visible world
-checkpoint is `cdcce91`, the preceding live-world submission checkpoint is
-`bd4b250`, and the Phase 6 final renderer checkpoint is `258fbe3`, the
+live-special-surface checkpoint `77c742a`; the preceding live-lightmap
+checkpoint is `4f9d38d`, the preceding compositor-visible world checkpoint is
+`cdcce91`, the preceding live-world submission checkpoint is `bd4b250`, and
+the Phase 6 final renderer checkpoint is `258fbe3`, the
 preceding client-PRX checkpoint is `3a30250`,
 and includes the dedicated title icon from `ea9be4b`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
@@ -709,8 +710,37 @@ Remote Play capture has SHA-256
 Black images taken before this run were rejected after a PS home screenshot
 proved that the CLI Chiaki stream itself was stale; they are not renderer
 evidence. A separately verified live-stream no-lightmap control was visibly
-unlit. Native sky/turbulent semantics, entities, viewmodel and 2D/UI remain
-open.
+unlit. At that checkpoint native sky/turbulent semantics, entities, viewmodel
+and 2D/UI remained open.
+
+### Phase 7 live sky and turbulent surfaces (2026-09-09)
+
+Xash3D PR #22, merged as `77c742a`, closes native special-surface extraction,
+transport and AGC presentation. The producer classifies sky and turbulent
+surfaces separately from ordinary opaque/alpha-test draws, publishes all six
+engine sky texture handles plus camera/time state and preserves raw GoldSrc
+turbulent coordinates. The consumer builds a camera-centred six-draw skybox
+and a dedicated classic sine-warp pipeline; neither path emulates OpenGL.
+
+The first hardware iteration proved that the packaged 4,823-entry index and
+all `gfx/env` assets were intact, but a synthetic 8,224-byte directory stream
+could not fit in the filesystem PRX's private libc heap. Runtime directory
+streams now use the filesystem engine pool with per-allocation ownership flags.
+The renderer's CPU texture/world stores likewise use a dedicated engine pool,
+lifting the earlier 360-texture ceiling while preserving exact teardown.
+
+Final correlated FW 12.02 runs
+`20260909T044902002Z_PPSA99996_xash3d-engine_0x12fc201d8f826` and
+`20260909T044902056Z_PPSA99996_ps5-xash3d_0x12fc2056055d0` began 54 ms apart
+and passed the strict paired validator across 1,616 frames. Hardware loaded all
+six `xen9` faces. The live world contained 14,981 vertices, 24,303 indices and
+3,440 draws: 3,282 lightmapped, 158 sky/1,197 source indices and 35
+turbulent/312 indices. Fourteen periodic samples retained six skybox draws/36
+indices with geometry hash `e7fd75bb4ee4188d`, texture hash
+`e97b5c8ba780c902` and engine time advancing from 0 to 26,942 ms. GPU texture
+sync completed 478 creates with zero errors; eight parent resources were
+reclaimed, engine live bytes returned to zero and the five PRXs unloaded in
+exact order. Entities, viewmodel and 2D/UI are the next translation boundary.
 
 ## Remote Play operating contract
 

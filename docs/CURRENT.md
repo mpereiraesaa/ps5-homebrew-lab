@@ -28,9 +28,10 @@ completed all six hardware gates before merging through
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
 history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 7
-live-lightmap checkpoint `4f9d38d`; its preceding compositor-visible world
-checkpoint is `cdcce91`, the preceding live-world submission checkpoint is
-`bd4b250`, and the Phase 6 final `ref_agc` checkpoint is `258fbe3`, the
+live-special-surface checkpoint `77c742a`; its preceding live-lightmap
+checkpoint is `4f9d38d`, the preceding compositor-visible world checkpoint is
+`cdcce91`, the preceding live-world submission checkpoint is `bd4b250`, and
+the Phase 6 final `ref_agc` checkpoint is `258fbe3`, the
 preceding client-PRX checkpoint is `3a30250`, the dedicated title icon entered
 at `ea9be4b`, and the dedicated identity began at `c09318f`.
 
@@ -233,7 +234,29 @@ texels, nonzero common frame hash `a3219a480a7a1c41`, eight exact reclaims,
 zero renderer errors and ordered five-PRX teardown. The launch-verified CLI
 Remote Play capture has SHA-256
 `2b8bd9ea8dd5345463f7bd9363ee79df36ae77af76cc635c54b8859699cdbfd7`.
-Sky/turbulent semantics, entities, viewmodel and 2D/UI remain open.
+At that checkpoint sky/turbulent semantics, entities, viewmodel and 2D/UI
+remained open.
+
+Merged Xash3D PR #22 (`77c742a`) closes native live special surfaces. The
+producer separates 158 sky draws/1,197 indices and 35 turbulent draws/312
+indices from the ordinary world passes, publishes the six engine sky handles,
+camera and engine time, and retains raw GoldSrc turbulent coordinates. The
+consumer builds six camera-centred cube draws and uses a dedicated classic
+time-driven warp pipeline; no OpenGL emulation layer was introduced. Runtime
+directory streams and renderer CPU stores now use engine-owned pools, removing
+the PRX-local libc heap ceiling that had prevented `gfx/env/xen9*.tga` from
+loading.
+
+Correlated FW 12.02 runs
+`20260909T044902002Z_PPSA99996_xash3d-engine_0x12fc201d8f826` and
+`20260909T044902056Z_PPSA99996_ps5-xash3d_0x12fc2056055d0` began 54 ms apart
+and passed 1,616 frames. The renderer retained 14 special-surface samples with
+animation time advancing from 0 to 26,942 ms, stable nonzero sky geometry and
+texture hashes, 478 GPU texture creates, 3,440 world draws, eight exact
+reclaims and zero errors. Engine memory returned to zero and all five PRXs
+unloaded in order. Entities, viewmodel and 2D/UI are now the immediate open
+translation boundary; gameplay, performance, transitions, soaks and release
+remain later Phase 7 gates.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
