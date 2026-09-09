@@ -2,14 +2,16 @@
 
 ## Port Xash3D sobre AGC — activo
 
-Pin actual: `2caa49e`, [PR #30 fusionado](https://github.com/mpereiraesaa/ps5-xash3d/pull/30).
+Pin actual: `3e78c1a`, [PR #31 fusionado](https://github.com/mpereiraesaa/ps5-xash3d/pull/31).
 
-Checkpoint actual: plan rev 48, validación explícita de ida/vuelta (10.810 frames)
-y recuperación controlada de Host_Error aceptada (10.825 frames, un error esperado,
-cero errores del renderer, nueve liberaciones y cierre exacto). Versión normal
-sin diagnóstico restaurada sin relanzar a las 18:58 UTC; sigue el harness temporal
-con audio apagado. Quedan cobertura Studio/efectos, audio, HD packs, gameplay,
-rendimiento, soaks y release; Fase 7 continúa abierta.
+Checkpoint actual: plan rev 49. La cobertura Studio combinada acepta visualmente
+controladores, crossfade, dos blends y glowshell; no hubo modelo visible de cuatro
+blends. Audio real fue audible y cerró con 18.179 frames, cero errores de salida,
+cero descartes y teardown exacto (seis underruns sólo al arranque). El primer
+montaje de `valve_hd` instaló 115 archivos verificados y pasó la QA visual con
+18.165 frames y cero errores. Quedan overlays de diagnóstico, pulido de
+underruns, soaks de transición/audio/HD, gameplay, rendimiento y release; Fase 7
+continúa abierta.
 
 Implementación canónica: `projects/ps5-xash3d` (`mpereiraesaa/ps5-xash3d`,
 repositorio público), bifurcado de `ps5-agc-gears` en

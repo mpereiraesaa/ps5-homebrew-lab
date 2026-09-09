@@ -21,15 +21,16 @@ the frozen tree at `8f035b7`.
 
 ## Xash3D checkpoint
 
-Current port pin: `2caa49e`, merged [PR #30](https://github.com/mpereiraesaa/ps5-xash3d/pull/30).
+Current port pin: `3e78c1a`, merged [PR #31](https://github.com/mpereiraesaa/ps5-xash3d/pull/31).
 
-Current plan revision 48: explicit round-trip validation passes the accepted
+Current plan revision 49: explicit round-trip validation passes the accepted
 10,810-frame multi-map run. Controlled Host_Error recovery is operator/hardware
 accepted: 10,825 frames, one expected diagnostic error, zero renderer errors,
-nine reclaims and exact teardown. Normal no-grant graphics build restored at
-18:58 UTC without relaunch; audio remains off and the timed harness is not a
-release package. Next are remaining Studio/effects parity, audio and release
-work, including longer transition soaks. See
+nine reclaims and exact teardown. Live-game audio and first `valve_hd` mount
+now have separate operator acceptance; the detailed runs, six startup
+underruns and exact audio teardown are recorded in the port docs. Four-blend
+console coverage, diagnostic-overlay cleanup and longer transition/audio/HD
+soaks remain open. The timed harness is not a release package. See
 `XASH3D_CHECKPOINT.md` for current integration identity and proof boundaries.
 Older checkpoint descriptions below are historical.
 

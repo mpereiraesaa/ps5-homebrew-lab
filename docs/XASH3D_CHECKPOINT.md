@@ -13,9 +13,31 @@ Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
 | 6 — Engine integration | Complete, 6 gates closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI, GoldSrc client and RefAPI 18 `ref_agc` are hardware-proven with exact teardown. |
-| 7 — Playable and release | Active, recovery checkpoint | HUD/fonts/fades, NPC lighting/NPOT/chrome, viewmodel events/reload and tested live effects accepted; explicit round-trip validation and controlled Host_Error recovery pass. Remaining Studio/effects coverage, game audio, HD-pack QA, gameplay/performance, longer soaks and release remain open. |
+| 7 — Playable and release | Active, audio/HD checkpoint | HUD/fonts/fades, NPC lighting/NPOT/chrome, viewmodel events/reload, tested live effects, live-game audio and first `valve_hd` mount pass. Remaining four-blend console coverage, startup-underrun polish, diagnostic-overlay cleanup, gameplay/performance, longer soaks and release remain open. |
 
-## Latest checkpoint — plan rev 48, 2026-09-09
+## Latest checkpoint — plan rev 49, 2026-09-09
+
+Integrated through [port PR #31](https://github.com/mpereiraesaa/ps5-xash3d/pull/31),
+squashed as `3e78c1a645fbafbc0e345cdd13c4166c9b694b05`, now the lab pin.
+
+The combined Studio run was visually accepted for controller interpolation,
+crossfade, two-blend routing and glowshell. Mode 4 found no visible model with
+four real blends; this remains an explicit hardware coverage gap, not a failed
+implementation claim. The live-game audio run was audible to the operator and
+closed exactly: 18,179 frames, zero output errors, no discarded frames and one
+worker-owned drain/close/join. Six startup underruns were recorded (four before
+the active-map timer and two just after, none later); they remain polish work.
+The subsequent run mounted 115 `valve_hd` files (8.65 MiB), was visually
+accepted and closed with paired renderer validation: 18,165 frames, zero
+errors, nine reclaims and exact teardown. The top diagnostic logger text still
+needs a presentation-only cleanup; external `ps5log/1` telemetry stays on.
+
+These are first-pass hardware acceptances, not full release coverage: map
+transition/long-session audio and HD performance soaks remain open. Title IDs
+remain `PPSA99996`/`PPSA99997`; `PPSA99998` is not installed and Prospero Win is
+untouched.
+
+## Previous checkpoint — plan rev 48, 2026-09-09
 
 Integrated through [port PR #30](https://github.com/mpereiraesaa/ps5-xash3d/pull/30),
 commit `2caa49e59f274e3cdd249d560e6fe23210fda039`, pinned by the lab submodule.
