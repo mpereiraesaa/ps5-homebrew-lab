@@ -835,6 +835,35 @@ game audio (`XASH_AUDIO=0` in these graphics runs), gameplay, performance and
 soaks. Dedicated Phase 5 audio proof is not proof of an audible live client.
 QA uses direct operator observations; no Remote Play/capture was required.
 
+## Phase 7 texture-memory policy (2026-09-09)
+
+Accepted and merged: Xash3D PR #26, `70ebea8d40e24d6642034abeb3721b251e00df17`.
+The lab pins this exact commit; the plan is revision 43.
+
+The fixed 80-MiB texture test budget is replaced by measured, configurable
+capacity. XASH_TEXTURE_MIB selects explicit MiB (zero means automatic),
+XASH_TEXTURE_RESERVE_MIB defaults to 512 MiB outside the renderer heap, and
+XASH_TEXTURE_AUTO_PERCENT defaults to 10% of eligible capacity. These are
+configurable policies, not PS5 hardware limits. A single returned free block
+is used conservatively; it is not mislabeled as total free memory.
+
+The explicit 256-MiB run passed 1,999 frames, nine reclaims and exact teardown.
+Automatic runs `20260909T122547724Z` / `20260909T122547781Z` pass 10,994 frames,
+nine exact reclaims, zero errors, five PRX unloads and clean BYEs. Selected
+texture capacity is 1,204,158,464 bytes, with 67,717,120 bytes of texture data
+resident inside that physically allocated arena. The independent paired
+validator and post-run status pass. This is startup sizing, not sparse
+allocation, runtime growth, eviction or performance-budget acceptance.
+Host tests and ASan/UBSan cover mapping-failure rollback, retained ownership
+when release fails, and create/replacement exhaustion without corruption.
+The paired validator independently recomputes budget arithmetic and matches
+the actual cache allocation. Full identities and automatic-run evidence live
+in the port's docs/PHASE7_TEXTURE_MEMORY_POLICY.md.
+
+Next gates remain ordered: chapter-title/HUD blending, real game audio,
+Studio/viewmodel fidelity, then valve_hd mounting and resource validation.
+None of these or the rest of Phase 7 is closed by the memory gate.
+
 ## Remote Play operating contract
 
 Chiaki already has a valid console entry. Never pair or re-register it during a
