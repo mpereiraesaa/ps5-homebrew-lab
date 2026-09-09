@@ -13,7 +13,45 @@ Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
 | 6 — Engine integration | Complete, 6 gates closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI, GoldSrc client and RefAPI 18 `ref_agc` are hardware-proven with exact teardown. |
-| 7 — Playable and release | Active, HUD/fonts/fades closed | Live world, MainUI, brush/NPCs and HUD fonts/fades have accepted native AGC evidence and exact ownership. Studio lighting/viewmodel is next, then game audio and HD-pack QA; fixed-camera comparison, gameplay/performance, transition soaks and release remain open. |
+| 7 — Playable and release | Active, Studio/input checkpoint | HUD/fonts/fades, NPC lighting/NPOT/chrome accepted; return transition, pistol/crowbar and DualSense aim have operator QA. Remaining Studio/viewmodel coverage, game audio, HD-pack QA, fixed-camera comparison, gameplay/performance, transition soaks and release remain open. |
+
+## Latest checkpoint — plan rev 46, 2026-09-09
+
+Xash3D [PR #28](https://github.com/mpereiraesaa/ps5-xash3d/pull/28) merged
+with green CI as `3cebf5611d1b615ec83642319a4c8cd0232ef2e6`; this is the
+lab's current `projects/ps5-xash3d` pin. Host CI now explicitly initializes
+the pinned library_suffix header dependency required by the shared-light test.
+
+The port integrates owner-thread Studio lighting, corrected NPOT mip storage,
+ordinary camera-relative chrome, separate viewmodel pose/draw ownership and
+complete compiled C++ callback names in the server PRX descriptor. Normal
+lighting/NPOT runs `20260909T154242843Z` / `20260909T154242941Z` and chrome
+runs `20260909T155503025Z` / `20260909T155503120Z` each pass paired validation
+with 10,990 frames, nine exact reclaims and zero renderer errors. The operator
+accepted NPC appearance and the return `c1a0d -> c1a0`; the latter has manual
+and structured evidence but is rejected by the single-map validator, which
+still needs an explicit transition-aware contract. Host_Error recovery remains
+host-tested, not hardware accepted.
+
+The viewmodel is actually drawn; operator QA covers pistol fire, crowbar attack
+and immediate weapon cycling. DualSense v5 is accepted for now: R2 primary,
+R1 secondary, D-pad cycling without confirmation; radial right-stick deadzone
+10%, exponent 1.6, horizontal/vertical rates 140/105 degrees/s. Movement is
+unchanged. Port `docs/SCEPAD_PHASE5.md` is the maintained controls/install guide.
+V5 run: `20260909T164158161Z_PPSA99996_xash3d-engine_0x156a978a27888`;
+profile SHA-256 `1fb70cc9172a82136e69e0a780869d1e437880d468524fdfa03a004adc13b9db`.
+
+Native build, host suite/publication audit and targeted sanitizer tests pass.
+Normal no-grant/no-A-B build restored at 16:48 UTC via verified raw FTP, no
+relaunch: SELF `8c4b1fcd951c6583a3fd4bd3e38487ef5370f70190cab01c4edc6285e462fe38`.
+This restoration is not a new hardware gate. Full exact identities and historical
+failed/rejected runs remain in port `docs/PHASE7_STUDIO_LIGHTING.md`.
+
+Remaining order: finish viewmodel events/effects/reload and controller/sequence
+coverage, explicit transition evidence and final integrated resource QA; then
+live game audio and optional valve_hd, followed by the remaining Phase 7
+gameplay/performance/release gates. No global Phase 7 closure, no cheats in the
+release input profile, no PPSA99998 and no Prospero Win changes.
 
 The Phase 1/2 implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
@@ -21,7 +59,8 @@ path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
 the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 7
-native-menu checkpoint `a975b86`; the preceding live-2D checkpoint is
+Studio/input checkpoint `3cebf56`; earlier native-menu checkpoint was
+`a975b86`, and the preceding live-2D checkpoint is
 `0bdcbfb`, and the preceding live-special-surface checkpoint is
 `77c742a`, the preceding live-lightmap checkpoint is `4f9d38d`, the preceding
 compositor-visible world checkpoint is `cdcce91`, the preceding live-world

@@ -125,9 +125,9 @@
 
 <div class="page">
 <header>
-  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-09 · rev 45</div>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-09 · rev 46</div>
   <h1>Xash3D on PS5</h1>
-  <p class="lede">Phase 6 is complete. Phase 7 now presents native MainUI, live <code>c1a0</code>, brush transforms and animated Studio NPCs. Operator QA confirms distant visibility, improved model minification and fluid walking. Full Studio fidelity, viewmodel, HUD blend correctness and integrated game audio remain, followed by gameplay, performance, soaks and release.</p>
+  <p class="lede">Phase 6 is complete. Phase 7 presents native MainUI, live <code>c1a0</code>, brush transforms, lit/chrome Studio NPCs and a separate viewmodel. HUD/fonts/fades, NPOT texture correction and DualSense aim have accepted evidence. Complete viewmodel effects and Studio coverage, integrated game audio, gameplay, performance, soaks and release remain.</p>
   <div class="facts">
     <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 7 active · live NPCs</div></div>
     <div class="fact"><div class="k">Latest gate</div><div class="v">223 menu frames · map at serial 224</div></div>
@@ -150,12 +150,13 @@
 
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-09</div>
-  <h2 id="checkpoint-title">HUD/fonts/fades accepted · Studio lighting/viewmodel next</h2>
+  <h2 id="checkpoint-title">Studio lighting/chrome accepted · DualSense aim baseline saved</h2>
+  <p>Revision 46 integrates NPC lighting, the NPOT mip-storage correction, ordinary chrome, callback save/restore coverage and the first separate viewmodel pose/draw path. Lighting/NPOT and chrome each have clean paired 10,990-frame resource runs. Operator QA confirms return from <code>c1a0d</code> to <code>c1a0</code>, pistol/crowbar use and immediate weapon cycling. DualSense profile v5 keeps R2 primary attack, radial deadzone 10%, exponent 1.6 and yaw/pitch 140/105 degrees per second. The controller guide is maintained in the port at <code>docs/SCEPAD_PHASE5.md</code>. Viewmodel effects/events/reload and remaining Studio coverage are still open; the multi-map validator and Host_Error recovery need their own acceptance. Normal no-grant build restored with exact FTP hashes, without relaunch. This is not Phase 7 completion.</p>
   <p>Revision 45 records operator acceptance of the transparent chapter title, removal of the white-scene flash, all three font modes and both alpha/multiplicative fades through real engine paths. Native background/world binds explicitly reset opaque blending instead of inheriting additive HUD state. Corrected normal runs pass 10,992 frames; final controlled runs <code>20260909T140302704Z</code>/<code>20260909T140302761Z</code> pass 10,993 frames, nine exact reclaims, intact guards, zero errors and clean BYEs. All observation stages and renderer mode counters are present. The normal non-probe build was restored with exact FTP hashes, without another launch. Full identities and evidence are in <code>docs/XASH3D_CHECKPOINT.md</code> and the port's <code>docs/PHASE7_HUD_FONT_BLEND.md</code>. No Remote Play was needed; Phase 7 remains open.</p>
   <ol aria-label="Current five-task order">
     <li>Measured/configurable texture memory policy — complete.</li>
-    <li>HUD/fonts/fades — complete; accepted PR #27 merged as <code>4726bd3</code>, now the lab pin.</li>
-    <li>Studio lighting/viewmodel — lighting, chrome, controllers, animation transitions and viewmodel; preserve smooth NPC walking.</li>
+    <li>HUD/fonts/fades — complete; accepted PR #27 merged as <code>4726bd3</code>, retained in the current PR #28 pin <code>3cebf56</code>.</li>
+    <li>Studio/viewmodel — NPC lighting, NPOT and ordinary chrome accepted; finish viewmodel events/effects/reload, remaining controllers/transitions and integrated resource QA.</li>
     <li>Real game audio — <code>XASH_AUDIO=1</code>, ambience/NPC/effects, audible evidence, ring telemetry and exact teardown.</li>
     <li>Optional <code>valve_hd</code> — mount precedence, fallback, resource and performance validation.</li>
   </ol>
@@ -397,7 +398,7 @@
   <div class="body">
     <div class="head">
       <h2>Playable and release</h2>
-      <div class="meta"><span class="pill active">in progress · Studio fidelity next</span><span>World/menu, brush transforms, animated NPCs and HUD blending accepted; full Studio, viewmodel and game audio pending.</span></div>
+      <div class="meta"><span class="pill active">in progress · viewmodel completion next</span><span>World/menu, brush/NPCs, HUD, lighting/chrome and aim accepted; remaining Studio/viewmodel fidelity and game audio pending.</span></div>
     </div>
     <div class="visible"><b>Visible result.</b> HL1 playable start to finish from a signed title, released from a clean checkout with hashes.</div>
     <ol class="steps">

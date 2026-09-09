@@ -400,9 +400,9 @@ or automatic startup capacity. The explicit 256-MiB run passes 1,999 frames;
 the automatic run passes 10,994 frames and exact resource teardown. Host tests
 cover allocation rollback and cache exhaustion. See XASH3D_CHECKPOINT and the
 port's PHASE7_TEXTURE_MEMORY_POLICY for full evidence and limitations.
-Current order: Studio lighting/viewmodel, then game audio, then optional
+Historical rev 45 order: Studio lighting/viewmodel, then game audio, then optional
 valve_hd QA. Texture memory policy and HUD are done. Xash3D PR #27 merged
-as `4726bd3`; this checkpoint pins that accepted port commit.
+as `4726bd3`; that was the rev 45 port pin, superseded by rev 46 below.
 
 The operator accepted the corrected chapter title and removal of the white-scene
 flash. Corrected paired runs `20260909T134011789Z` / `20260909T134011848Z`
@@ -415,7 +415,23 @@ Studio scope is lighting, chrome, controllers, animation transitions and
 viewmodel, preserving accepted smooth NPC walking. Audio remains a separate
 fourth task; this focused acceptance does not close Phase 7.
 
-## Historical boundary
+## Phase 7 Studio/input integration — plan rev 46
+
+Xash3D PR #28 merged with green CI as `3cebf56`, now the lab pin. It integrates
+accepted NPC lighting, NPOT texture correction and
+ordinary chrome, callback save/restore coverage, separate viewmodel drawing
+and the DualSense v5 profile. Operator QA confirms pistol/crowbar use,
+immediate weapon cycling and preferred aim at 140/105 degrees/s with radial
+deadzone 10% and exponent 1.6. R2 is primary attack, R1 secondary. Use the
+port's SCEPAD_PHASE5 guide for the current profile rather than engine defaults.
+
+Lighting/NPOT and chrome normal runs each passed 10,990 frames and exact
+teardown. Viewmodel effects/events/reload and remaining Studio coverage,
+transition-aware evidence, game audio, valve_hd and release gates remain open.
+The normal no-grant build is restored without relaunch; graphics audio remains
+disabled. Full evidence and limitations are in XASH3D_CHECKPOINT rev 46.
+
+## Historical renderer boundary
 
 The former Phase 0 and Stages A–I proved the path from direct memory and simple
 DCBs through triangle, cube and early Gears rendering. Their source now lives

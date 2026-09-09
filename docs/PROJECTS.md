@@ -42,6 +42,11 @@ renderer 224 y el vídeo muestra ambos estados. El checkpoint posterior añade
 brush transforms, primeros NPCs Studio, mipmaps y movimiento STEP fluido. Quedan
 Studio completo, viewmodel, audio del juego, gameplay y soaks. La mezcla HUD,
 fuentes y fades ya está aceptada e integrada mediante PR #27 (`4726bd3`).
+El checkpoint rev 46 añade iluminación/chrome de NPCs y corrección NPOT
+aceptadas, retorno entre mapas y viewmodel básico probado con pistola/palanca.
+El perfil DualSense v5 usa R2 para ataque y apuntado radial a 140/105 grados/s.
+Quedan efectos/eventos y cobertura restante del viewmodel/Studio; no está
+cerrada la Fase 7. El mapeo vigente está en `docs/SCEPAD_PHASE5.md` del port.
 
 Identidades instaladas: Xash3D usa `PPSA99996` y la demo Gears usa
 `PPSA99997`, cada una con helpers exactos independientes. El host histórico
@@ -106,7 +111,7 @@ cliente y renderer como PRXs propios, con lifecycle explícito, callbacks ABI
 probados y teardown ordenado. La Fase 7 ya presenta el mundo, texturas base,
 lightmaps, skybox, superficies turbulentas, listas 2D y MainUI vivos, con
 transición nativa al mapa, brush transforms y primeros NPCs Studio. El trabajo
-inmediato es completar iluminación Studio/viewmodel y después validar audio
+inmediato es completar efectos y cobertura restante de Studio/viewmodel y después validar audio
 del juego; la mezcla HUD ya tiene aceptación visual y teardown exacto.
 
 Half-Life requiere datos originales que no forman parte del código del engine
