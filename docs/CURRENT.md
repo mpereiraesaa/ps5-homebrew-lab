@@ -28,11 +28,11 @@ completed all six hardware gates before merging through
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
 history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 7
-compositor-visible world checkpoint `cdcce91`; its preceding live-world
-submission checkpoint is `bd4b250`, and the Phase 6 final `ref_agc` checkpoint
-is `258fbe3`, the preceding client-PRX checkpoint is `3a30250`, the dedicated
-title icon entered at `ea9be4b`, and the dedicated identity began at
-`c09318f`.
+live-lightmap checkpoint `4f9d38d`; its preceding compositor-visible world
+checkpoint is `cdcce91`, the preceding live-world submission checkpoint is
+`bd4b250`, and the Phase 6 final `ref_agc` checkpoint is `258fbe3`, the
+preceding client-PRX checkpoint is `3a30250`, the dedicated title icon entered
+at `ea9be4b`, and the dedicated identity began at `c09318f`.
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -205,7 +205,8 @@ ended with clean gap-free BYE, and the deterministic rebuild reproduced the
 accepted host, renderer and asset hashes. Phase 6 is complete. Phase 7 owns
 live engine-entity-to-AGC translation, gameplay, transitions and release.
 
-Phase 7 gate 1 is active through merged Xash3D PR #20 (`cdcce91`). Exact
+Phase 7 live-world presentation is active through merged Xash3D PR #20
+(`cdcce91`). Exact
 no-handoff and post-bundle-handoff captures were both black; moving the bounded
 10 ms scheduler handoff after live-camera fallback initialization produced the
 textured `c1a0` tram interior. Final correlated runs
@@ -218,8 +219,21 @@ errors. A synchronized 1920x1080 CLI Remote Play capture was taken only after
 `PPSA99996` was verified active; its SHA-256 is
 `1ee3578b517bee368f72805d3a9ecd339a5f7de65de462bbefd7a6d7a19c1850`.
 This closes compositor presentation and base-texture sampling, not the
-unobserved firmware-internal cause of the timing boundary. Live lightmaps,
-sky/turbulent semantics, entities, viewmodel and 2D/UI remain open.
+unobserved firmware-internal cause of the timing boundary.
+
+Merged Xash3D PR #21 (`4f9d38d`) closes the next checkpoint. The engine
+combines active lightstyle planes into one owned padded 1024x256 RGBA8 atlas;
+the native backend uploads it through the existing direct-memory world arena
+and binds the already hardware-proven opaque/alpha-test lightmap pipelines,
+without an OpenGL emulation layer. Correlated runs
+`20260909T022301539Z_PPSA99996_xash3d-engine_0x127ca54ee550a` and
+`20260909T022301592Z_PPSA99996_ps5-xash3d_0x127ca581d165f` began 53 ms apart
+and passed 1,075 matched frames, 3,695 lightmapped draws, 186,051 nonzero atlas
+texels, nonzero common frame hash `a3219a480a7a1c41`, eight exact reclaims,
+zero renderer errors and ordered five-PRX teardown. The launch-verified CLI
+Remote Play capture has SHA-256
+`2b8bd9ea8dd5345463f7bd9363ee79df36ae77af76cc635c54b8859699cdbfd7`.
+Sky/turbulent semantics, entities, viewmodel and 2D/UI remain open.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
