@@ -30,9 +30,11 @@ híbrido, `filesystem_stdio.prx`, `server.prx`, `menu.prx`, `client.prx` y
 `ref_agc` tienen evidencia FW 12.02 y teardown exacto. La Fase 7 está activa.
 El mundo vivo de `c1a0`, sus 164 texturas y el atlas 1024x256 de lightmaps del
 engine ya llegan al compositor mediante AGC nativo. El checkpoint fusionado
-`4f9d38d` pasó 1.075 frames con 3.695 draws lightmapped, ocho reclaims, cero
-errores y sin capa de emulación OpenGL. Siguen cielo/agua, entidades,
-viewmodel, 2D/UI, gameplay, rendimiento, transiciones, soaks y release.
+`4f9d38d` pasó 1.075 frames con 3.695 draws lightmapped, ocho reclaims y cero
+errores. El checkpoint `77c742a` añade skybox vivo de seis caras y 35 draws
+turbulentos animados por el tiempo del engine; pasó 1.616 frames, ocho reclaims
+y teardown exacto, sin capa de emulación OpenGL. Siguen entidades, viewmodel,
+2D/UI, gameplay, rendimiento, transiciones, soaks y release.
 
 Identidades instaladas: Xash3D usa `PPSA99996` y la demo Gears usa
 `PPSA99997`, cada una con helpers exactos independientes. El host histórico
@@ -94,9 +96,9 @@ Plan vigente: `docs/XASH3D_PS5_PLAN.html`; checkpoint textual:
 `docs/XASH3D_CHECKPOINT.md`. Las Fases 0–6 están cerradas en hardware. El
 engine conserva su identidad `PPSA99996` y carga filesystem, servidor, MainUI,
 cliente y renderer como PRXs propios, con lifecycle explícito, callbacks ABI
-probados y teardown ordenado. La Fase 7 ya presenta el mundo, texturas base y
-lightmaps vivos; el trabajo inmediato es cielo/agua y luego entidades,
-viewmodel y 2D/UI.
+probados y teardown ordenado. La Fase 7 ya presenta el mundo, texturas base,
+lightmaps, skybox y superficies turbulentas vivos; el trabajo inmediato es
+entidades, viewmodel y 2D/UI.
 
 Half-Life requiere datos originales que no forman parte del código del engine
 y nunca deben incorporarse a repositorios ni artefactos públicos.
