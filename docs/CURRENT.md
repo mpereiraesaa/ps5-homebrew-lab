@@ -374,6 +374,23 @@ pins the native-foundation fork's `exp/prx-module` tooling and uses
 `sceKernelDlsym` are not available for these modules; symbol resolution goes
 through each module's range-checked `PRXDESC1` export descriptor.
 
+## Phase 7 live NPC checkpoint — 2026-09-09
+
+Pinned Xash3D `3167fc6` (merged PR #25); plan revision 42.
+
+Final resource validation passed 10,997 frames / 180 active-map seconds, nine
+exact reclaims, zero errors and five-PRX teardown. The engine root is empty;
+post-run status confirms no BigApp. Full run IDs and hashes are in the port's
+`docs/PHASE7_BASELINE_REGRESSION.md` and the lab checkpoint below.
+
+Brush transforms and first live Studio NPCs now have direct operator evidence.
+The background color pass no longer writes scene depth; opaque Studio textures
+use GPU mip/trilinear filtering; STEP origin/angle interpolation restores fluid
+walking. Runtime DualSense exploration is active. See XASH3D_CHECKPOINT and the
+port's PHASE7_BASELINE_REGRESSION for artifact/run identities and resource proof.
+Full Studio fidelity, viewmodel, chapter-title blending and live-client audio
+remain open: graphics runs use XASH_AUDIO=0. This does not close Phase 7.
+
 ## Historical boundary
 
 The former Phase 0 and Stages A–I proved the path from direct memory and simple

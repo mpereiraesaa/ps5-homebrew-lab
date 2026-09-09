@@ -804,6 +804,37 @@ Home preflight. This closes native menu presentation and the in-process map
 transition; entities, viewmodel, camera comparison, gameplay, performance,
 soaks and release remain.
 
+## Live NPC and visual corrections checkpoint (2026-09-09)
+
+Xash3D PR #25 is merged as `3167fc60c8c038507f088a8194b25cd8473590e0`;
+the lab pins this exact commit. Port host contracts and publication checks pass.
+
+The port's `docs/PHASE7_BASELINE_REGRESSION.md` records the complete sequence of
+accepted and failed runs: coherent menu/map deployment, brush transforms,
+animated Studio NPCs, runtime ScePad, camera-relative black occlusion corrected
+by color-only background depth, Studio mip/trilinear minification and restored
+MOVETYPE_STEP movement interpolation. Operator confirms distant visibility,
+reduced shimmer and fluid walking. None of this closes all of Phase 7.
+
+The live GPU texture budget is now 80 MiB; measured residency is 67,717,120
+bytes. The first 64-MiB mip candidate correctly parked on exhaustion and remains
+documented as a failure. Interactive 30-minute runs were externally closed for
+iteration. The final three-minute natural-exit run now closes resource teardown:
+engine `20260909T113637960Z_PPSA99996_xash3d-engine_0x1460005826042` and renderer
+`20260909T113638013Z_PPSA99996_ps5-xash3d_0x14600097ae176` passed 10,997 frames,
+nine exact reclaims, zero errors, all five PRX unloads and empty engine memory.
+Post-run status confirmed no BigApp and four healthy services. Renderer PRX
+SHA-256: `192ec1ffd401720ecc6f108c58f5844b00c146a92c9ddb3ca87f856a4bd4b9d2`.
+The paired validator checks live lightmaps/2D/menu/brush/Studio; this scene has
+no sky/turbulent draws and does not supersede their earlier dedicated proof.
+The port document preserves full artifact/log hashes and rejected iterations.
+
+Known next work: full Studio lighting/chrome/controllers/sequence transitions,
+viewmodel, chapter-title blend-state propagation (black rectangle), integrated
+game audio (`XASH_AUDIO=0` in these graphics runs), gameplay, performance and
+soaks. Dedicated Phase 5 audio proof is not proof of an audible live client.
+QA uses direct operator observations; no Remote Play/capture was required.
+
 ## Remote Play operating contract
 
 Chiaki already has a valid console entry. Never pair or re-register it during a
