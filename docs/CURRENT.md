@@ -28,9 +28,10 @@ completed all six hardware gates before merging through
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
 history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 7
-live-special-surface checkpoint `77c742a`; its preceding live-lightmap
-checkpoint is `4f9d38d`, the preceding compositor-visible world checkpoint is
-`cdcce91`, the preceding live-world submission checkpoint is `bd4b250`, and
+live-2D checkpoint `0bdcbfb`; its preceding live-special-surface checkpoint is
+`77c742a`, the preceding live-lightmap checkpoint is `4f9d38d`, the preceding
+compositor-visible world checkpoint is `cdcce91`, the preceding live-world
+submission checkpoint is `bd4b250`, and
 the Phase 6 final `ref_agc` checkpoint is `258fbe3`, the
 preceding client-PRX checkpoint is `3a30250`, the dedicated title icon entered
 at `ea9be4b`, and the dedicated identity began at `c09318f`.
@@ -254,9 +255,35 @@ and passed 1,616 frames. The renderer retained 14 special-surface samples with
 animation time advancing from 0 to 26,942 ms, stable nonzero sky geometry and
 texture hashes, 478 GPU texture creates, 3,440 world draws, eight exact
 reclaims and zero errors. Engine memory returned to zero and all five PRXs
-unloaded in order. Entities, viewmodel and 2D/UI are now the immediate open
-translation boundary; gameplay, performance, transitions, soaks and release
-remain later Phase 7 gates.
+unloaded in order. At that checkpoint entities, viewmodel and 2D/UI remained
+the open translation boundary; the following live-2D gate closes the 2D part.
+
+Merged Xash3D PR #23 (`0bdcbfb`) closes native live 2D composition. The
+renderer consumes `R_Set2DMode`, `R_DrawStretchPic` and `FillRGBA` in producer
+order after world and special-surface passes, carries `Color4f`/`Color4ub`,
+resolves live texture handles and emits orthographic geometry through the
+hardware-proven `screen_2d` pipeline. Consecutive commands batch only when
+texture and blend identity match; `FillRGBA` uses a transient white texel.
+There is no OpenGL emulation layer. A full-capacity host test proves that all
+4,096 producer slots, including 4,095 alternating drawable commands/batches,
+fit either 1 MiB transient slot.
+
+Correlated FW 12.02 runs
+`20260909T060525224Z_PPSA99996_xash3d-engine_0x133ed1bbb4d07` and
+`20260909T060525280Z_PPSA99996_ps5-xash3d_0x133ed1efb02b5` began 56 ms apart
+and passed 1,044 frames. Across 333 draw-bearing frames, 61,316 quads became
+367,896 indices and 610 ordered batches, with peak three batches, 63,395 input
+commands, 2,079 mode commands, zero unresolved textures and command hash
+`177a07fa2fd9e5b1`. Both framebuffer slots hashed
+`49b1297de5cef0a0`; eight resources retired, guards remained intact, all five
+PRXs unloaded in order and both streams ended clean and gap-free. The accepted
+20-second CLI capture visibly shows the translucent Xash console, text and
+localized overlay over the live tram interior; its SHA-256 is
+`5bcdd2772f5d3d29baae61a659ca19af9c079061f69b79f58dc479e70dce6aa0`.
+This closes live console/HUD/font/fill translation, not native MainUI menu
+presentation. Entities, viewmodel and the native main menu are now the
+immediate translation boundary; gameplay, performance, transitions, soaks and
+release remain later Phase 7 gates.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains

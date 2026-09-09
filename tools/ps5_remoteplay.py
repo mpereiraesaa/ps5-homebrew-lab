@@ -194,6 +194,22 @@ def stream_window() -> str:
     return ids[-1]
 
 
+def active_cli_stream_window() -> str | None:
+    """Return one verified isolated CLI stream, refusing ambiguous state."""
+    ids = chiaki_windows("Chiaki | Stream")
+    if not ids:
+        return None
+    if len(ids) != 1:
+        raise SystemExit("multiple active 'Chiaki | Stream' client windows")
+    window = ids[0]
+    pid = window_pid(window)
+    if not is_cli_chiaki_stream_process(pid):
+        raise SystemExit(
+            "active stream was not launched by the isolated Chiaki CLI helper"
+        )
+    return window
+
+
 def acknowledge_quit_dialog(wait: float) -> bool:
     """Acknowledge Chiaki's expected handoff dialog with focus restoration."""
     dialogs = chiaki_windows("Session has quit")
@@ -444,6 +460,10 @@ def isolated_chiaki_stream_process(
 def start_stream(args: argparse.Namespace) -> None:
     xdotool = require_program("xdotool")
     stop_ended_cli_stream(args.cleanup_wait)
+    existing = active_cli_stream_window()
+    if existing is not None:
+        print(existing)
+        return
     previous_window = subprocess.check_output(
         [xdotool, "getactivewindow"], text=True
     ).strip()
