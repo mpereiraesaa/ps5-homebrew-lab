@@ -13,15 +13,16 @@ Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
 | 6 — Engine integration | Complete, 6 gates closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI, GoldSrc client and RefAPI 18 `ref_agc` are hardware-proven with exact teardown. |
-| 7 — Playable and release | Active, live 2D closed | Live `c1a0` geometry, base textures, engine lightmaps, six-sided sky, turbulent surfaces and console/HUD/font/fill lists are native AGC output with exact ownership; entities/viewmodel, native MainUI presentation, gameplay/performance, transition soaks and release remain open. |
+| 7 — Playable and release | Active, native MainUI closed | Live `c1a0` world/special surfaces/2D and MainUI are native AGC output with exact ownership; the menu transitions to `c1a0` in-process. Entities/viewmodel, fixed-camera comparison, gameplay/performance, transition soaks and release remain open. |
 
 The Phase 1/2 implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
-the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 7 live-2D
-checkpoint `0bdcbfb`; the preceding live-special-surface checkpoint is
+the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 7
+native-menu checkpoint `a975b86`; the preceding live-2D checkpoint is
+`0bdcbfb`, and the preceding live-special-surface checkpoint is
 `77c742a`, the preceding live-lightmap checkpoint is `4f9d38d`, the preceding
 compositor-visible world checkpoint is `cdcce91`, the preceding live-world
 submission checkpoint is `bd4b250`, and
@@ -776,8 +777,32 @@ localized overlay over the live tram interior. The engine/ref transcript
 hashes are respectively
 `f637d76cc88698869bd2fa9ba8234a2bcd5a8c6d0ac06c090a836e370423baaf`
 and `5eab062c4e38b56208754d7804ab94a9610658b5c79c58ee77bd675b2f3388c6`.
-This closes live 2D composition, not native MainUI main-menu presentation.
-Entities, viewmodel and the native main menu are the next translation boundary.
+This closes live 2D composition. The following gate closes native MainUI
+presentation; entities and viewmodel remain the next translation boundary.
+
+### Phase 7 native MainUI and map transition (2026-09-09)
+
+Xash3D PR #24, merged as `a975b86`, boots the complete client/ref_agc stack
+without `+map`, presents MainUI through live native AGC 2D and, after five
+seconds, queues `map c1a0` through the engine command buffer. Strict evidence
+requires positive pre-map frames/quads/draws, serial order menu-before-map, a
+unique raw transition before `Spawn Server`, exact completion/teardown and
+independent video of both states. The deploy helper also now disables ftpsrv's
+SELF transformation and verifies exact remote SHA-256 for every staged file.
+
+Accepted paired runs
+`20260909T065237749Z_PPSA99996_xash3d-engine_0x1368098fcc1b8` and
+`20260909T065237800Z_PPSA99996_ps5-xash3d_0x136809c13ba99` began 52 ms apart
+and passed 1,339 frames. MainUI started at serial 1. The map first appeared at
+serial 224 after 223 menu frames, 94,918 quads and 27,929 draws. The paired
+validator retained 3,695 lightmapped world draws, 3,989,406 bright pixels,
+both buffers at `49b1297de5cef0a0`, eight exact reclaims, zero errors and exact
+five-PRX teardown. The accepted 35-second CLI recording
+(`bfff803bbd69d91e067220ff178b3771720125b17f45a151b20a5370662c22c9`)
+visibly shows MainUI at 23 seconds and `c1a0` at 25 seconds after a non-black
+Home preflight. This closes native menu presentation and the in-process map
+transition; entities, viewmodel, camera comparison, gameplay, performance,
+soaks and release remain.
 
 ## Remote Play operating contract
 

@@ -28,7 +28,8 @@ completed all six hardware gates before merging through
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
 history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 7
-live-2D checkpoint `0bdcbfb`; its preceding live-special-surface checkpoint is
+native-menu checkpoint `a975b86`; its preceding live-2D checkpoint is
+`0bdcbfb`, and the preceding live-special-surface checkpoint is
 `77c742a`, the preceding live-lightmap checkpoint is `4f9d38d`, the preceding
 compositor-visible world checkpoint is `cdcce91`, the preceding live-world
 submission checkpoint is `bd4b250`, and
@@ -280,10 +281,31 @@ PRXs unloaded in order and both streams ended clean and gap-free. The accepted
 20-second CLI capture visibly shows the translucent Xash console, text and
 localized overlay over the live tram interior; its SHA-256 is
 `5bcdd2772f5d3d29baae61a659ca19af9c079061f69b79f58dc479e70dce6aa0`.
-This closes live console/HUD/font/fill translation, not native MainUI menu
-presentation. Entities, viewmodel and the native main menu are now the
-immediate translation boundary; gameplay, performance, transitions, soaks and
-release remain later Phase 7 gates.
+This closes live console/HUD/font/fill translation. The following native-menu
+gate closes MainUI presentation; entities and viewmodel remain the immediate
+translation boundary.
+
+Merged Xash3D PR #24 (`a975b86`) boots the complete five-PRX stack into MainUI
+without a boot-time `+map`, presents it through the live native AGC 2D path,
+then queues `map c1a0` through the engine command buffer after five seconds.
+The renderer records the first menu frame and the first positive map serial,
+while the engine records a unique raw transition before the unique
+`Spawn Server: c1a0` line. The transactional deploy helper now disables
+ftpsrv's connection-local SELF conversion and requires exact remote size plus
+SHA-256 for every staged SELF, PRX and asset; size-only and transformed-ELF
+fallbacks are gone.
+
+Correlated FW 12.02 runs
+`20260909T065237749Z_PPSA99996_xash3d-engine_0x1368098fcc1b8` and
+`20260909T065237800Z_PPSA99996_ps5-xash3d_0x136809c13ba99` began 52 ms apart
+and passed 1,339 frames. MainUI began at serial 1; 223 pre-map frames carried
+94,918 quads and 27,929 native draws before map serial 1 appeared at renderer
+serial 224. Both framebuffer slots hashed `49b1297de5cef0a0`, all eight
+resources retired and all five PRXs unloaded exactly with zero errors. A fresh
+decoded Home preflight preceded the accepted 35-second CLI recording, which
+visibly shows MainUI at 23 seconds and `c1a0` at 25 seconds. This closes native
+menu presentation and its in-process map transition. Entities, viewmodel,
+fixed-camera comparison, gameplay, performance, soaks and release remain.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
@@ -316,8 +338,10 @@ ledger and reproduction scripts live under
 - Native changes require a fresh artifact hash and matching TCP telemetry;
   synchronization, memory or command changes additionally require a soak.
 - Visual checks, screenshots and bounded video recordings use the canonical
-  `tools/ps5_remoteplay.py` workflow. Remote Play complements telemetry and
-  never replaces its ownership/completion evidence.
+  `tools/ps5_remoteplay.py` workflow. Hardware capture requires a decoded,
+  non-black `screenshot --require-decoded` preflight; process/window presence
+  alone is insufficient. Remote Play complements telemetry and never replaces
+  its ownership/completion evidence.
 
 ## Canonical tooling
 

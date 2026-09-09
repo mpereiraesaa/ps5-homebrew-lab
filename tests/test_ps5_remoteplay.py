@@ -56,6 +56,30 @@ def main() -> int:
             Path("/tmp/demo.mp4"), 30, "4242", ":0", seconds=12.5
         )
         assert bounded[bounded.index("-t") + 1] == "12.5"
+    with tempfile.TemporaryDirectory() as directory:
+        decoded = Path(directory) / "decoded.png"
+        with mock.patch.object(MODULE, "capture_window") as capture, \
+                mock.patch.object(MODULE, "image_signal", return_value=0.125):
+            signal_value = MODULE.wait_for_decoded_frame(
+                "4242", decoded, 0.0, 0.002
+            )
+        assert signal_value == 0.125
+        capture.assert_called_once_with("4242", decoded)
+        with mock.patch.object(MODULE, "capture_window"), \
+                mock.patch.object(MODULE, "image_signal", return_value=0.0):
+            try:
+                MODULE.wait_for_decoded_frame("4242", decoded, 0.0, 0.002)
+            except SystemExit as exc:
+                assert "stayed black" in str(exc)
+            else:
+                raise AssertionError("black Remote Play frame was accepted")
+        with mock.patch.object(MODULE, "require_program",
+                               return_value="/usr/bin/convert"), \
+                mock.patch.object(MODULE.subprocess, "run") as run:
+            run.return_value.stdout = "0.125\n"
+            run.return_value.returncode = 0
+            assert MODULE.image_signal(decoded) == 0.125
+            assert "%[fx:mean]" in run.call_args.args[0]
     graceful = mock.Mock()
     graceful.poll.return_value = None
     graceful.stdin = mock.Mock()
