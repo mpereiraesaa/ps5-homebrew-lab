@@ -838,7 +838,7 @@ QA uses direct operator observations; no Remote Play/capture was required.
 ## Phase 7 texture-memory policy (2026-09-09)
 
 Accepted and merged: Xash3D PR #26, `70ebea8d40e24d6642034abeb3721b251e00df17`.
-The lab pins this exact commit; the plan is revision 43.
+The lab pins this exact commit; memory acceptance was recorded in revision 43.
 
 The fixed 80-MiB texture test budget is replaced by measured, configurable
 capacity. XASH_TEXTURE_MIB selects explicit MiB (zero means automatic),
@@ -863,6 +863,34 @@ in the port's docs/PHASE7_TEXTURE_MEMORY_POLICY.md.
 Next gates remain ordered: chapter-title/HUD blending, real game audio,
 Studio/viewmodel fidelity, then valve_hd mounting and resource validation.
 None of these or the rest of Phase 7 is closed by the memory gate.
+
+## Phase 7 HUD/font correction — pending hardware QA (2026-09-09)
+
+Plan revision 44 records draft Xash3D PR #27 at
+`f99929d69d345be7028afc10a71087cf870105ff`. Requested render modes now reach
+the compositor, with independent alpha test and correct FillRGBA/current-color
+side effects. The eight 2D pipelines preserve the 96 existing 3D permutations;
+a dedicated screen shader discards only final alpha zero. Full host tests,
+ASan/UBSan compositor coverage, gfx1013 shader validation, the native
+client/AGC build and both GitHub host-contracts jobs pass.
+
+Renderer ELF SHA-256:
+`88ca05fbf445e532fa91e92c5d420b43dc9b90fbb73a0cd07fe0821f669e66b4`.
+Renderer PRX SHA-256:
+`23672468d2920dc78096a7224744d254be1a82c590038b974252084ba9864ad9`.
+Exact compiled pixel shader bytes were located in the ELF, rather than
+assuming the source change reached the artifact.
+
+No deployment, launch, operator visual acceptance or paired teardown evidence
+exists for this HUD candidate yet. Keep PR #27 in draft and the lab submodule
+pinned to accepted `70ebea8`. Required next: confirm operator availability,
+canonical transactional deployment and paired console run; verify MainUI,
+chapter title without a black rectangle, readable fonts and fades, plus
+resource ownership/teardown. An ordinary title run does not automatically
+cover every font mode or multiplicative fade. The port's
+`docs/PHASE7_HUD_FONT_BLEND.md` contains the QA checklist and build evidence.
+Only after acceptance and integration proceed to real game audio, then Studio
+fidelity and HD-pack validation. This does not close the remainder of Phase 7.
 
 ## Remote Play operating contract
 
