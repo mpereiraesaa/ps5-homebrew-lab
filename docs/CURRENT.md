@@ -21,6 +21,17 @@ the frozen tree at `8f035b7`.
 
 ## Xash3D checkpoint
 
+Current port pin: `47f3315`, merged [PR #29](https://github.com/mpereiraesaa/ps5-xash3d/pull/29).
+
+Current plan revision 47: live impact effects, blood/sprite lighting and
+viewmodel reload/events are operator accepted with a clean 18,175-frame paired
+resource run. Normal no-grant graphics build restored without relaunch;
+audio remains off and the timed harness is not a release package. Next are
+transition-aware validation and Host_Error hardware recovery, followed by
+remaining Studio/effects parity, audio and release work. See
+`XASH3D_CHECKPOINT.md` for current integration identity and proof boundaries.
+Older checkpoint descriptions below are historical.
+
 The active engineering target is now Xash3D on PS5. Phases 0, 1 and 2 of
 `XASH3D_PS5_PLAN.html` are complete on the canonical public branch, and Phase 3
 completed all six hardware gates before merging through
@@ -417,7 +428,7 @@ fourth task; this focused acceptance does not close Phase 7.
 
 ## Phase 7 Studio/input integration — plan rev 46
 
-Xash3D PR #28 merged with green CI as `3cebf56`, now the lab pin. It integrates
+Xash3D PR #28 merged with green CI as `3cebf56`, the previous lab pin. It integrates
 accepted NPC lighting, NPOT texture correction and
 ordinary chrome, callback save/restore coverage, separate viewmodel drawing
 and the DualSense v5 profile. Operator QA confirms pistol/crowbar use,

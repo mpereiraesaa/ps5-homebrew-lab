@@ -2,6 +2,14 @@
 
 ## Port Xash3D sobre AGC — activo
 
+Pin actual: `47f3315`, [PR #29 fusionado](https://github.com/mpereiraesaa/ps5-xash3d/pull/29).
+
+Checkpoint actual: plan rev 47, efectos de impacto/sangre e iluminación de
+sprites aceptados, junto con eventos/recarga de viewmodel; corrida pareada de
+18.175 frames con recursos liberados y cero errores. Versión sin armas de
+diagnóstico restaurada sin relanzar (harness gráfico temporal, audio apagado).
+Sigue validación multi-mapa y recuperación Host_Error; Fase 7 continúa abierta.
+
 Implementación canónica: `projects/ps5-xash3d` (`mpereiraesaa/ps5-xash3d`,
 repositorio público), bifurcado de `ps5-agc-gears` en
 `cbff264` con toda la historia el 2026-09-06. Ahí vive el renderer AGC, el
