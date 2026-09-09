@@ -400,7 +400,17 @@ or automatic startup capacity. The explicit 256-MiB run passes 1,999 frames;
 the automatic run passes 10,994 frames and exact resource teardown. Host tests
 cover allocation rollback and cache exhaustion. See XASH3D_CHECKPOINT and the
 port's PHASE7_TEXTURE_MEMORY_POLICY for full evidence and limitations.
-Next: HUD/font blending, game audio, Studio/viewmodel, optional valve_hd QA.
+Current order: finish HUD/font blending, then Studio lighting/viewmodel,
+then game audio, then optional valve_hd QA. Texture memory policy is done.
+
+The operator accepted the corrected chapter title and removal of the white-scene
+flash. Corrected paired runs `20260909T134011789Z` / `20260909T134011848Z`
+passed 10,992 frames, nine exact reclaims, intact guards, zero errors and clean
+BYEs. Remaining HUD work is controlled font-mode/multiplicative-fade coverage
+and PR/lab integration, not another chapter-title or movement validation.
+Studio scope is lighting, chrome, controllers, animation transitions and
+viewmodel, preserving accepted smooth NPC walking. Audio remains a separate
+fourth task; this reordering does not close HUD or Phase 7.
 
 ## Historical boundary
 
