@@ -194,6 +194,22 @@ def stream_window() -> str:
     return ids[-1]
 
 
+def active_cli_stream_window() -> str | None:
+    """Return one verified isolated CLI stream, refusing ambiguous state."""
+    ids = chiaki_windows("Chiaki | Stream")
+    if not ids:
+        return None
+    if len(ids) != 1:
+        raise SystemExit("multiple active 'Chiaki | Stream' client windows")
+    window = ids[0]
+    pid = window_pid(window)
+    if not is_cli_chiaki_stream_process(pid):
+        raise SystemExit(
+            "active stream was not launched by the isolated Chiaki CLI helper"
+        )
+    return window
+
+
 def acknowledge_quit_dialog(wait: float) -> bool:
     """Acknowledge Chiaki's expected handoff dialog with focus restoration."""
     dialogs = chiaki_windows("Session has quit")
@@ -444,6 +460,10 @@ def isolated_chiaki_stream_process(
 def start_stream(args: argparse.Namespace) -> None:
     xdotool = require_program("xdotool")
     stop_ended_cli_stream(args.cleanup_wait)
+    existing = active_cli_stream_window()
+    if existing is not None:
+        print(existing)
+        return
     previous_window = subprocess.check_output(
         [xdotool, "getactivewindow"], text=True
     ).strip()
@@ -598,12 +618,61 @@ def recording_command(
     return command
 
 
-def screenshot(args: argparse.Namespace) -> None:
-    path = output_path(args.output, "png")
+def capture_window(window: str, path: Path) -> None:
     subprocess.run(
-        [require_program("import"), "-window", stream_window(), str(path)],
+        [require_program("import"), "-window", window, str(path)],
         check=True,
     )
+
+
+def image_signal(path: Path) -> float:
+    """Return normalized RGB mean in [0, 1] for a captured frame."""
+    result = subprocess.run(
+        [require_program("convert"), str(path), "-colorspace", "RGB",
+         "-format", "%[fx:mean]", "info:"],
+        text=True, capture_output=True, check=True,
+    )
+    try:
+        value = float(result.stdout.strip())
+    except ValueError as exc:
+        raise SystemExit("could not measure Remote Play frame signal") from exc
+    if not 0.0 <= value <= 1.0:
+        raise SystemExit("Remote Play frame signal is outside [0, 1]")
+    return value
+
+
+def wait_for_decoded_frame(
+    window: str, path: Path, wait: float, minimum_signal: float,
+) -> float:
+    """Capture until Chiaki has decoded a non-black frame, or fail closed."""
+    if wait < 0.0:
+        raise SystemExit("decode wait must be non-negative")
+    if not 0.0 <= minimum_signal <= 1.0:
+        raise SystemExit("minimum signal must be within [0, 1]")
+    deadline = time.monotonic() + wait
+    while True:
+        capture_window(window, path)
+        signal_value = image_signal(path)
+        if signal_value > minimum_signal:
+            return signal_value
+        if time.monotonic() >= deadline:
+            raise SystemExit(
+                f"Remote Play stayed black for {wait:g}s "
+                f"(signal={signal_value:.6f}, capture={path})"
+            )
+        time.sleep(0.25)
+
+
+def screenshot(args: argparse.Namespace) -> None:
+    path = output_path(args.output, "png")
+    window = stream_window()
+    if args.require_decoded:
+        signal_value = wait_for_decoded_frame(
+            window, path, args.wait, args.minimum_signal,
+        )
+        print(f"decoded_signal={signal_value:.6f}")
+    else:
+        capture_window(window, path)
     print(path)
 
 
@@ -710,6 +779,9 @@ def parser() -> argparse.ArgumentParser:
     stop_cmd.set_defaults(func=stop_stream)
     shot_cmd = commands.add_parser("screenshot")
     shot_cmd.add_argument("--output")
+    shot_cmd.add_argument("--require-decoded", action="store_true")
+    shot_cmd.add_argument("--wait", type=float, default=10.0)
+    shot_cmd.add_argument("--minimum-signal", type=float, default=0.002)
     shot_cmd.set_defaults(func=screenshot)
     record_cmd = commands.add_parser("record")
     record_cmd.add_argument("--output")

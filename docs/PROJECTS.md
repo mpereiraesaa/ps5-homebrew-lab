@@ -2,6 +2,17 @@
 
 ## Port Xash3D sobre AGC — activo
 
+Pin actual: `3e78c1a`, [PR #31 fusionado](https://github.com/mpereiraesaa/ps5-xash3d/pull/31).
+
+Checkpoint actual: plan rev 49. La cobertura Studio combinada acepta visualmente
+controladores, crossfade, dos blends y glowshell; no hubo modelo visible de cuatro
+blends. Audio real fue audible y cerró con 18.179 frames, cero errores de salida,
+cero descartes y teardown exacto (seis underruns sólo al arranque). El primer
+montaje de `valve_hd` instaló 115 archivos verificados y pasó la QA visual con
+18.165 frames y cero errores. Quedan overlays de diagnóstico, pulido de
+underruns, soaks de transición/audio/HD, gameplay, rendimiento y release; Fase 7
+continúa abierta.
+
 Implementación canónica: `projects/ps5-xash3d` (`mpereiraesaa/ps5-xash3d`,
 repositorio público), bifurcado de `ps5-agc-gears` en
 `cbff264` con toda la historia el 2026-09-06. Ahí vive el renderer AGC, el
@@ -25,11 +36,28 @@ blend/depth/cull/fog/lightmap, viewport/scissor, ruta 2D, lightstyles/luces
 dinámicas, sprites/partículas, Studio animado, brush entities y visibilidad
 PVS/frustum. El gate integrado final sostuvo agua, vidrio, efectos, Studio y
 HUD durante 60.000 frames con ownership exacto, guardas intactas, BYE gap-free
-y cero errores. La Fase 5, platform layer, está completa. La Fase 6 está
-activa y sus cinco primeros gates ya probaron el loader híbrido,
-`filesystem_stdio.prx`, `server.prx`, `menu.prx` y `client.prx` en FW 12.02.
-El cliente ejecutó video/HUD real sobre `c1a0` y descargó los cuatro módulos
-en orden; `ref_agc` es el único checkpoint restante de la fase.
+y cero errores. Las Fases 5 y 6 están completas: platform layer, loader
+híbrido, `filesystem_stdio.prx`, `server.prx`, `menu.prx`, `client.prx` y
+`ref_agc` tienen evidencia FW 12.02 y teardown exacto. La Fase 7 está activa.
+El mundo vivo de `c1a0`, sus 164 texturas y el atlas 1024x256 de lightmaps del
+engine ya llegan al compositor mediante AGC nativo. El checkpoint fusionado
+`4f9d38d` pasó 1.075 frames con 3.695 draws lightmapped, ocho reclaims y cero
+errores. El checkpoint `77c742a` añade skybox vivo de seis caras y 35 draws
+turbulentos animados por el tiempo del engine; pasó 1.616 frames, ocho reclaims
+y teardown exacto, sin capa de emulación OpenGL. El checkpoint `0bdcbfb`
+traduce las listas 2D vivas en orden: 61.316 quads, 367.896 índices y 610
+batches pasaron 1.044 frames emparejados con evidencia visual. El checkpoint
+`a975b86` presenta MainUI por AGC durante 223 frames y luego carga `c1a0`
+mediante el command buffer del engine; el serial de mapa 1 aparece en el serial
+renderer 224 y el vídeo muestra ambos estados. El checkpoint posterior añade
+brush transforms, primeros NPCs Studio, mipmaps y movimiento STEP fluido. Quedan
+Studio completo, viewmodel, audio del juego, gameplay y soaks. La mezcla HUD,
+fuentes y fades ya está aceptada e integrada mediante PR #27 (`4726bd3`).
+El checkpoint rev 46 añade iluminación/chrome de NPCs y corrección NPOT
+aceptadas, retorno entre mapas y viewmodel básico probado con pistola/palanca.
+El perfil DualSense v5 usa R2 para ataque y apuntado radial a 140/105 grados/s.
+Quedan efectos/eventos y cobertura restante del viewmodel/Studio; no está
+cerrada la Fase 7. El mapeo vigente está en `docs/SCEPAD_PHASE5.md` del port.
 
 Identidades instaladas: Xash3D usa `PPSA99996` y la demo Gears usa
 `PPSA99997`, cada una con helpers exactos independientes. El host histórico
@@ -118,11 +146,14 @@ concurrencia y memoria ejecutable.
 ## GoldSrc / Xash3D — objetivo activo
 
 Plan vigente: `docs/XASH3D_PS5_PLAN.html`; checkpoint textual:
-`docs/XASH3D_CHECKPOINT.md`. Las Fases 0–5 están cerradas en hardware y la Fase
-6 tiene tres gates cerrados. El engine conserva su identidad `PPSA99996` y ya
-carga filesystem y servidor como PRXs propios, con lifecycle explícito,
-callbacks ABI probados y teardown ordenado. El trabajo inmediato es convertir
-`menu`; después siguen `client` y `ref_agc` como checkpoints independientes.
+`docs/XASH3D_CHECKPOINT.md`. Las Fases 0–6 están cerradas en hardware. El
+engine conserva su identidad `PPSA99996` y carga filesystem, servidor, MainUI,
+cliente y renderer como PRXs propios, con lifecycle explícito, callbacks ABI
+probados y teardown ordenado. La Fase 7 ya presenta el mundo, texturas base,
+lightmaps, skybox, superficies turbulentas, listas 2D y MainUI vivos, con
+transición nativa al mapa, brush transforms y primeros NPCs Studio. El trabajo
+inmediato es completar efectos y cobertura restante de Studio/viewmodel y después validar audio
+del juego; la mezcla HUD ya tiene aceptación visual y teardown exacto.
 
 Half-Life requiere datos originales que no forman parte del código del engine
 y nunca deben incorporarse a repositorios ni artefactos públicos.

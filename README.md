@@ -40,17 +40,48 @@ y 128 muestras `nanosleep`/`usleep` sin errores ni despertares anticipados. El
 gate de telemetría correlacionó 60.000 submits, timestamps GPU end-of-pipe,
 fences y eventos VideoOut exactos sin gaps ni regresiones. El cierre final
 retuvo `__assert`, `getpwuid` y `dladdr` como definiciones locales del port,
-probó sus contratos en FW 12.02 y cargó `c1a0` sin errores. La Fase 6 ya está
-activa y tiene cuatro gates cerrados: el loader híbrido,
-`filesystem_stdio.prx`, el servidor HLSDK y MainUI como PRXs propios. La
+probó sus contratos en FW 12.02 y cargó `c1a0` sin errores. La Fase 6 está
+completa: loader híbrido, `filesystem_stdio.prx`, servidor HLSDK, MainUI,
+cliente GoldSrc y `ref_agc` funcionan como módulos propios. La
 combinación dinámica montó las 4.823
 entradas, probó listing, lectura grande y path con case mixto; el servidor
 publicó 251 exports del engine, ejecutó sus constructores C++, cruzó la ABI en
 ambos sentidos, levantó `c1a0` y se descargó antes que el filesystem con
 ownership exacto. MainUI publicó sus 16 callbacks base y 12 extendidos, se
 activó y redibujó 5.127 veces sobre un framebuffer software no negro. El
-siguiente checkpoint convierte sólo `client`; después sigue `ref_agc` como
-gate independiente y presentación nativa en TV.
+cliente pasó interface 7 y ambos sentidos de la ABI sobre `c1a0`; el gate
+final enlazó RefAPI 18 con el backend AGC, presentó 600 frames con hashes GPU
+no nulos y descargó los cinco PRXs exactamente. La Fase 7 está activa: el
+primer checkpoint ya extrae el mundo `c1a0` vivo del engine y somete 17.245
+vértices, 29.565 índices y 3.695 superficies mediante AGC, con las 164
+referencias de textura resueltas y teardown exacto. El A/B de FW 12.02 aisló
+un handoff de scheduler de 10 ms después de inicializar la cámara viva. El
+checkpoint siguiente construye el atlas de lightmaps desde los lightstyles del
+engine, lo aloja en direct memory y enlaza los pipelines AGC nativos: 3.695
+draws lightmapped y 1.075 frames emparejados pasaron con imagen visible,
+ownership exacto y cero errores. El checkpoint fusionado siguiente añade el
+skybox vivo de seis caras y el warp turbulento clásico dirigido por el tiempo
+del engine, sin emulación OpenGL: 1.616 frames emparejados probaron 158
+superficies sky, seis draws de cubo y 35 draws turbulentos, con ocho recursos
+reclamados y cero errores. El checkpoint 2D traduce las listas vivas en orden
+de fuente: 61.316 quads formaron 610 batches nativos durante 1.044 frames
+emparejados. El checkpoint anterior presenta MainUI mediante AGC
+durante 223 frames y luego encola `map c1a0` dentro del mismo proceso: el mapa
+aparece en el serial 224, con vídeo directo de ambos estados, ocho recursos
+reclamados y teardown exacto. El nuevo checkpoint añade brush entities y NPCs
+Studio animados, corrige la oclusión negra del fondo y el movimiento STEP, y
+mejora el filtrado de modelos. La validación final completa 10.997 frames y
+nueve recursos reclamados con cero errores y teardown exacto. PR #27
+(`4726bd3`) cierra además la mezcla del título, fuentes y fades con aceptación
+visual y 10.993 frames limpios. El checkpoint rev 46 añade iluminación/chrome
+de NPCs, corrección NPOT, retorno entre mapas y viewmodel básico; el perfil
+DualSense v5 fija R2 como ataque y apuntado radial a 140/105 grados/s.
+Quedan efectos/cobertura restante de Studio/viewmodel, después audio
+del juego, cámara fija, gameplay, rendimiento y soaks.
+El presupuesto de texturas ya es configurable y se calcula con memoria
+disponible medida: 256 MiB explícitos y el modo automático tienen evidencia
+en consola. El plan rev 46 y el checkpoint separan capacidad reservada de
+texturas residentes; no se promete crecimiento dinámico ni soporte HD validado.
 
 La identidad de consola también está separada y validada: Xash3D usa
 `PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico

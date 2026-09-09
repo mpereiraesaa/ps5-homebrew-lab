@@ -1,6 +1,6 @@
 # Current development boundary
 
-Last reconciled: 2026-09-08. Tested console firmware: PS5 12.02.
+Last reconciled: 2026-09-09. Tested console firmware: PS5 12.02.
 
 ## Canonical implementation
 
@@ -21,16 +21,34 @@ the frozen tree at `8f035b7`.
 
 ## Xash3D checkpoint
 
+Current port pin: `3e78c1a`, merged [PR #31](https://github.com/mpereiraesaa/ps5-xash3d/pull/31).
+
+Current plan revision 49: explicit round-trip validation passes the accepted
+10,810-frame multi-map run. Controlled Host_Error recovery is operator/hardware
+accepted: 10,825 frames, one expected diagnostic error, zero renderer errors,
+nine reclaims and exact teardown. Live-game audio and first `valve_hd` mount
+now have separate operator acceptance; the detailed runs, six startup
+underruns and exact audio teardown are recorded in the port docs. Four-blend
+console coverage, diagnostic-overlay cleanup and longer transition/audio/HD
+soaks remain open. The timed harness is not a release package. See
+`XASH3D_CHECKPOINT.md` for current integration identity and proof boundaries.
+Older checkpoint descriptions below are historical.
+
 The active engineering target is now Xash3D on PS5. Phases 0, 1 and 2 of
 `XASH3D_PS5_PLAN.html` are complete on the canonical public branch, and Phase 3
 completed all six hardware gates before merging through
 `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264`. The
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
-history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 6
-client-PRX commit `3a30250`, which includes the dedicated title icon from
-`ea9be4b`; the preceding MainUI-PRX implementation is `9f783ec` and the
-dedicated identity began at `c09318f`.
+history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 7
+native-menu checkpoint `a975b86`; its preceding live-2D checkpoint is
+`0bdcbfb`, and the preceding live-special-surface checkpoint is
+`77c742a`, the preceding live-lightmap checkpoint is `4f9d38d`, the preceding
+compositor-visible world checkpoint is `cdcce91`, the preceding live-world
+submission checkpoint is `bd4b250`, and
+the Phase 6 final `ref_agc` checkpoint is `258fbe3`, the
+preceding client-PRX checkpoint is `3a30250`, the dedicated title icon entered
+at `ea9be4b`, and the dedicated identity began at `c09318f`.
 
 Phase 1 renders the private `c1a0` BSP with base textures and lightmaps, proves
 physical DualSense noclip movement and passes a 60,000-frame textured gate.
@@ -186,7 +204,121 @@ successful HUD redraws and 4,800 non-black software presentations. Server,
 menu, client and filesystem stopped/unloaded with active counts 3, 2, 1 and 0;
 89 structured records and 115 raw lines ended with result zero, no errors,
 gaps or oversized records, and a clean BYE. The five-file bundle is now the
-rollback point; `ref_agc` is the only remaining Phase 6 conversion.
+rollback point beneath the final renderer conversion.
+
+Phase 6 gate 6 is closed in merged Xash3D PR #18 (`258fbe3`). Correlated runs
+`20260908T191327933Z_PPSA99996_xash3d-engine_0x11059870e2628` and
+`20260908T191327984Z_PPSA99996_ps5-xash3d_0x110598a25cd2f` began 51 ms apart.
+The engine loaded the complete filesystem/server/menu/client/renderer PRX
+stack, started `c1a0`, bound RefAPI 18 with engine mask 63 and observed
+203,420 balanced begin/end callbacks, 203,411 scene callbacks and one new-map
+callback. The native Phase 4 backend presented 600 combined frames with GPU
+hashes `a9e62c5188ca6bf5` and `0044418de19349d8`, 807,578 bright pixels,
+exact fence/VideoOut tokens, intact guards and zero errors. Native teardown
+closed VideoOut, direct memory and AGC; server, menu, client, renderer and
+filesystem then unloaded with active counts 4, 3, 2, 1 and 0. Both streams
+ended with clean gap-free BYE, and the deterministic rebuild reproduced the
+accepted host, renderer and asset hashes. Phase 6 is complete. Phase 7 owns
+live engine-entity-to-AGC translation, gameplay, transitions and release.
+
+Phase 7 live-world presentation is active through merged Xash3D PR #20
+(`cdcce91`). Exact
+no-handoff and post-bundle-handoff captures were both black; moving the bounded
+10 ms scheduler handoff after live-camera fallback initialization produced the
+textured `c1a0` tram interior. Final correlated runs
+`20260909T005027224Z_PPSA99996_xash3d-engine_0x122bd226f4e00` and
+`20260909T005027279Z_PPSA99996_ps5-xash3d_0x122bd25b72b53` began 55 ms apart
+and matched 1,076 frame serials. They staged 17,245 vertices, 29,565 indices
+and 3,695 surface draws, resolved all 164 world texture references, reclaimed
+eight parent resources and unloaded the five PRXs exactly with zero renderer
+errors. A synchronized 1920x1080 CLI Remote Play capture was taken only after
+`PPSA99996` was verified active; its SHA-256 is
+`1ee3578b517bee368f72805d3a9ecd339a5f7de65de462bbefd7a6d7a19c1850`.
+This closes compositor presentation and base-texture sampling, not the
+unobserved firmware-internal cause of the timing boundary.
+
+Merged Xash3D PR #21 (`4f9d38d`) closes the next checkpoint. The engine
+combines active lightstyle planes into one owned padded 1024x256 RGBA8 atlas;
+the native backend uploads it through the existing direct-memory world arena
+and binds the already hardware-proven opaque/alpha-test lightmap pipelines,
+without an OpenGL emulation layer. Correlated runs
+`20260909T022301539Z_PPSA99996_xash3d-engine_0x127ca54ee550a` and
+`20260909T022301592Z_PPSA99996_ps5-xash3d_0x127ca581d165f` began 53 ms apart
+and passed 1,075 matched frames, 3,695 lightmapped draws, 186,051 nonzero atlas
+texels, nonzero common frame hash `a3219a480a7a1c41`, eight exact reclaims,
+zero renderer errors and ordered five-PRX teardown. The launch-verified CLI
+Remote Play capture has SHA-256
+`2b8bd9ea8dd5345463f7bd9363ee79df36ae77af76cc635c54b8859699cdbfd7`.
+At that checkpoint sky/turbulent semantics, entities, viewmodel and 2D/UI
+remained open.
+
+Merged Xash3D PR #22 (`77c742a`) closes native live special surfaces. The
+producer separates 158 sky draws/1,197 indices and 35 turbulent draws/312
+indices from the ordinary world passes, publishes the six engine sky handles,
+camera and engine time, and retains raw GoldSrc turbulent coordinates. The
+consumer builds six camera-centred cube draws and uses a dedicated classic
+time-driven warp pipeline; no OpenGL emulation layer was introduced. Runtime
+directory streams and renderer CPU stores now use engine-owned pools, removing
+the PRX-local libc heap ceiling that had prevented `gfx/env/xen9*.tga` from
+loading.
+
+Correlated FW 12.02 runs
+`20260909T044902002Z_PPSA99996_xash3d-engine_0x12fc201d8f826` and
+`20260909T044902056Z_PPSA99996_ps5-xash3d_0x12fc2056055d0` began 54 ms apart
+and passed 1,616 frames. The renderer retained 14 special-surface samples with
+animation time advancing from 0 to 26,942 ms, stable nonzero sky geometry and
+texture hashes, 478 GPU texture creates, 3,440 world draws, eight exact
+reclaims and zero errors. Engine memory returned to zero and all five PRXs
+unloaded in order. At that checkpoint entities, viewmodel and 2D/UI remained
+the open translation boundary; the following live-2D gate closes the 2D part.
+
+Merged Xash3D PR #23 (`0bdcbfb`) closes native live 2D composition. The
+renderer consumes `R_Set2DMode`, `R_DrawStretchPic` and `FillRGBA` in producer
+order after world and special-surface passes, carries `Color4f`/`Color4ub`,
+resolves live texture handles and emits orthographic geometry through the
+hardware-proven `screen_2d` pipeline. Consecutive commands batch only when
+texture and blend identity match; `FillRGBA` uses a transient white texel.
+There is no OpenGL emulation layer. A full-capacity host test proves that all
+4,096 producer slots, including 4,095 alternating drawable commands/batches,
+fit either 1 MiB transient slot.
+
+Correlated FW 12.02 runs
+`20260909T060525224Z_PPSA99996_xash3d-engine_0x133ed1bbb4d07` and
+`20260909T060525280Z_PPSA99996_ps5-xash3d_0x133ed1efb02b5` began 56 ms apart
+and passed 1,044 frames. Across 333 draw-bearing frames, 61,316 quads became
+367,896 indices and 610 ordered batches, with peak three batches, 63,395 input
+commands, 2,079 mode commands, zero unresolved textures and command hash
+`177a07fa2fd9e5b1`. Both framebuffer slots hashed
+`49b1297de5cef0a0`; eight resources retired, guards remained intact, all five
+PRXs unloaded in order and both streams ended clean and gap-free. The accepted
+20-second CLI capture visibly shows the translucent Xash console, text and
+localized overlay over the live tram interior; its SHA-256 is
+`5bcdd2772f5d3d29baae61a659ca19af9c079061f69b79f58dc479e70dce6aa0`.
+This closes live console/HUD/font/fill translation. The following native-menu
+gate closes MainUI presentation; entities and viewmodel remain the immediate
+translation boundary.
+
+Merged Xash3D PR #24 (`a975b86`) boots the complete five-PRX stack into MainUI
+without a boot-time `+map`, presents it through the live native AGC 2D path,
+then queues `map c1a0` through the engine command buffer after five seconds.
+The renderer records the first menu frame and the first positive map serial,
+while the engine records a unique raw transition before the unique
+`Spawn Server: c1a0` line. The transactional deploy helper now disables
+ftpsrv's connection-local SELF conversion and requires exact remote size plus
+SHA-256 for every staged SELF, PRX and asset; size-only and transformed-ELF
+fallbacks are gone.
+
+Correlated FW 12.02 runs
+`20260909T065237749Z_PPSA99996_xash3d-engine_0x1368098fcc1b8` and
+`20260909T065237800Z_PPSA99996_ps5-xash3d_0x136809c13ba99` began 52 ms apart
+and passed 1,339 frames. MainUI began at serial 1; 223 pre-map frames carried
+94,918 quads and 27,929 native draws before map serial 1 appeared at renderer
+serial 224. Both framebuffer slots hashed `49b1297de5cef0a0`, all eight
+resources retired and all five PRXs unloaded exactly with zero errors. A fresh
+decoded Home preflight preceded the accepted 35-second CLI recording, which
+visibly shows MainUI at 23 seconds and `c1a0` at 25 seconds. This closes native
+menu presentation and its in-process map transition. Entities, viewmodel,
+fixed-camera comparison, gameplay, performance, soaks and release remain.
 
 The package-identity prerequisite is also closed. Xash3D is installed and
 hardware-smoke-tested as `PPSA99996`, while the frozen Gears demo remains
@@ -292,8 +424,10 @@ Canonical status, artifact hashes and acceptance command:
 - Native changes require a fresh artifact hash and matching TCP telemetry;
   synchronization, memory or command changes additionally require a soak.
 - Visual checks, screenshots and bounded video recordings use the canonical
-  `tools/ps5_remoteplay.py` workflow. Remote Play complements telemetry and
-  never replaces its ownership/completion evidence.
+  `tools/ps5_remoteplay.py` workflow. Hardware capture requires a decoded,
+  non-black `screenshot --require-decoded` preflight; process/window presence
+  alone is insufficient. Remote Play complements telemetry and never replaces
+  its ownership/completion evidence.
 
 ## Canonical tooling
 
@@ -326,7 +460,64 @@ pins the native-foundation fork's `exp/prx-module` tooling and uses
 `sceKernelDlsym` are not available for these modules; symbol resolution goes
 through each module's range-checked `PRXDESC1` export descriptor.
 
-## Historical boundary
+## Phase 7 live NPC checkpoint — 2026-09-09
+
+Pinned Xash3D `3167fc6` (merged PR #25); plan revision 42.
+
+Final resource validation passed 10,997 frames / 180 active-map seconds, nine
+exact reclaims, zero errors and five-PRX teardown. The engine root is empty;
+post-run status confirms no BigApp. Full run IDs and hashes are in the port's
+`docs/PHASE7_BASELINE_REGRESSION.md` and the lab checkpoint below.
+
+Brush transforms and first live Studio NPCs now have direct operator evidence.
+The background color pass no longer writes scene depth; opaque Studio textures
+use GPU mip/trilinear filtering; STEP origin/angle interpolation restores fluid
+walking. Runtime DualSense exploration is active. See XASH3D_CHECKPOINT and the
+port's PHASE7_BASELINE_REGRESSION for artifact/run identities and resource proof.
+Full Studio fidelity, viewmodel, chapter-title blending and live-client audio
+remain open: graphics runs use XASH_AUDIO=0. This does not close Phase 7.
+
+## Phase 7 texture-memory policy — 2026-09-09
+
+Pinned Xash3D `70ebea8` (merged PR #26), memory task accepted.
+
+Plan revision 43 replaces the fixed texture test budget with measured explicit
+or automatic startup capacity. The explicit 256-MiB run passes 1,999 frames;
+the automatic run passes 10,994 frames and exact resource teardown. Host tests
+cover allocation rollback and cache exhaustion. See XASH3D_CHECKPOINT and the
+port's PHASE7_TEXTURE_MEMORY_POLICY for full evidence and limitations.
+Historical rev 45 order: Studio lighting/viewmodel, then game audio, then optional
+valve_hd QA. Texture memory policy and HUD are done. Xash3D PR #27 merged
+as `4726bd3`; that was the rev 45 port pin, superseded by rev 46 below.
+
+The operator accepted the corrected chapter title and removal of the white-scene
+flash. Corrected paired runs `20260909T134011789Z` / `20260909T134011848Z`
+passed 10,992 frames, nine exact reclaims, intact guards, zero errors and clean
+BYEs. The final controlled three-font/two-fade exercise was also accepted by
+the operator. Paired runs `20260909T140302704Z` / `20260909T140302761Z` pass
+10,993 frames, nine exact reclaims, zero errors and clean BYEs. The normal
+non-probe build was restored by exact FTP hashes without relaunching.
+Studio scope is lighting, chrome, controllers, animation transitions and
+viewmodel, preserving accepted smooth NPC walking. Audio remains a separate
+fourth task; this focused acceptance does not close Phase 7.
+
+## Phase 7 Studio/input integration — plan rev 46
+
+Xash3D PR #28 merged with green CI as `3cebf56`, the previous lab pin. It integrates
+accepted NPC lighting, NPOT texture correction and
+ordinary chrome, callback save/restore coverage, separate viewmodel drawing
+and the DualSense v5 profile. Operator QA confirms pistol/crowbar use,
+immediate weapon cycling and preferred aim at 140/105 degrees/s with radial
+deadzone 10% and exponent 1.6. R2 is primary attack, R1 secondary. Use the
+port's SCEPAD_PHASE5 guide for the current profile rather than engine defaults.
+
+Lighting/NPOT and chrome normal runs each passed 10,990 frames and exact
+teardown. Viewmodel effects/events/reload and remaining Studio coverage,
+transition-aware evidence, game audio, valve_hd and release gates remain open.
+The normal no-grant build is restored without relaunch; graphics audio remains
+disabled. Full evidence and limitations are in XASH3D_CHECKPOINT rev 46.
+
+## Historical renderer boundary
 
 The former Phase 0 and Stages A–I proved the path from direct memory and simple
 DCBs through triangle, cube and early Gears rendering. Their source now lives
