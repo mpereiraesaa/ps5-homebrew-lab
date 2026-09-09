@@ -125,13 +125,13 @@
 
 <div class="page">
 <header>
-  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-09 · rev 48</div>
-  <p>Current port pin: <code>2caa49e</code> · <a href="https://github.com/mpereiraesaa/ps5-xash3d/pull/30">merged PR #30</a>.</p>
+  <div class="eyebrow">homebrew_ps5 · plan · 2026-09-09 · rev 49</div>
+  <p>Current port pin: <code>3e78c1a</code> · <a href="https://github.com/mpereiraesaa/ps5-xash3d/pull/31">merged PR #31</a>.</p>
   <h1>Xash3D on PS5</h1>
-  <p class="lede">Phase 6 is complete. Phase 7 presents native MainUI, live <code>c1a0</code>, lit/chrome NPCs, viewmodel events and live impact effects. HUD, DualSense aim, muzzleflash, blood/sprite lighting and wall marks have accepted evidence with clean resources. Explicit round-trip validation and controlled Host_Error recovery now pass. Remaining Studio/effects parity, game audio, HD packs, gameplay, performance, soaks and release remain.</p>
+  <p class="lede">Phase 6 is complete. Phase 7 presents native MainUI, live <code>c1a0</code>, lit/chrome NPCs, viewmodel events, live impact effects, real game audio and the optional <code>valve_hd</code> mount. HUD, DualSense aim, Studio subset, audio and HD first-pass checks have accepted evidence with clean resources. Remaining four-blend coverage, diagnostic-overlay cleanup, startup-audio polish, gameplay, performance, soaks and release remain.</p>
   <div class="facts">
     <div class="fact"><div class="k">Checkpoint</div><div class="v">Phase 7 active · live NPCs</div></div>
-    <div class="fact"><div class="k">Latest gate</div><div class="v">10,825 frames · recovery accepted</div></div>
+    <div class="fact"><div class="k">Latest gate</div><div class="v">18,165 frames · HD/audio accepted</div></div>
     <div class="fact"><div class="k">Dataset</div><div class="v">4,741 files · 555.4 MB</div></div>
     <div class="fact"><div class="k">GPU target</div><div class="v">gfx1013 · AGC</div></div>
   </div>
@@ -151,7 +151,8 @@
 
 <section class="checkpoint" aria-labelledby="checkpoint-title">
   <div class="eyebrow">Current checkpoint · 2026-09-09</div>
-  <h2 id="checkpoint-title">Transitions validated · controlled error recovery accepted</h2>
+  <h2 id="checkpoint-title">Studio, audio and HD first-pass acceptance</h2>
+  <p>Revision 49 pins port PR #31 as <code>3e78c1a</code>. The combined Studio run was visually accepted for controller interpolation, crossfade, two-blend routing and glowshell; mode 4 found no visible four-blend model, so four-blend console coverage remains open. Live-game audio was audible and closed exactly after 18,179 frames with zero output errors, no discarded frames and one worker-owned drain/close/join; six startup underruns (four before the active-map timer, two just after) remain non-blocking polish. A follow-up mounted 115 verified <code>valve_hd</code> files (8.65 MiB) and passed visual QA with 18,165 frames, zero errors, nine reclaims and exact teardown. Diagnostic logger lines at the top of the screen remain a presentation-only cleanup; external <code>ps5log/1</code> telemetry is retained. Map-transition/long-session audio and HD performance soaks, gameplay, performance and release are still open.</p>
   <p>Revision 48 adds explicit ordered map validation: the unchanged accepted <code>c1a0 → c1a0d → c1a0</code> run passes 10,810 frames. A separate opt-in recovery diagnostic passes 10,825 frames, one named expected <code>Host_Error</code>, zero renderer errors, nine exact reclaims and clean teardown. World clear at serial 1099 is followed by 2D presentation and a successful reload at serial 1700; the operator confirmed visible recovery and working movement/look. The initial upstream-command attempt did not inject an error and is not accepted as recovery evidence. The normal no-grant build was restored at 18:58 UTC by exact FTP hashes without relaunch; it remains timed and audio-off. This closes this recovery path, not arbitrary failures, transition soaks or Phase 7. Earlier revisions below are historical.</p>
   <p>Revision 47 closes the tested viewmodel-event/live-effects increment: reload/crowbar, muzzleflash, wall marks, particles/tracers, blood and sprite lighting have operator acceptance. The final 18:17 engine/renderer pair passes 18,175 frames, nine reclaims, intact guards, zero errors and exact teardown. The validator accounts for the separate viewmodel and anonymous shell casings while retaining strict persistent-entity checks. Blood presentation defaults to 1.5 and is reversible with <code>ps5_blood_amount 1</code>; damage and DualSense v5 are unchanged. A normal no-grant build was restored by exact FTP hashes without relaunch. It still uses the timed, audio-off graphics harness, not a release package. Transition-aware evidence and Host_Error hardware recovery are next; broader Studio/effects parity, audio, gameplay/performance and release remain open. Earlier revisions below are historical.</p>
   <p>Revision 46 integrates NPC lighting, the NPOT mip-storage correction, ordinary chrome, callback save/restore coverage and the first separate viewmodel pose/draw path. Lighting/NPOT and chrome each have clean paired 10,990-frame resource runs. Operator QA confirms return from <code>c1a0d</code> to <code>c1a0</code>, pistol/crowbar use and immediate weapon cycling. DualSense profile v5 keeps R2 primary attack, radial deadzone 10%, exponent 1.6 and yaw/pitch 140/105 degrees per second. The controller guide is maintained in the port at <code>docs/SCEPAD_PHASE5.md</code>. Viewmodel effects/events/reload and remaining Studio coverage are still open; the multi-map validator and Host_Error recovery need their own acceptance. Normal no-grant build restored with exact FTP hashes, without relaunch. This is not Phase 7 completion.</p>
@@ -159,9 +160,9 @@
   <ol aria-label="Current five-task order">
     <li>Measured/configurable texture memory policy — complete.</li>
     <li>HUD/fonts/fades — complete; accepted PR #27 merged as <code>4726bd3</code>, retained in the current PR #28 pin <code>3cebf56</code>.</li>
-    <li>Studio/viewmodel — tested events, reload and live impact effects accepted with clean resources; explicit round-trip and controlled Host_Error recovery pass. Next: remaining controllers/forced effects and broader parity; longer transition soaks remain release work.</li>
-    <li>Real game audio — <code>XASH_AUDIO=1</code>, ambience/NPC/effects, audible evidence, ring telemetry and exact teardown.</li>
-    <li>Optional <code>valve_hd</code> — mount precedence, fallback, resource and performance validation.</li>
+    <li>Studio/viewmodel — events, reload, live effects, controllers, crossfade, two-blend routing and glowshell accepted; four-blend console coverage and broader parity remain.</li>
+    <li>Real game audio — first live run accepted with audible evidence and exact teardown; investigate startup underruns and validate map-transition/long-session behavior.</li>
+    <li>Optional <code>valve_hd</code> — first mount and visual/resource check accepted; validate fallback and long-session performance.</li>
   </ol>
   <p>Revision 44 implemented requested font/HUD modes, independent alpha test, FillRGBA state/color semantics and an alpha-zero screen shader in <a href="https://github.com/mpereiraesaa/ps5-xash3d/pull/27">Xash3D PR #27</a>. Its initial host/build evidence is retained in the checkpoint; revision 45 supersedes the former no-hardware-evidence declaration and moves Studio ahead of audio at the owner's request.</p>
   <p>Revision 43 removes the fixed 80-MiB texture allocation. The native renderer sizes its cache from measured direct-memory availability, explicit capacity or an automatic share, accounting for the rest of its heap and an outside reserve. A 256-MiB explicit run passes 1,999 frames and exact resource teardown. Host tests cover allocation/map rollback and transactional cache exhaustion. Automatic hardware acceptance and merged port identity are recorded in the checkpoint. The current iteration order is listed above.</p>
@@ -401,12 +402,12 @@
   <div class="body">
     <div class="head">
       <h2>Playable and release</h2>
-      <div class="meta"><span class="pill active">in progress · viewmodel completion next</span><span>World/menu, brush/NPCs, HUD, lighting/chrome and aim accepted; remaining Studio/viewmodel fidelity and game audio pending.</span></div>
+      <div class="meta"><span class="pill active">in progress · release coverage next</span><span>World/menu, brush/NPCs, HUD, Studio subset, live audio and first HD mount accepted; release coverage remains.</span></div>
     </div>
     <div class="visible"><b>Visible result.</b> HL1 playable start to finish from a signed title, released from a clean checkout with hashes.</div>
     <ol class="steps">
-      <li><b>In progress.</b> Native MainUI reaches <code>c1a0</code>; live brush transforms and first animated Studio NPCs now have operator evidence. Background color no longer occludes distant geometry, opaque Studio textures have mip/trilinear filtering, and STEP interpolation restores fluid NPC walking. Complete Studio fidelity and viewmodel next; do not fall back to an OpenGL emulation layer.</li>
-      <li><b>HUD accepted.</b> Chapter-title transparency, the white-scene flash fix and controlled font-mode/multiplicative-fade coverage have operator acceptance and clean paired resource regressions. Improve Studio lighting/viewmodel next, before validating live game audio separately: graphics runs use <code>XASH_AUDIO=0</code>. After full entities/viewmodel, compare a fixed-camera frame against the Phase 1 viewer.</li>
+      <li><b>Accepted first pass.</b> Native MainUI reaches <code>c1a0</code>; live brush transforms, animated Studio NPCs, crossfade/two-blend/glowshell, viewmodel effects, real audio and the optional <code>valve_hd</code> mount have operator evidence. Four-blend hardware coverage, startup audio underruns and diagnostic-overlay cleanup remain bounded tasks.</li>
+      <li><b>Release coverage next.</b> Validate fallback and map-transition/long-session behavior, compare a fixed-camera frame against the Phase 1 viewer, complete gameplay/performance budgets and transition soaks, then package from a fresh clone with a publication audit. Do not fall back to an OpenGL emulation layer.</li>
       <li>Prove DualSense gameplay through the tram ride, then save/load, level transitions and the first full chapter.</li>
       <li>Performance budget: 16.6 ms at 1080p on the heaviest retail map, measured with Phase 5 instrumentation.</li>
       <li>60k-frame soak in gameplay, plus a level-transition soak.</li>
