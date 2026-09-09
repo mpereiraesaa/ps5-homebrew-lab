@@ -13,7 +13,7 @@ Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
 | 6 — Engine integration | Complete, 6 gates closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI, GoldSrc client and RefAPI 18 `ref_agc` are hardware-proven with exact teardown. |
-| 7 — Playable and release | Active, native MainUI closed | Live `c1a0` world/special surfaces/2D and MainUI are native AGC output with exact ownership; the menu transitions to `c1a0` in-process. Entities/viewmodel, fixed-camera comparison, gameplay/performance, transition soaks and release remain open. |
+| 7 — Playable and release | Active, HUD/fonts/fades closed | Live world, MainUI, brush/NPCs and HUD fonts/fades have accepted native AGC evidence and exact ownership. Studio lighting/viewmodel is next, then game audio and HD-pack QA; fixed-camera comparison, gameplay/performance, transition soaks and release remain open. |
 
 The Phase 1/2 implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
@@ -860,11 +860,14 @@ The paired validator independently recomputes budget arithmetic and matches
 the actual cache allocation. Full identities and automatic-run evidence live
 in the port's docs/PHASE7_TEXTURE_MEMORY_POLICY.md.
 
-Next gates remain ordered: chapter-title/HUD blending, real game audio,
-Studio/viewmodel fidelity, then valve_hd mounting and resource validation.
+Next gates remain ordered: chapter-title/HUD blending, Studio lighting/viewmodel
+fidelity, real game audio, then valve_hd mounting and resource validation.
 None of these or the rest of Phase 7 is closed by the memory gate.
 
-## Phase 7 HUD/font correction — pending hardware QA (2026-09-09)
+## Phase 7 HUD/font correction — hardware accepted (2026-09-09)
+
+Xash3D PR #27 merged with all checks green as
+`4726bd3301aba5dba7659da22f9e82d6fead7105`, now the lab submodule pin.
 
 Plan revision 44 records draft Xash3D PR #27 at
 `f99929d69d345be7028afc10a71087cf870105ff`. Requested render modes now reach
@@ -881,16 +884,50 @@ Renderer PRX SHA-256:
 Exact compiled pixel shader bytes were located in the ELF, rather than
 assuming the source change reached the artifact.
 
-No deployment, launch, operator visual acceptance or paired teardown evidence
-exists for this HUD candidate yet. Keep PR #27 in draft and the lab submodule
-pinned to accepted `70ebea8`. Required next: confirm operator availability,
-canonical transactional deployment and paired console run; verify MainUI,
-chapter title without a black rectangle, readable fonts and fades, plus
-resource ownership/teardown. An ordinary title run does not automatically
-cover every font mode or multiplicative fade. The port's
-`docs/PHASE7_HUD_FONT_BLEND.md` contains the QA checklist and build evidence.
-Only after acceptance and integration proceed to real game audio, then Studio
-fidelity and HD-pack validation. This does not close the remainder of Phase 7.
+The initial candidate above was superseded by the native opaque-blend reset:
+the base world and background clear must not inherit additive HUD state.
+The operator accepted the transparent chapter title and removal of the
+white-scene flash. Corrected renderer ELF SHA-256 is
+`72b77e924283b3f9c5452ec63d63593a570fc90895e715e33d8e6073f3e6ab5a`;
+renderer PRX SHA-256 is
+`1037c7fc64a0a95d7cec55540b14835c56d28769856fe40ee3dcc5e6b126e6bf`.
+Paired engine run `20260909T134011789Z_PPSA99996_xash3d-engine_0x14cbe2b57d1b9`
+and renderer run `20260909T134011848Z_PPSA99996_ps5-xash3d_0x14cbe2ed915f6`
+passed 10,992 frames, nine exact reclaims, intact guards, zero errors and clean
+BYEs. The validator passes live lightmaps, 2D, menu, brush and Studio evidence;
+independent post-run status confirms no BigApp and four healthy services.
+Manual-close sessions are not teardown evidence.
+
+The subsequent opt-in exercise uses real engine console-font notifications
+(additive/masked/alpha) and `CL_DrawScreenFade` (alpha/multiplicative), with
+six 15-second observation stages and state restoration. The operator confirmed
+everything looked correct, including letters without rectangles. Paired runs
+`20260909T140302704Z_PPSA99996_xash3d-engine_0x14dfd5b292543` and
+`20260909T140302761Z_PPSA99996_ps5-xash3d_0x14dfd5e51453b` pass 10,993 frames,
+nine exact reclaims, intact guards, zero errors and clean BYEs. All stages and
+renderer masked/additive/alpha/modulate batches are recorded. The strict paired
+validator passes menu, lightmaps, 2D, brush and Studio requirements; independent
+post-run status confirms no BigApp and four healthy services.
+Diagnostic ELF: `d16d9d7ad8efe535b5e4d84310fe1a592cec6f3e00c1dafd0dde65cce32e6b33`;
+SELF: `3a639cd0343c2a0da1f4dea1e5c4a6b15eb0b3f1aee8ac71e8b87e090298ae71`.
+The renderer is unchanged from the corrected normal candidate above.
+The default-off normal build was restored without launching, using verified
+raw FTP hashes: ELF `878232f31299066486c1e3b4d8678c3f20d54a286bad2f7acc1e2a65f9724de2`,
+SELF `48395ac510aa1fb1acf2216962005c81a89a7aa50e774e75551429e843809854`.
+The port's `docs/PHASE7_HUD_FONT_BLEND.md` contains the full evidence.
+
+### Current five-task order — revision 45
+
+1. Measured/configurable texture memory policy — complete.
+2. HUD/fonts/fades — complete, accepted PR #27 integrated at `4726bd3`.
+3. Studio lighting/viewmodel — lighting, chrome, controllers, animation
+   transitions and viewmodel; preserve accepted smooth NPC walking.
+4. Real game audio — enable `XASH_AUDIO=1`, verify ambience, NPC voices and
+   effects with audible evidence, ring-buffer telemetry and exact teardown.
+5. Optional `valve_hd` — mount precedence, fallback, resources and performance.
+
+Studio is next at the owner's request; audio follows Studio. This changes
+priority, not scope. Phase 7 remains open.
 
 ## Remote Play operating contract
 

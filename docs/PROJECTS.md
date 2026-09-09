@@ -40,7 +40,8 @@ batches pasaron 1.044 frames emparejados con evidencia visual. El checkpoint
 mediante el command buffer del engine; el serial de mapa 1 aparece en el serial
 renderer 224 y el vídeo muestra ambos estados. El checkpoint posterior añade
 brush transforms, primeros NPCs Studio, mipmaps y movimiento STEP fluido. Quedan
-Studio completo, viewmodel, mezcla HUD, audio del juego, gameplay y soaks.
+Studio completo, viewmodel, audio del juego, gameplay y soaks. La mezcla HUD,
+fuentes y fades ya está aceptada e integrada mediante PR #27 (`4726bd3`).
 
 Identidades instaladas: Xash3D usa `PPSA99996` y la demo Gears usa
 `PPSA99997`, cada una con helpers exactos independientes. El host histórico
@@ -105,7 +106,8 @@ cliente y renderer como PRXs propios, con lifecycle explícito, callbacks ABI
 probados y teardown ordenado. La Fase 7 ya presenta el mundo, texturas base,
 lightmaps, skybox, superficies turbulentas, listas 2D y MainUI vivos, con
 transición nativa al mapa, brush transforms y primeros NPCs Studio. El trabajo
-inmediato es completar Studio/viewmodel y validar mezcla HUD y audio del juego.
+inmediato es completar iluminación Studio/viewmodel y después validar audio
+del juego; la mezcla HUD ya tiene aceptación visual y teardown exacto.
 
 Half-Life requiere datos originales que no forman parte del código del engine
 y nunca deben incorporarse a repositorios ni artefactos públicos.

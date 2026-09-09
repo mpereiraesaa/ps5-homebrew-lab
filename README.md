@@ -71,11 +71,13 @@ aparece en el serial 224, con vídeo directo de ambos estados, ocho recursos
 reclamados y teardown exacto. El nuevo checkpoint añade brush entities y NPCs
 Studio animados, corrige la oclusión negra del fondo y el movimiento STEP, y
 mejora el filtrado de modelos. La validación final completa 10.997 frames y
-nueve recursos reclamados con cero errores y teardown exacto. Quedan Studio completo, viewmodel, mezcla del
-título de capítulo, audio del juego, cámara fija, gameplay, rendimiento y soaks.
+nueve recursos reclamados con cero errores y teardown exacto. PR #27
+(`4726bd3`) cierra además la mezcla del título, fuentes y fades con aceptación
+visual y 10.993 frames limpios. Siguen Studio lighting/viewmodel, después audio
+del juego, cámara fija, gameplay, rendimiento y soaks.
 El presupuesto de texturas ya es configurable y se calcula con memoria
 disponible medida: 256 MiB explícitos y el modo automático tienen evidencia
-en consola. El plan rev 43 y el checkpoint separan capacidad reservada de
+en consola. El plan rev 45 y el checkpoint separan capacidad reservada de
 texturas residentes; no se promete crecimiento dinámico ni soporte HD validado.
 
 La identidad de consola también está separada y validada: Xash3D usa
