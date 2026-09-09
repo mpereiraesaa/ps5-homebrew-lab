@@ -13,7 +13,7 @@ Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
 | 6 — Engine integration | Complete, 6 gates closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI, GoldSrc client and RefAPI 18 `ref_agc` are hardware-proven with exact teardown. |
-| 7 — Playable and release | Active, gate 1 in progress | Live `c1a0` world extraction and AGC submission are proven; synchronized presentation is black, so visible sampling remains open before entities/UI, gameplay/performance, transition soaks and release. |
+| 7 — Playable and release | Active, visible-world gate closed | Live `c1a0` geometry and base textures are compositor-visible with exact ownership; lightmaps/special surfaces, entities/viewmodel, 2D/UI, gameplay/performance, transition soaks and release remain open. |
 
 The Phase 1/2 implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
@@ -21,8 +21,9 @@ path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
 the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 7
-live-world checkpoint `bd4b250`; the Phase 6 final renderer checkpoint is
-`258fbe3`, the preceding client-PRX checkpoint is `3a30250`,
+compositor-visible world checkpoint `cdcce91`; the preceding live-world
+submission checkpoint is `bd4b250`, and the Phase 6 final renderer checkpoint
+is `258fbe3`, the preceding client-PRX checkpoint is `3a30250`,
 and includes the dedicated title icon from `ea9be4b`.
 `ps5-agc-gears` is frozen as the Gears demo (`ps5-agc-gears#10` reverts #8/#9).
 
@@ -659,26 +660,28 @@ RefAPI/module boundary and real native presentation, not yet arbitrary live
 engine-entity translation. That bridge, playable traversal, saves/transitions
 and release soaks are the Phase 7 boundary. Phase 6 is complete.
 
-### Phase 7 live-world submission: open visual gate (2026-09-09)
+### Phase 7 compositor-visible live world (2026-09-09)
 
-Xash3D PR #19, merged as `bd4b250`, replaces the baked world draw loop with
-geometry, view state and texture references extracted from the engine's parsed
-`c1a0` model. Correlated FW 12.02 runs
-`20260908T232706159Z_PPSA99996_xash3d-engine_0x11e30bf78529b` and
-`20260908T232706214Z_PPSA99996_ps5-xash3d_0x11e30c30c3800` began 55 ms apart
-and matched 1,076 engine/renderer frame serials. They staged 17,245 vertices,
-29,565 indices and 3,695 per-surface draws, resolved all 164 world texture
-references and recorded nonzero GPU readback hashes with zero structured
-errors. All eight parent resources were reclaimed and the five PRXs unloaded
-with active counts 4, 3, 2, 1 and 0.
+Xash3D PR #20, merged as `cdcce91`, closes the presentation boundary left by
+PR #19. A serial hardware A/B captured the no-handoff and post-bundle-handoff
+forms as byte-identical black frames. The same renderer becomes visible when a
+bounded 10 ms scheduler handoff occurs after bundle load and live-camera
+fallback initialization, before command/pipeline planning. This location is
+pinned by a host contract and reported as `live_camera_settle_ns=10000000`;
+the internal firmware mechanism remains an inference, not a documented cause.
 
-That evidence closes CPU extraction, direct-memory upload, descriptor-table
-construction, AGC draw submission and exact teardown only. A synchronized
-1920×1080 CLI Remote Play capture taken while `PPSA99996` was the active title
-was completely black. Nonzero readback counters therefore do not prove visible
-texture sampling. The next iteration must make a controlled live-world draw
-recognizable and compare a fixed `c1a0` camera against the Phase 1 viewer before
-live lightmaps, sky/turbulent surfaces, entities or 2D/UI are added.
+Final correlated FW 12.02 runs
+`20260909T005027224Z_PPSA99996_xash3d-engine_0x122bd226f4e00` and
+`20260909T005027279Z_PPSA99996_ps5-xash3d_0x122bd25b72b53` began 55 ms apart
+and matched 1,076 serials. They staged 17,245 vertices, 29,565 indices and
+3,695 draws, resolved 164/164 world textures, reclaimed all eight parent
+resources and unloaded the five PRXs at active counts 4, 3, 2, 1 and 0 with
+zero renderer errors. The synchronized 1920×1080 capture, taken after
+`PPSA99996` launch verification, visibly shows the textured tram interior and
+has SHA-256
+`1ee3578b517bee368f72805d3a9ecd339a5f7de65de462bbefd7a6d7a19c1850`.
+This closes live base-texture sampling and compositor presentation. Lightmaps,
+native sky/turbulent semantics, entities, viewmodel and 2D/UI remain open.
 
 ## Remote Play operating contract
 
