@@ -1,6 +1,6 @@
 # Current development boundary
 
-Last reconciled: 2026-09-09. Tested console firmware: PS5 12.02.
+Last reconciled: 2026-09-10. Tested console firmware: PS5 12.02.
 
 ## Canonical implementation
 
@@ -356,15 +356,16 @@ one image released and clean BYE. Eight host DLL bindings remain unimplemented.
 The validator accepted --allow-i386 and --allow-wx; one 16 KiB page merges
 write/execute permissions. That mapping run executed no guest instructions or graphics.
 
-Subsequent bounded host translation executed 385 instructions (4096-event limit) from the original
-Pinball entry plus GetModuleHandleA(NULL), returning the mapped base 0x01000000,
-and the CRT state setter __set_app_type, both mode-pointer getters, _controlfp, _initterm and __getmainargs.
-It now binds 207 imports (205 function tokens, two CRT data words) and stops
-at lstrcpyA, after malloc allocates guest memory for the resource string, GetStartupInfoA and the original initializer callback with its enclosing _initterm.
-Sixteen distinct APIs completed (eighteen calls). Six clock/ID handlers have host
-unit tests, with PS5 clock wiring pending. Nested callback evidence remains synthetic.
-Guest FP control state and CRT mode-pointer getters also
-have host unit coverage. Other handlers remain pending; binding is not implementation.
+Subsequent bounded host translation now executes 723 instructions from the
+original Pinball entry and completes 38 API calls (23 distinct APIs). It binds
+all 207 imports (205 function tokens, two CRT data words), completes the real
+initializer callback, heap/string/resource setup and both source-confirmed
+registry sequences, then stops explicitly at `GetModuleFileNameA`. Registry is
+a fixed-capacity owner-supplied service with all seven target adapters; security,
+WOW64 views and persistence remain pending. Six clock/ID handlers have host unit
+tests, with PS5 clock wiring pending. Nested callback evidence remains synthetic.
+Guest FP state now includes the isolated raw 80-bit x87 stack as well as control
+state; x87 arithmetic does not execute yet. Binding is not implementation.
 This is not PS5 guest execution or completed Win32 startup.
 See `projects/prospero-win/docs/X86_EXECUTION.md`.
 
@@ -375,6 +376,21 @@ Window creation reaches audio/table initialization, so these dependencies must
 be planned together. Six subsystem packages and evidence limits are recorded in
 `projects/prospero-win/docs/STARTUP_ANALYSIS.md`. This is static analysis, not
 new hardware or application-startup execution evidence.
+The production translator accepts 22,816/25,538 reachable static instructions
+(89.34%). The 2,300 x87 occurrences reduce to 54 unique semantic forms, only 36
+in the startup graph. The sanitized aggregate is checked in as
+`projects/prospero-win/docs/PINBALL_X86_COVERAGE.json`; no bytes or assembly are
+published. A generation-scoped translated-block cache lifecycle core now has
+overflow, duplicate-publication, hit/miss and invalidation tests, but the host
+diagnostic runner has not integrated it yet.
+
+The target SHA-1 exactly matches the public MIT SpaceCadetPinball reconstruction.
+A reproducible source-oracle gate pins its original-Win32 and maintained commits,
+PDB GUID/age and ten public symbol addresses. Entry, WinMain and window-procedure
+addresses independently equal the Ghidra roots. This makes the pre-SDL source a
+verified semantic ordering oracle while the binary/Ghidra remain authoritative
+for ABI and instructions. The privacy-safe manifest is
+`projects/prospero-win/docs/PINBALL_SOURCE_ORACLE.json`.
 The guest heap core now implements allocation, zeroing, resizing and coalescing
 with host regression coverage. All four CRT adapters and logical guest errno
 are integrated; registered new handlers and the errno pointer export remain
@@ -399,13 +415,14 @@ adapter. This does not implement a Win32 API or validate PS5 callbacks.
 Scope: `projects/prospero-win/docs/GUEST_ABI.md`.
 The shared PE32 import binder passes synthetic function/data, ordinal and
 failure-atomicity tests and is integrated in the original Pinball host trace.
-The catalog and narrow first API case are in `src/pw_win32.c`; full subsystem
-implementations and console integration remain pending.
+The catalog and initial API packages are in `src/pw_win32.c`; full subsystem
+coverage and console execution integration remain pending.
 
 Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
 does not eliminate x86 address/stack rewriting or establish a large guest
-working-set budget. Next: extend the bounded x86 translator, validate it on
-hardware and implement the Pinball Win32 surface. Reuse Xash3D audio/input contracts
+working-set budget. Next: integrate cached multi-instruction blocks, implement
+the 36 startup x87 forms by tested semantic groups and continue the source-ranked
+Win32 surface from `GetModuleFileNameA`. Then validate on hardware. Reuse Xash3D audio/input contracts
 with WinMM and Win32 adapters; resolve component licensing before extraction.
 
 Canonical status, artifact hashes and acceptance command:
