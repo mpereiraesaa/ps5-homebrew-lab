@@ -356,11 +356,12 @@ one image released and clean BYE. Eight host DLL bindings remain unimplemented.
 The validator accepted --allow-i386 and --allow-wx; one 16 KiB page merges
 write/execute permissions. That mapping run executed no guest instructions or graphics.
 
-Subsequent bounded host translation now executes 723 instructions from the
-original Pinball entry and completes 38 API calls (23 distinct APIs). It binds
-all 207 imports (205 function tokens, two CRT data words), completes the real
-initializer callback, heap/string/resource setup and both source-confirmed
-registry sequences, then stops explicitly at `GetModuleFileNameA`. Registry is
+Subsequent bounded host translation now reaches the public-PDB-verified
+`WinMain` address and retires 1,823 instructions from the original Pinball
+entry while completing 105 API calls (30 distinct APIs). It binds all 207
+imports (205 function tokens, two CRT data words), completes the real initializer
+callback, heap/string/resource/registry setup and initial User32 setup, then
+stops explicitly at `LoadIconA` before class registration. Registry is
 a fixed-capacity owner-supplied service with all seven target adapters; security,
 WOW64 views and persistence remain pending. Six clock/ID handlers have host unit
 tests, with PS5 clock wiring pending. Nested callback evidence remains synthetic.
@@ -376,13 +377,14 @@ Window creation reaches audio/table initialization, so these dependencies must
 be planned together. Six subsystem packages and evidence limits are recorded in
 `projects/prospero-win/docs/STARTUP_ANALYSIS.md`. This is static analysis, not
 new hardware or application-startup execution evidence.
-The production translator accepts 22,816/25,538 reachable static instructions
-(89.34%). The 2,300 x87 occurrences reduce to 54 unique semantic forms, only 36
+The production translator accepts 22,839/25,538 reachable static instructions
+(89.43%). The 2,300 x87 occurrences reduce to 54 unique semantic forms, only 36
 in the startup graph. The sanitized aggregate is checked in as
 `projects/prospero-win/docs/PINBALL_X86_COVERAGE.json`; no bytes or assembly are
-published. A generation-scoped translated-block cache lifecycle core now has
-overflow, duplicate-publication, hit/miss and invalidation tests, but the host
-diagnostic runner has not integrated it yet.
+published. The host runner now integrates the generation-scoped translated-block
+cache: the reference run records 417 dispatches, 270 hits, 147 misses/publishes,
+45,488 emitted bytes and exact retired-prefix accounting. Publication uses an
+RW-to-RX lifecycle; invalidation and mid-block-fault behavior have regressions.
 
 The target SHA-1 exactly matches the public MIT SpaceCadetPinball reconstruction.
 A reproducible source-oracle gate pins its original-Win32 and maintained commits,
@@ -420,9 +422,9 @@ coverage and console execution integration remain pending.
 
 Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
 does not eliminate x86 address/stack rewriting or establish a large guest
-working-set budget. Next: integrate cached multi-instruction blocks, implement
-the 36 startup x87 forms by tested semantic groups and continue the source-ranked
-Win32 surface from `GetModuleFileNameA`. Then validate on hardware. Reuse Xash3D audio/input contracts
+working-set budget. Next: implement the 36 startup x87 forms by tested semantic
+groups and continue the source-ranked resource/window surface from `LoadIconA`.
+Then validate on hardware. Reuse Xash3D audio/input contracts
 with WinMM and Win32 adapters; resolve component licensing before extraction.
 
 Canonical status, artifact hashes and acceptance command:
