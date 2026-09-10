@@ -372,9 +372,11 @@ tests, with PS5 clock wiring pending. Nested callback evidence remains synthetic
 Guest FP state now includes isolated raw 80-bit x87 stack/control state plus an
 integer-only binary80 execution layer. All 36 startup forms and 384 startup x87
 occurrences are accepted without installing guest state in host FP controls.
-Unmasked invalid, divide-by-zero and precision cases now preserve the faulting
-destination, set per-thread status/pending bits and leave the DBT at the exact
-faulting PC with a distinct `x87-trap`; guest exception-handler delivery remains pending.
+Masked x87 stack faults now apply the AMD indefinite response, TOP/tag updates,
+`IE|SF` and directional `C1`. Unmasked stack, invalid, divide-by-zero and
+precision cases preserve the faulting destination, set per-thread status/pending
+bits and leave the DBT at the exact faulting PC with a distinct `x87-trap`;
+guest exception-handler delivery remains pending.
 Binding is not implementation.
 This is not PS5 guest execution or completed Win32 startup.
 See `projects/prospero-win/docs/X86_EXECUTION.md`.
