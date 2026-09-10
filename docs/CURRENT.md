@@ -357,11 +357,13 @@ The validator accepted --allow-i386 and --allow-wx; one 16 KiB page merges
 write/execute permissions. That mapping run executed no guest instructions or graphics.
 
 Subsequent bounded host translation now reaches the public-PDB-verified
-`WinMain` address and retires 1,823 instructions from the original Pinball
-entry while completing 105 API calls (30 distinct APIs). It binds all 207
+`WinMain` address and retires 1,944 instructions from the original Pinball
+entry while completing 113 API calls (33 distinct APIs). It binds all 207
 imports (205 function tokens, two CRT data words), completes the real initializer
 callback, heap/string/resource/registry setup and initial User32 setup, then
-stops explicitly at `LoadIconA` before class registration. Registry is
+resolves the named icon and system cursor into owned objects, registers the
+source-confirmed splash class and stops explicitly at `CreateWindowExA` before
+its synchronous WndProc callbacks. Registry is
 a fixed-capacity owner-supplied service with all seven target adapters; security,
 WOW64 views and persistence remain pending. Six clock/ID handlers have host unit
 tests, with PS5 clock wiring pending. Nested callback evidence remains synthetic.
@@ -385,8 +387,8 @@ startup graph; the 47 remaining x87 occurrences are later wndproc/gameplay
 forms and 399 rejected instructions are non-x87. The sanitized aggregate is checked in as
 `projects/prospero-win/docs/PINBALL_X86_COVERAGE.json`; no bytes or assembly are
 published. The host runner now integrates the generation-scoped translated-block
-cache: the reference run records 417 dispatches, 270 hits, 147 misses/publishes,
-45,488 emitted bytes and exact retired-prefix accounting. Publication uses an
+cache: the reference run records 437 dispatches, 279 hits, 158 misses/publishes,
+50,704 emitted bytes and exact retired-prefix accounting. Publication uses an
 RW-to-RX lifecycle; invalidation and mid-block-fault behavior have regressions.
 
 The target SHA-1 exactly matches the public MIT SpaceCadetPinball reconstruction.
@@ -425,8 +427,8 @@ coverage and console execution integration remain pending.
 
 Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
 does not eliminate x86 address/stack rewriting or establish a large guest
-working-set budget. Next: continue the source-ranked resource/window surface
-from `LoadIconA` and exercise the x87 layer on each newly reached runtime path.
+working-set budget. Next: implement owned window creation and ordered guest
+WndProc callbacks from `CreateWindowExA`, and exercise x87 on each newly reached runtime path.
 Then validate on hardware. Reuse Xash3D audio/input contracts
 with WinMM and Win32 adapters; resolve component licensing before extraction.
 
