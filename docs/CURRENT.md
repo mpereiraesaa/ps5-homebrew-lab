@@ -365,8 +365,10 @@ stops explicitly at `LoadIconA` before class registration. Registry is
 a fixed-capacity owner-supplied service with all seven target adapters; security,
 WOW64 views and persistence remain pending. Six clock/ID handlers have host unit
 tests, with PS5 clock wiring pending. Nested callback evidence remains synthetic.
-Guest FP state now includes the isolated raw 80-bit x87 stack as well as control
-state; x87 arithmetic does not execute yet. Binding is not implementation.
+Guest FP state now includes isolated raw 80-bit x87 stack/control state plus an
+integer-only binary80 execution layer. All 36 startup forms and 384 startup x87
+occurrences are accepted without installing guest state in host FP controls.
+Binding is not implementation.
 This is not PS5 guest execution or completed Win32 startup.
 See `projects/prospero-win/docs/X86_EXECUTION.md`.
 
@@ -377,9 +379,10 @@ Window creation reaches audio/table initialization, so these dependencies must
 be planned together. Six subsystem packages and evidence limits are recorded in
 `projects/prospero-win/docs/STARTUP_ANALYSIS.md`. This is static analysis, not
 new hardware or application-startup execution evidence.
-The production translator accepts 22,839/25,538 reachable static instructions
-(89.43%). The 2,300 x87 occurrences reduce to 54 unique semantic forms, only 36
-in the startup graph. The sanitized aggregate is checked in as
+The production translator accepts 25,092/25,538 reachable static instructions
+(98.25%). It accepts 2,253/2,300 x87 occurrences, including all 36 forms in the
+startup graph; the 47 remaining x87 occurrences are later wndproc/gameplay
+forms and 399 rejected instructions are non-x87. The sanitized aggregate is checked in as
 `projects/prospero-win/docs/PINBALL_X86_COVERAGE.json`; no bytes or assembly are
 published. The host runner now integrates the generation-scoped translated-block
 cache: the reference run records 417 dispatches, 270 hits, 147 misses/publishes,
@@ -422,8 +425,8 @@ coverage and console execution integration remain pending.
 
 Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
 does not eliminate x86 address/stack rewriting or establish a large guest
-working-set budget. Next: implement the 36 startup x87 forms by tested semantic
-groups and continue the source-ranked resource/window surface from `LoadIconA`.
+working-set budget. Next: continue the source-ranked resource/window surface
+from `LoadIconA` and exercise the x87 layer on each newly reached runtime path.
 Then validate on hardware. Reuse Xash3D audio/input contracts
 with WinMM and Win32 adapters; resolve component licensing before extraction.
 
