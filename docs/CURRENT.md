@@ -366,9 +366,11 @@ acceptance point it had retired 649,958,605 guest instructions, completed
 blocks and consumed 2,975 connected pad samples with no
 abort/signal/read/profile error. The exact current source also passed a finite
 18-second launch with 473 state bytes loaded, 878 audio blocks, all cleanup
-results successful and a matching `BYE`. The only remaining P5/P6 acceptance
-is physical gameplay by the owner. MIDI music is optional and off by default;
-general Win32 compatibility and D3D8/9 remain later milestones.
+results successful and a matching `BYE`. The owner then accepted Cross launch,
+both shoulder flippers, scoring, ball loss, Options pause/resume and Square
+new-game restart on the post-fix production candidate. P5/P6 are complete.
+MIDI music is optional and off by default; general Win32 compatibility and
+D3D8/9 remain later milestones.
 
 Canonical current hashes and run IDs are in
 `projects/prospero-win/docs/HARDWARE_VALIDATION.md`.

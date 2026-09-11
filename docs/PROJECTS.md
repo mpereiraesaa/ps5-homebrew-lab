@@ -92,7 +92,8 @@ para `WM_QUIT` y teardown ordenado. Estado de registro checksummed, parsing de
 `wavemix.inf`, pacing de la cola y cierre de todos los recursos tienen pruebas
 host y evidencia FW 12.02. La ruta continua superó diez minutos sin abortos;
 una build finita cargó 473 bytes persistentes, emitió 878 bloques PCM y cerró
-con `BYE`. Sólo queda la aceptación física de gameplay por el propietario.
+con `BYE`. El propietario confirmó lanzamiento, ambos flippers, puntuación,
+pérdida de bola, pausa/reanudación y nueva partida: P5/P6 están completos.
 
 La música MIDI, desactivada por defecto por el juego, sigue fuera del target:
 el único `MCI_OPEN` se rechaza honestamente mientras el audio PCM requerido
