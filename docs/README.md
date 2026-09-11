@@ -45,9 +45,10 @@ make agc-sdk-check
 
 The public-facing demo has its independent documentation under
 `projects/ps5-agc-gears/docs/`. The Win32 compatibility layer documents
-itself under `projects/prospero-win/docs/`; Pinball P5/P6 is complete and its
-accepted boundary is recorded in `ROADMAP.md` and `HARDWARE_VALIDATION.md`,
-while `PE_MAPPING_PHASE0.md` remains the dated foundation record.
+itself under `projects/prospero-win/docs/`; Pinball is its first playable title
+and the exact accepted boundary is recorded in `ROADMAP.md` and
+`HARDWARE_VALIDATION.md`, while `PE_MAPPING_PHASE0.md` remains the dated
+foundation record.
 
 The Xash3D Phase 1/2 implementation was merged through public Gears PR #8 as
 commit `642d348`; the checked-in Gears submodule pins that exact canonical

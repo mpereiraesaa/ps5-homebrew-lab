@@ -35,11 +35,12 @@ An experimental Windows compatibility runtime for PS5. It maps PE images,
 translates 32-bit x86 into x86-64, supplies reviewed Win32/CRT services and
 connects guest presentation, audio and input to native PS5 backends.
 
-Its first target is complete through P5/P6: the owner's original Windows XP
-Space Cadet Pinball executable runs without recompilation and has passed
-physical gameplay acceptance for launch, both flippers, scoring, ball loss,
-pause/resume and new-game restart. No Windows executable or game asset is
-included.
+It has reached its first playable title: the owner's original Windows XP Space
+Cadet Pinball executable runs without recompilation and has passed physical
+gameplay checks for launch, both flippers, scoring, ball loss, pause/resume and
+new-game restart. Pinball is the first compatibility target, not the scope of
+the runtime; pacing and presentation polish remain. No Windows executable or
+game asset is included.
 
 ### [logging_server](projects/logging_server/README.md)
 
