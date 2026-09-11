@@ -2,16 +2,12 @@
 
 ## Port Xash3D sobre AGC — activo
 
-Pin actual: `3e78c1a`, [PR #31 fusionado](https://github.com/mpereiraesaa/ps5-xash3d/pull/31).
+Pin actual: `a1cd517`, [PR #34 fusionado](https://github.com/mpereiraesaa/ps5-xash3d/pull/34).
 
-Checkpoint actual: plan rev 49. La cobertura Studio combinada acepta visualmente
-controladores, crossfade, dos blends y glowshell; no hubo modelo visible de cuatro
-blends. Audio real fue audible y cerró con 18.179 frames, cero errores de salida,
-cero descartes y teardown exacto (seis underruns sólo al arranque). El primer
-montaje de `valve_hd` instaló 115 archivos verificados y pasó la QA visual con
-18.165 frames y cero errores. Quedan overlays de diagnóstico, pulido de
-underruns, soaks de transición/audio/HD, gameplay, rendimiento y release; Fase 7
-continúa abierta.
+Checkpoint actual: primera versión PLAYABLE de Half-Life 1. Motor y módulos del
+juego, renderer AGC, DualSense, audio, transiciones de mapa y save/load funcionan
+juntos en FW 12.02; `valve_hd` tiene aceptación separada. Quedan pulido de
+release y cobertura más amplia de gameplay y rendimiento.
 
 Implementación canónica: `projects/ps5-xash3d` (`mpereiraesaa/ps5-xash3d`,
 repositorio público), bifurcado de `ps5-agc-gears` en

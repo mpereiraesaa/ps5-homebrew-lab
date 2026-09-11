@@ -14,11 +14,11 @@ engines.
 ### [ps5-xash3d](projects/ps5-xash3d/README.md)
 
 The active native Xash3D/GoldSrc port and canonical AGC renderer. It boots the
-engine, loads the original game modules and renders `c1a0` through native PS5
-graphics, input and audio backends. Phases 0–6 are complete; Phase 7 has
-hardware-validated live world geometry, lightmaps, special surfaces, 2D,
-Studio models, effects, game audio and an optional HD-content mount. Release
-polish, longer transition/audio/HD soaks and broader gameplay coverage remain.
+engine, loads the original game modules and renders playable Half-Life 1
+through native PS5 graphics, input and audio backends. The first playable
+release covers live world geometry, lightmaps, special surfaces, 2D, Studio
+models, effects, game audio, save/load and an optional HD-content mount.
+Release polish and broader gameplay coverage remain.
 
 The laboratory pins the public repository as a submodule. Its own README and
 roadmap are authoritative for current port status.
