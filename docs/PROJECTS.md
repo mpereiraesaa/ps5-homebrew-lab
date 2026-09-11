@@ -81,28 +81,23 @@ copiado desde un proyecto tercero.
 
 `projects/prospero-win` (PPSA99995) busca ejecutar binarios Windows originales.
 PE64 necesita puentes ABI Win64; PE32 requiere ejecución por software. La ruta
-LDT probada está rechazada en FW 12.02. La ejecución de aplicaciones sigue
-pendiente; el primer juego objetivo es el Space Cadet Pinball original.
+LDT probada está rechazada en FW 12.02. El primer objetivo, el Space Cadet
+Pinball original PE32, ya ejecuta sin recompilación mediante el DBT propio.
 
-El mapeo del Pinball original pasó en PS5 el 2026-09-08:
-`20260908T145242477Z_PPSA99995_prospero-win_0x1021ed623a4eb`.
-Base 0x01000000, 311296 bytes reservados, tres secciones verificadas sin
-discrepancias y cierre limpio. Una página de 16 KiB combina permisos WX.
-Las ocho DLLs se clasificaron como interfaces host aún sin implementar.
+El candidato P5/P6 muestra la mesa completa animada a 1920×1080 mediante GDI,
+AGC DMA y VideoOut, y reproduce los efectos WaveMix originales mediante
+SceAudioOut. Abre DualSense con la ABI medida de ScePad, traduce flippers,
+plunger, nudges, pausa y nueva partida a mensajes Win32, y reserva `Create`
+para `WM_QUIT` y teardown ordenado. Estado de registro checksummed, parsing de
+`wavemix.inf`, pacing de la cola y cierre de todos los recursos tienen pruebas
+host y evidencia FW 12.02. La ruta continua superó diez minutos sin abortos;
+una build finita cargó 473 bytes persistentes, emitió 878 bloques PCM y cerró
+con `BYE`. Sólo queda la aceptación física de gameplay por el propietario.
 
-El traductor acotado ejecutó en host 385 instrucciones del arranque original (límite de 4096 eventos),
-GetModuleHandleA(NULL), __set_app_type, los dos getters CRT, _controlfp, _initterm y __getmainargs. Enlaza 205 funciones y dos datos;
-los getters de modos CRT tienen pruebas unitarias y los demás handlers
-siguen pendientes. El callback original ya retorna junto con su _initterm;
-hay dieciocho llamadas completadas a dieciséis APIs distintas. GetStartupInfoA, LoadStringA, lstrlenA y malloc retornan y
-el siguiente stop es lstrcpyA; el anidamiento de callbacks sigue validado sólo con pruebas sintéticas.
-Esto no acredita ejecución del juego en PS5 ni
-inicialización Win32. Detalles: `projects/prospero-win/docs/X86_EXECUTION.md`.
-
-Próximos pasos: ampliar y validar ejecución x86/ABI, APIs Win32 y presentación AGC.
-Audio y control partirán de los contratos validados de Xash3D; WinMM, mensajes
-Windows y MIDI necesitan adaptación. Licencia declarada LGPL-2.1-or-later;
-la extracción de componentes GPL de Xash3D requiere resolver su licencia.
+La música MIDI, desactivada por defecto por el juego, sigue fuera del target:
+el único `MCI_OPEN` se rechaza honestamente mientras el audio PCM requerido
+permanece activo. La compatibilidad Win32 general y D3D8/9 son P7/P8, no
+afirmaciones del milestone Pinball. Licencia LGPL-2.1-or-later.
 
 Estado y evidencias: `projects/prospero-win/docs/PINBALL_TARGET.md`.
 Plan vigente: `projects/prospero-win/docs/ROADMAP.md`.

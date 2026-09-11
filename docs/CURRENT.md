@@ -1,6 +1,6 @@
 # Current development boundary
 
-Last reconciled: 2026-09-10. Tested console firmware: PS5 12.02.
+Last reconciled: 2026-09-11. Tested console firmware: PS5 12.02.
 
 ## Canonical implementation
 
@@ -344,104 +344,38 @@ ledger and reproduction scripts live under
 
 prospero-win (PPSA99995) targets original Windows binaries. AMD64 execution
 requires Win64 ABI bridges; x86 requires software execution because the tested
-LDT compatibility-mode route is refused on FW 12.02. Neither application
-execution path is complete. The first game target is original Space Cadet
-Pinball, without recompilation; DRM and anti-cheat are out of scope.
+LDT compatibility-mode route is refused on FW 12.02. The first game target is
+original Space Cadet Pinball, without recompilation; DRM and anti-cheat are out
+of scope.
 
-Phase 0.1 synthetic mapping passed. The original Pinball PE32 also passed
-mapping on PS5 in run
-`20260908T145242477Z_PPSA99995_prospero-win_0x1021ed623a4eb`: exact base
-0x01000000, 311296 reserved bytes, three verified sections, zero mismatches,
-one image released and clean BYE. Eight host DLL bindings remain unimplemented.
-The validator accepted --allow-i386 and --allow-wx; one 16 KiB page merges
-write/execute permissions. That mapping run executed no guest instructions or graphics.
+### Current P5/P6 checkpoint
 
-Subsequent bounded host translation now reaches the public-PDB-verified
-`WinMain` address and retires 2,031 instructions from the original Pinball
-entry while completing 120 API calls (38 distinct APIs). It binds all 207
-imports (205 function tokens, two CRT data words), completes the real initializer
-callback, heap/string/resource/registry setup and initial User32 setup, then
-resolves the named icon and system cursor into owned objects, registers the
-source-confirmed splash class, allocates its HWND transactionally and executes
-both synchronous guest WndProc callbacks. It stores the splash pointer in the
-class's four owned extra bytes, queries a configured 1920x1080 virtual desktop
-and stops explicitly at `GetDC`, the first unimplemented GDI ownership boundary. Registry is
-a fixed-capacity owner-supplied service with all seven target adapters; security,
-WOW64 views and persistence remain pending. Six clock/ID handlers have host unit
-tests, with PS5 clock wiring pending. Nested callback evidence remains synthetic.
-Guest FP state now includes isolated raw 80-bit x87 stack/control state plus an
-integer-only binary80 execution layer. All 36 startup forms and 384 startup x87
-occurrences are accepted without installing guest state in host FP controls.
-Masked x87 stack faults now apply the AMD indefinite response, TOP/tag updates,
-`IE|SF` and directional `C1`. Unmasked stack, invalid, divide-by-zero and
-precision cases preserve the faulting destination, set per-thread status/pending
-bits and leave the DBT at the exact faulting PC with a distinct `x87-trap`;
-guest exception-handler delivery remains pending.
-Binding is not implementation.
-This is not PS5 guest execution or completed Win32 startup.
-See `projects/prospero-win/docs/X86_EXECUTION.md`.
+The original PE32 now executes continuously through the project DBT on FW
+12.02. Its complete animated GDI table is composed correctly, transferred by
+AGC DMA and presented through VideoOut; its WaveMix path feeds original PCM to
+SceAudioOut. The reusable ScePad adapter maps plunger, both flippers, nudges,
+pause and new game into Win32 messages, neutralizes every ownership boundary
+and maps the raw Create edge to orderly `WM_QUIT`. Persistent registry state,
+bounded `wavemix.inf` parsing, idle pacing and exhaustive teardown are covered
+by host regressions and structured `ps5log/1` evidence.
 
-Ghidra startup survey: file-backed imported bytes match the private target.
-Entry, main startup, window procedure and message-pump roots are identified;
-callback-inclusive reachability is materially larger than entry-only reachability.
-Window creation reaches audio/table initialization, so these dependencies must
-be planned together. Six subsystem packages and evidence limits are recorded in
-`projects/prospero-win/docs/STARTUP_ANALYSIS.md`. This is static analysis, not
-new hardware or application-startup execution evidence.
-The production translator accepts 25,092/25,538 reachable static instructions
-(98.25%). It accepts 2,253/2,300 x87 occurrences, including all 36 forms in the
-startup graph; the 47 remaining x87 occurrences are later wndproc/gameplay
-forms and 399 rejected instructions are non-x87. The sanitized aggregate is checked in as
-`projects/prospero-win/docs/PINBALL_X86_COVERAGE.json`; no bytes or assembly are
-published. The host runner now integrates the generation-scoped translated-block
-cache: the reference run records 463 dispatches, 288 hits, 175 misses/publishes,
-55,088 emitted bytes and exact retired-prefix accounting. Publication uses an
-RW-to-RX lifecycle; invalidation and mid-block-fault behavior have regressions.
+The continuous path has passed a strict soak beyond ten minutes with more than
+700 million retired guest instructions, 7,600 changing-frame flips, active
+audio and no abort/signal/read/profile error. The exact current source also
+passed a finite 18-second launch with 473 state bytes loaded, 878 audio blocks,
+all cleanup results successful and a matching `BYE`. The only remaining P5/P6
+acceptance is physical gameplay by the owner. MIDI music is optional and off by
+default; general Win32 compatibility and D3D8/9 remain later milestones.
 
-The target SHA-1 exactly matches the public MIT SpaceCadetPinball reconstruction.
-A reproducible source-oracle gate pins its original-Win32 and maintained commits,
-PDB GUID/age and ten public symbol addresses. Entry, WinMain and window-procedure
-addresses independently equal the Ghidra roots. This makes the pre-SDL source a
-verified semantic ordering oracle while the binary/Ghidra remain authoritative
-for ABI and instructions. The privacy-safe manifest is
-`projects/prospero-win/docs/PINBALL_SOURCE_ORACLE.json`.
-The guest heap core now implements allocation, zeroing, resizing and coalescing
-with host regression coverage. All four CRT adapters and logical guest errno
-are integrated; registered new handlers and the errno pointer export remain
-pending. The host tracer owns an 8 MiB arena and reports live allocation state.
+Canonical current hashes and run IDs are in
+`projects/prospero-win/docs/HARDWARE_VALIDATION.md`.
 
-The next API work is inventory-first, not incremental runtime discovery.
-`inventory_imports.py` confirms 207 imports across eight DLLs, all with Wine
-spec declarations at commit 490f6d5dcbb2a5047345b8af88d114bbcaad69a8.
-Two are data exports and three are variadic; none are implemented by merely
-finding a declaration. The private report is under the main lab's ignored
-`research/gpu/captures/prospero-win/20260908-import-inventory/pinball.json`.
-See `projects/prospero-win/docs/IMPORT_PLAN.md` for subsystem and license review.
-The follow-up Wine audit covers export routing and source-reference leads
-for all 207 imports; its private report is `wine-audit-v2.json` in the same
-capture directory. Reviewed CRT requirements include x87 helpers, guest
-initializer callbacks and x86 SEH. No Wine implementation has been extracted
-yet. See `projects/prospero-win/docs/WINE_REUSE_AUDIT.md` for boundaries and
-known limitations of lexical source indexing.
-Shared integer cdecl/stdcall call frames and callback services now pass host
-tests, including a translated synthetic callback returning through the
-adapter. This does not implement a Win32 API or validate PS5 callbacks.
-Scope: `projects/prospero-win/docs/GUEST_ABI.md`.
-The shared PE32 import binder passes synthetic function/data, ordinal and
-failure-atomicity tests and is integrated in the original Pinball host trace.
-The catalog and initial API packages are in `src/pw_win32.c`; full subsystem
-coverage and console execution integration remain pending.
+### Historical foundation
 
-Single-mapping mprotect RW-to-RX works on the tested firmware. Low allocation
-does not eliminate x86 address/stack rewriting or establish a large guest
-working-set budget. Next: implement owned DC/bitmap objects for the splash GDI
-path and exercise x87 on each newly reached runtime path.
-Then validate on hardware. Reuse Xash3D audio/input contracts
-with WinMM and Win32 adapters; resolve component licensing before extraction.
-
-Canonical status, artifact hashes and acceptance command:
-`projects/prospero-win/docs/PINBALL_TARGET.md`. Scope and sequence:
-`projects/prospero-win/docs/ROADMAP.md`. Project licence: LGPL-2.1-or-later.
+The mapping, static-coverage and incremental startup record remains in the
+project's dated phase documents. Those files are evidence history, not the
+operational status; the P5/P6 checkpoint above and the project roadmap govern
+current work.
 
 
 ## Development policy
