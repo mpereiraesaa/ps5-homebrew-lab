@@ -21,16 +21,13 @@ the frozen tree at `8f035b7`.
 
 ## Xash3D checkpoint
 
-Current port pin: `3e78c1a`, merged [PR #31](https://github.com/mpereiraesaa/ps5-xash3d/pull/31).
+Current port pin: `a1cd517`, merged [PR #34](https://github.com/mpereiraesaa/ps5-xash3d/pull/34).
 
-Current plan revision 49: explicit round-trip validation passes the accepted
-10,810-frame multi-map run. Controlled Host_Error recovery is operator/hardware
-accepted: 10,825 frames, one expected diagnostic error, zero renderer errors,
-nine reclaims and exact teardown. Live-game audio and first `valve_hd` mount
-now have separate operator acceptance; the detailed runs, six startup
-underruns and exact audio teardown are recorded in the port docs. Four-blend
-console coverage, diagnostic-overlay cleanup and longer transition/audio/HD
-soaks remain open. The timed harness is not a release package. See
+The first playable Half-Life 1 release is hardware accepted: the native engine,
+game modules, AGC renderer, DualSense input, audio, map transitions and
+save/load operate together on FW 12.02. Optional `valve_hd` content also has
+separate operator acceptance. Remaining work is release polish and broader
+gameplay/performance coverage. See
 `XASH3D_CHECKPOINT.md` for current integration identity and proof boundaries.
 Older checkpoint descriptions below are historical.
 
@@ -40,8 +37,9 @@ completed all six hardware gates before merging through
 `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264`. The
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
-history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 7
-native-menu checkpoint `a975b86`; its preceding live-2D checkpoint is
+history of `projects/ps5-xash3d`. This laboratory now pins the first playable
+release checkpoint `a1cd517`; the earlier Phase 7 native-menu checkpoint is
+`a975b86`, and its preceding live-2D checkpoint is
 `0bdcbfb`, and the preceding live-special-surface checkpoint is
 `77c742a`, the preceding live-lightmap checkpoint is `4f9d38d`, the preceding
 compositor-visible world checkpoint is `cdcce91`, the preceding live-world

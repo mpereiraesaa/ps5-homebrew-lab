@@ -1,6 +1,6 @@
 # Xash3D on PS5 checkpoint
 
-Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
+Reconciled: 2026-09-11. Hardware boundary: one PS5 on firmware 12.02.
 
 ## Current position
 
@@ -13,12 +13,21 @@ Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
 | 6 — Engine integration | Complete, 6 gates closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI, GoldSrc client and RefAPI 18 `ref_agc` are hardware-proven with exact teardown. |
-| 7 — Playable and release | Active, audio/HD checkpoint | HUD/fonts/fades, NPC lighting/NPOT/chrome, viewmodel events/reload, tested live effects, live-game audio and first `valve_hd` mount pass. Remaining four-blend console coverage, startup-underrun polish, diagnostic-overlay cleanup, gameplay/performance, longer soaks and release remain open. |
+| 7 — Playable and release | First playable release complete | Native graphics/input/audio, map transitions and save/load are integrated and hardware accepted. Broader gameplay/performance coverage and presentation polish continue. |
 
-## Latest checkpoint — plan rev 49, 2026-09-09
+## Latest checkpoint — first playable, 2026-09-11
+
+Integrated through [port PR #34](https://github.com/mpereiraesaa/ps5-xash3d/pull/34),
+squashed as `a1cd5175b490278f3b160d7f1257d460623f41dd`, now the laboratory pin.
+Half-Life 1 is playable through the native PS5 engine/module stack with the AGC
+renderer, DualSense input, audio, transitions and save/load. The port README
+and hardware-validation documents define the exact accepted evidence; the
+remaining work is release polish and broader gameplay/performance coverage.
+
+## Previous checkpoint — plan rev 49, 2026-09-09
 
 Integrated through [port PR #31](https://github.com/mpereiraesaa/ps5-xash3d/pull/31),
-squashed as `3e78c1a645fbafbc0e345cdd13c4166c9b694b05`, now the lab pin.
+squashed as `3e78c1a645fbafbc0e345cdd13c4166c9b694b05`, the preceding lab pin.
 
 The combined Studio run was visually accepted for controller interpolation,
 crossfade, two-blend routing and glowshell. Mode 4 found no visible model with
