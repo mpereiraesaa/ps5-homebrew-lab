@@ -359,13 +359,16 @@ and maps the raw Create edge to orderly `WM_QUIT`. Persistent registry state,
 bounded `wavemix.inf` parsing, idle pacing and exhaustive teardown are covered
 by host regressions and structured `ps5log/1` evidence.
 
-The continuous path has passed a strict soak beyond ten minutes with more than
-700 million retired guest instructions, 7,600 changing-frame flips, active
-audio and no abort/signal/read/profile error. The exact current source also
-passed a finite 18-second launch with 473 state bytes loaded, 878 audio blocks,
-all cleanup results successful and a matching `BYE`. The only remaining P5/P6
-acceptance is physical gameplay by the owner. MIDI music is optional and off by
-default; general Win32 compatibility and D3D8/9 remain later milestones.
+The post-commit production deployment passed a strict soak beyond ten minutes
+as run `20260911T012402917Z_PPSA99995_prospero-win_0x1c1bb08616b67`: at the
+acceptance point it had retired 649,958,605 guest instructions, completed
+3,001,738 adapter calls, presented 7,122 changing frames, emitted 901 audio
+blocks and consumed 2,975 connected pad samples with no
+abort/signal/read/profile error. The exact current source also passed a finite
+18-second launch with 473 state bytes loaded, 878 audio blocks, all cleanup
+results successful and a matching `BYE`. The only remaining P5/P6 acceptance
+is physical gameplay by the owner. MIDI music is optional and off by default;
+general Win32 compatibility and D3D8/9 remain later milestones.
 
 Canonical current hashes and run IDs are in
 `projects/prospero-win/docs/HARDWARE_VALIDATION.md`.
