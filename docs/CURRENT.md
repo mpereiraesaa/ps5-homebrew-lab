@@ -1,6 +1,6 @@
 # Current development boundary
 
-Last reconciled: 2026-09-09. Tested console firmware: PS5 12.02.
+Last reconciled: 2026-09-11. Tested console firmware: PS5 12.02.
 
 ## Canonical implementation
 
@@ -339,6 +339,49 @@ former project-owned gaps `__assert`, `getpwuid` and `dladdr` are now closed by
 local definitions plus the accepted hardware probe. Raw lists, the evidence
 ledger and reproduction scripts live under
 `research/xash3d/` and the pinned `ps5-xash3d` submodule.
+
+## Win32 compatibility layer
+
+prospero-win (PPSA99995) targets original Windows binaries. AMD64 execution
+requires Win64 ABI bridges; x86 requires software execution because the tested
+LDT compatibility-mode route is refused on FW 12.02. The first game target is
+original Space Cadet Pinball, without recompilation; DRM and anti-cheat are out
+of scope.
+
+### Current P5/P6 checkpoint
+
+The original PE32 now executes continuously through the project DBT on FW
+12.02. Its complete animated GDI table is composed correctly, transferred by
+AGC DMA and presented through VideoOut; its WaveMix path feeds original PCM to
+SceAudioOut. The reusable ScePad adapter maps plunger, both flippers, nudges,
+pause and new game into Win32 messages, neutralizes every ownership boundary
+and maps the raw Create edge to orderly `WM_QUIT`. Persistent registry state,
+bounded `wavemix.inf` parsing, idle pacing and exhaustive teardown are covered
+by host regressions and structured `ps5log/1` evidence.
+
+The post-commit production deployment passed a strict soak beyond ten minutes
+as run `20260911T012402917Z_PPSA99995_prospero-win_0x1c1bb08616b67`: at the
+acceptance point it had retired 649,958,605 guest instructions, completed
+3,001,738 adapter calls, presented 7,122 changing frames, emitted 901 audio
+blocks and consumed 2,975 connected pad samples with no
+abort/signal/read/profile error. The exact current source also passed a finite
+18-second launch with 473 state bytes loaded, 878 audio blocks, all cleanup
+results successful and a matching `BYE`. The owner then accepted Cross launch,
+both shoulder flippers, scoring, ball loss, Options pause/resume and Square
+new-game restart on the post-fix production candidate. P5/P6 are complete.
+MIDI music is optional and off by default; general Win32 compatibility and
+D3D8/9 remain later milestones.
+
+Canonical current hashes and run IDs are in
+`projects/prospero-win/docs/HARDWARE_VALIDATION.md`.
+
+### Historical foundation
+
+The mapping, static-coverage and incremental startup record remains in the
+project's dated phase documents. Those files are evidence history, not the
+operational status; the P5/P6 checkpoint above and the project roadmap govern
+current work.
+
 
 ## Development policy
 

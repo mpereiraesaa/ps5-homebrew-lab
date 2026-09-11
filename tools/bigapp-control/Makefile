@@ -9,6 +9,7 @@ all: status.elf close-fake.elf launch-san-andreas.elf close-san-andreas.elf \
 	launch-agc-native-sce.elf close-agc-native-sce.elf \
 	launch-agc-gears.elf close-agc-gears.elf \
 	launch-xash3d.elf close-xash3d.elf \
+	launch-prospero-win.elf close-prospero-win.elf \
 	close-native-hello-world.elf
 
 status.elf: main.c
@@ -50,6 +51,12 @@ launch-xash3d.elf: main.c
 close-xash3d.elf: main.c
 	$(CC) $(CFLAGS) -DTARGET_TITLE='"PPSA99996"' -o $@ $< $(LDLIBS)
 
+launch-prospero-win.elf: main.c
+	$(CC) $(CFLAGS) -DACTION_LAUNCH=1 -DTARGET_TITLE='"PPSA99995"' -o $@ $< $(LDLIBS)
+
+close-prospero-win.elf: main.c
+	$(CC) $(CFLAGS) -DTARGET_TITLE='"PPSA99995"' -o $@ $< $(LDLIBS)
+
 close-native-hello-world.elf: main.c
 	$(CC) $(CFLAGS) -DTARGET_TITLE='"PPSA99999"' -o $@ $< $(LDLIBS)
 
@@ -59,6 +66,7 @@ clean:
 		close-agc-phase0-v2.elf launch-agc-native-sce.elf close-agc-native-sce.elf \
 		launch-agc-gears.elf close-agc-gears.elf \
 		launch-xash3d.elf close-xash3d.elf \
+		launch-prospero-win.elf close-prospero-win.elf \
 		close-native-hello-world.elf
 
 .PHONY: all clean

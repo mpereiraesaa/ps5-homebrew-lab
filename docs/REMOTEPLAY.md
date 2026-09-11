@@ -48,6 +48,12 @@ python3 tools/ps5_remoteplay.py record-demo --name "Xash3D Phase 5"
 python3 tools/ps5_remoteplay.py stop-stream
 ```
 
+`record` and `record-demo` resolve the PulseAudio monitor attached to the
+verified CLI-owned Chiaki process and mux it as AAC alongside the 1080p60
+video. They fail closed if that routing is missing or ambiguous, so a demo is
+never silently published as video-only. The monitor is sink-scoped and may
+contain other desktop sounds; captures remain private until owner review.
+
 Before a hardware-evidence launch, require an actually decoded frame rather
 than trusting the existence of the X11 process/window:
 
