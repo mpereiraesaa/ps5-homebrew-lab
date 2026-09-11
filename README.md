@@ -1,144 +1,96 @@
-# homebrew_ps5
+# PS5 Homebrew Lab
 
-Laboratorio privado y reproducible para homebrew nativo de PS5 en firmware
-12.02. La implementación gráfica canónica es ahora
-[`projects/ps5-xash3d`](projects/ps5-xash3d/README.md): el port nativo de
-Xash3D (GoldSrc) sobre AGC, con shaders propios `gfx1013`, bifurcado de la demo
-pública [`projects/ps5-agc-gears`](projects/ps5-agc-gears/README.md), que queda
-congelada como demo Gears.
+A reproducible engineering laboratory for native PlayStation 5 homebrew on
+firmware 12.02. The repository records reusable platform contracts, host-side
+tests and hardware evidence for graphics, input, audio, memory, telemetry and
+runtime compatibility work.
 
-## Estado actual
+This is an independent community project. It is not affiliated with or
+endorsed by Sony, Microsoft, Valve or the owners of the referenced games and
+engines.
 
-`ps5-xash3d` renderiza el mapa `c1a0` con texturas base, lightmap dinámico,
-mipmaps con filtrado trilineal/anisotrópico, alpha-test y cielo, con noclip
-físico por DualSense y dos frames en vuelo. Las Fases 0–4 del plan están
-cerradas en hardware con fences GPU, tokens VideoOut y guardas exactos, cero
-errores del renderer y telemetría TCP estructurada. La Fase 4, estados de
-render GoldSrc, está completa. Sus ocho gates ordenados
-probaron pipelines, matriz de estados, viewport/scissor, 2D, iluminación BSP,
-sprites/partículas, Studio animado, brush entities y visibilidad; una corrida
-integrada final mantuvo agua, vidrio, efectos, Studio y HUD durante 60.000
-frames con ownership exacto y cero errores.
+## Projects
 
-La Fase 5 está completa: engine bootstrap, filesystem completo, ScePad,
-SceAudioOut, memoria directa, threads/reloj, telemetría GPU/flip y los tres
-shims propios ya están cerrados. El backend de input consume lotes
-cronológicos de hasta 64 registros y traduce el DualSense a los eventos
-canónicos de Xash3D; la
-corrida aceptada probó movimiento, cámara, salto, agacharse, usar y disparar,
-sin errores y con teardown exacto. El backend de audio saca PCM por
-`libSceAudioOut` desde un ring productor/consumidor con un resampler continuo
-147/160 y un worker que es el único dueño del handle: la corrida aceptada
-transportó 1,5 s de PCM a 44,1 kHz como 282 grains completos de 48 kHz, con
-hash coincidente, cero underruns y confirmación audible del operador. Todo el
-allocator C/C++ del engine usa ahora una única raíz de 128 MiB sobre direct
-memory; cuatro recursos GPU representativos probaron generaciones, retiro y
-reclamación exactos, con guardas intactos y el arena vacío al terminar. El
-gate de threads probó dos workers distintos con ownership `join`/`detach`
-exacto, 32.768 incrementos protegidos, 8.192 lecturas monotónicas sin regresión
-y 128 muestras `nanosleep`/`usleep` sin errores ni despertares anticipados. El
-gate de telemetría correlacionó 60.000 submits, timestamps GPU end-of-pipe,
-fences y eventos VideoOut exactos sin gaps ni regresiones. El cierre final
-retuvo `__assert`, `getpwuid` y `dladdr` como definiciones locales del port,
-probó sus contratos en FW 12.02 y cargó `c1a0` sin errores. La Fase 6 está
-completa: loader híbrido, `filesystem_stdio.prx`, servidor HLSDK, MainUI,
-cliente GoldSrc y `ref_agc` funcionan como módulos propios. La
-combinación dinámica montó las 4.823
-entradas, probó listing, lectura grande y path con case mixto; el servidor
-publicó 251 exports del engine, ejecutó sus constructores C++, cruzó la ABI en
-ambos sentidos, levantó `c1a0` y se descargó antes que el filesystem con
-ownership exacto. MainUI publicó sus 16 callbacks base y 12 extendidos, se
-activó y redibujó 5.127 veces sobre un framebuffer software no negro. El
-cliente pasó interface 7 y ambos sentidos de la ABI sobre `c1a0`; el gate
-final enlazó RefAPI 18 con el backend AGC, presentó 600 frames con hashes GPU
-no nulos y descargó los cinco PRXs exactamente. La Fase 7 está activa: el
-primer checkpoint ya extrae el mundo `c1a0` vivo del engine y somete 17.245
-vértices, 29.565 índices y 3.695 superficies mediante AGC, con las 164
-referencias de textura resueltas y teardown exacto. El A/B de FW 12.02 aisló
-un handoff de scheduler de 10 ms después de inicializar la cámara viva. El
-checkpoint siguiente construye el atlas de lightmaps desde los lightstyles del
-engine, lo aloja en direct memory y enlaza los pipelines AGC nativos: 3.695
-draws lightmapped y 1.075 frames emparejados pasaron con imagen visible,
-ownership exacto y cero errores. El checkpoint fusionado siguiente añade el
-skybox vivo de seis caras y el warp turbulento clásico dirigido por el tiempo
-del engine, sin emulación OpenGL: 1.616 frames emparejados probaron 158
-superficies sky, seis draws de cubo y 35 draws turbulentos, con ocho recursos
-reclamados y cero errores. El checkpoint 2D traduce las listas vivas en orden
-de fuente: 61.316 quads formaron 610 batches nativos durante 1.044 frames
-emparejados. El checkpoint anterior presenta MainUI mediante AGC
-durante 223 frames y luego encola `map c1a0` dentro del mismo proceso: el mapa
-aparece en el serial 224, con vídeo directo de ambos estados, ocho recursos
-reclamados y teardown exacto. El nuevo checkpoint añade brush entities y NPCs
-Studio animados, corrige la oclusión negra del fondo y el movimiento STEP, y
-mejora el filtrado de modelos. La validación final completa 10.997 frames y
-nueve recursos reclamados con cero errores y teardown exacto. PR #27
-(`4726bd3`) cierra además la mezcla del título, fuentes y fades con aceptación
-visual y 10.993 frames limpios. El checkpoint rev 46 añade iluminación/chrome
-de NPCs, corrección NPOT, retorno entre mapas y viewmodel básico; el perfil
-DualSense v5 fija R2 como ataque y apuntado radial a 140/105 grados/s.
-Quedan efectos/cobertura restante de Studio/viewmodel, después audio
-del juego, cámara fija, gameplay, rendimiento y soaks.
-El presupuesto de texturas ya es configurable y se calcula con memoria
-disponible medida: 256 MiB explícitos y el modo automático tienen evidencia
-en consola. El plan rev 46 y el checkpoint separan capacidad reservada de
-texturas residentes; no se promete crecimiento dinámico ni soporte HD validado.
+### [ps5-xash3d](projects/ps5-xash3d/README.md)
 
-La identidad de consola también está separada y validada: Xash3D usa
-`PPSA99996` y la demo Gears congelada conserva `PPSA99997`. El host histórico
-`PPSA99998` fue desinstalado de la consola y no deja rutas ni filas vivas en su
-base de aplicaciones.
+The active native Xash3D/GoldSrc port and canonical AGC renderer. It boots the
+engine, loads the original game modules and renders `c1a0` through native PS5
+graphics, input and audio backends. Phases 0–6 are complete; Phase 7 has
+hardware-validated live world geometry, lightmaps, special surfaces, 2D,
+Studio models, effects, game audio and an optional HD-content mount. Release
+polish, longer transition/audio/HD soaks and broader gameplay coverage remain.
 
-`ps5-agc-gears` dibuja tres engranajes 3D animados con depth, iluminación,
-doble buffer y dos frames realmente en vuelo; pasó soaks de 10.000 y 60.000
-frames y es el origen del renderer.
+The laboratory pins the public repository as a submodule. Its own README and
+roadmap are authoritative for current port status.
 
-El repo público construye sin depender de dumps, Ghidra, juegos ni rutas
-privadas del laboratorio. `main` está protegida; todo desarrollo nuevo ocurre
-en branches/worktrees y entra mediante pull request.
+### [ps5-agc-gears](projects/ps5-agc-gears/README.md)
 
-El laboratorio también puede observar la consola directamente mediante Remote
-Play. `tools/ps5_remoteplay.py` reutiliza la entrada Chiaki ya registrada para
-abrir el stream CLI y tomar capturas o grabaciones; el flujo normal no repite
-pairing, no abre el cliente principal y no depende del foco ni de la cámara del
-operador.
+The frozen standalone GPU demonstration: three lit, depth-tested gears,
+double buffering, two frames in flight and a validated 60,000-frame hardware
+soak. It is the small reference project for confirming native PS5 GPU output.
 
-## Estructura
+### [prospero-win](projects/prospero-win/README.md)
 
-- `projects/ps5-xash3d/`: port Xash3D sobre AGC, implementación canónica.
-- `projects/ps5-agc-gears/`: demo Gears pública, congelada.
-- `projects/logging_server/`: infraestructura de telemetría `ps5log/1`.
-- `tools/ps5_remoteplay.py`: streaming y captura visual mediante Chiaki.
-- `legacy/`: apps por stages y probes históricos; evidencia opt-in, nunca base
-  para una nueva implementación.
-- `research/gpu/`: análisis, capturas y dumps privados; jamás se publica.
-- `sdk/agc/`: primera API AGC sanitizada conservada como referencia del lab.
-- `third_party/`: toolchains y fuentes públicas fijadas localmente.
-- `docs/CURRENT.md`: frontera vigente y flujo de desarrollo.
+An experimental Windows compatibility runtime for PS5. It maps PE images,
+translates 32-bit x86 into x86-64, supplies reviewed Win32/CRT services and
+connects guest presentation, audio and input to native PS5 backends.
 
-## Flujo normal
+Its first target is complete through P5/P6: the owner's original Windows XP
+Space Cadet Pinball executable runs without recompilation and has passed
+physical gameplay acceptance for launch, both flippers, scoring, ball loss,
+pause/resume and new-game restart. No Windows executable or game asset is
+included.
+
+### [logging_server](projects/logging_server/README.md)
+
+The `ps5log/1` telemetry service used for structured, correlated runtime
+evidence. Filesystem and USB logs are deprecated for active development.
+
+## Repository layout
+
+- `projects/` — active or independently publishable applications and tooling.
+- `docs/CURRENT.md` — canonical laboratory boundary and current project pins.
+- `docs/PROJECTS.md` — concise project-level status and deferred work.
+- `docs/PORTING_PLAYBOOK.md` — reusable native-porting practices.
+- `tools/ps5_remoteplay.py` — isolated Chiaki streaming, screenshots and video.
+- `sdk/agc/` — sanitized AGC interface notes retained by the laboratory.
+- `legacy/` — historical probes and retired staged applications.
+- `research/` — reproducible analysis; private captures and dumps are ignored.
+
+## Build and test
+
+Clone with submodules, then run the complete host gate:
 
 ```sh
+git clone --recurse-submodules git@github.com:mpereiraesaa/ps5-homebrew-lab.git
+cd ps5-homebrew-lab
 make check
 ```
 
-Ese gate ejecuta, en orden, los contratos del port canónico `ps5-xash3d`, la
-demo Gears congelada, la suite independiente del servidor de telemetría y los
-contratos del helper Remote Play. Para construir la aplicación se delega
-igualmente al repo canónico:
+The gate tests the canonical renderer, Gears, `prospero-win`, telemetry and
+Remote Play contracts and runs publication audits. Console deployment needs
+an owned PS5 with a compatible homebrew environment; host tests do not.
 
-```sh
-make native-release AMDLLPC=/ruta/a/amdllpc LLVM_READELF=/ruta/a/llvm-readelf
-```
+Project-specific build and hardware-validation instructions live in each
+project README. Generated artifacts, vendor SDK material, game data, firmware
+content, memory dumps, decompiler output, credentials and private captures must
+never be committed.
 
-Los stages A–I y el código de `PPSA99998` permanecen sólo como historia
-reproducible bajo `legacy/` y `research/`; `PPSA99998` no permanece instalado
-en la consola. hbldr/elfldr y ShadowMountPlus siguen siendo infraestructura del
-laboratorio, no la implementación del port.
+## Contributing
 
-En un clon nuevo, inicializar el renderer público fijado antes de ejecutar los
-gates:
+Issues and focused pull requests are welcome. Start with the target project's
+README and tests, keep changes reusable rather than title-name-specific, and
+include a regression for behavioral fixes. Hardware claims need an exact
+artifact identity plus structured `ps5log/1` evidence; screenshots alone prove
+only visual output.
 
-```sh
-git submodule update --init
-make check
-```
+All changes enter through topic branches and pull requests. Direct pushes to
+`main` are intentionally disallowed, and CI must pass before merge. Please
+keep PRs small enough to review without proprietary context.
+
+See [the documentation index](docs/README.md),
+[current status](docs/CURRENT.md), [operations](docs/OPERATIONS.md) and
+[publication boundaries](docs/UPSTREAMING.md) for details.
+
+Individual projects carry their own licenses and notices. Check the relevant
+project before redistributing or combining code.

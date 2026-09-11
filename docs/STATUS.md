@@ -31,7 +31,7 @@ token coincidente, cero gaps/RAW/oversized, BYE exacto, tamaño/hash y guard
 fail-closed. Contrato completo: `docs/OBSERVABILITY.md`.
 `make agc-check` sigue siendo el gate offline obligatorio antes de cada
 build/deploy: ejecuta las 34 pruebas del subsistema de observabilidad y todos
-los contratos clean-room del frame loop. El runner garantiza muestra inicial,
+los contratos independientes del frame loop. El runner garantiza muestra inicial,
 cadencia de 60 frames, errores inmediatos y resumen terminal.
 
 ## Resultado principal

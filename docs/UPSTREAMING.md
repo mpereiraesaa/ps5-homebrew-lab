@@ -3,8 +3,9 @@
 ## Intención
 
 Conforme madure el proyecto, publicar en la cuenta personal del propietario
-forks y parches clean-room que sean útiles para homebrew legal. La publicación
-será deliberada y por componente; esta nota no autoriza un push automático.
+forks y parches de desarrollo independiente que sean útiles para homebrew
+legal. La publicación será deliberada y por componente; esta nota no autoriza
+un push automático.
 
 ## Estado actual
 
@@ -38,7 +39,7 @@ será deliberada y por componente; esta nota no autoriza un push automático.
 - Demo pública AGC: repositorio aislado en `projects/ps5-agc-gears`; debe poder
   construirse sin acceder al resto del laboratorio antes de convertirse en repo.
 - Parches de SDK: repositorio/fork independiente cuando sus cambios tengan ABI,
-  tests y procedencia clean-room claramente documentados.
+  tests y procedencia independiente claramente documentados.
 
 Antes de cualquier publicación hay que confirmar el usuario/organización de
 GitHub, nombres de repositorios, visibilidad y licencia deseada.
