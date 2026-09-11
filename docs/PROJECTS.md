@@ -81,10 +81,11 @@ copiado desde un proyecto tercero.
 
 `projects/prospero-win` (PPSA99995) busca ejecutar binarios Windows originales.
 PE64 necesita puentes ABI Win64; PE32 requiere ejecución por software. La ruta
-LDT probada está rechazada en FW 12.02. El primer objetivo, el Space Cadet
-Pinball original PE32, ya ejecuta sin recompilación mediante el DBT propio.
+LDT probada está rechazada en FW 12.02. El primer objetivo de compatibilidad,
+el Space Cadet Pinball original PE32, ya ejecuta sin recompilación mediante el
+DBT propio; sirve para validar el runtime general y no define su arquitectura.
 
-El candidato P5/P6 muestra la mesa completa animada a 1920×1080 mediante GDI,
+El primer título jugable muestra la mesa completa animada a 1920×1080 mediante GDI,
 AGC DMA y VideoOut, y reproduce los efectos WaveMix originales mediante
 SceAudioOut. Abre DualSense con la ABI medida de ScePad, traduce flippers,
 plunger, nudges, pausa y nueva partida a mensajes Win32, y reserva `Create`
@@ -93,12 +94,15 @@ para `WM_QUIT` y teardown ordenado. Estado de registro checksummed, parsing de
 host y evidencia FW 12.02. La ruta continua superó diez minutos sin abortos;
 una build finita cargó 473 bytes persistentes, emitió 878 bloques PCM y cerró
 con `BYE`. El propietario confirmó lanzamiento, ambos flippers, puntuación,
-pérdida de bola, pausa/reanudación y nueva partida: P5/P6 están completos.
+pérdida de bola, pausa/reanudación y nueva partida. Quedan detalles de pacing y
+presentación por pulir, por lo que el resultado se clasifica como **first
+playable**, no como runtime terminado ni compatibilidad general.
 
 La música MIDI, desactivada por defecto por el juego, sigue fuera del target:
 el único `MCI_OPEN` se rechaza honestamente mientras el audio PCM requerido
-permanece activo. La compatibilidad Win32 general y D3D8/9 son P7/P8, no
-afirmaciones del milestone Pinball. Licencia LGPL-2.1-or-later.
+permanece activo. El siguiente hito es ejecutar un segundo título independiente
+y eliminar supuestos específicos del primer caso; después siguen la expansión
+Win32 y el bring-up de D3D8/9. Licencia LGPL-2.1-or-later.
 
 Estado y evidencias: `projects/prospero-win/docs/PINBALL_TARGET.md`.
 Plan vigente: `projects/prospero-win/docs/ROADMAP.md`.

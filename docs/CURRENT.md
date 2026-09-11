@@ -344,11 +344,12 @@ ledger and reproduction scripts live under
 
 prospero-win (PPSA99995) targets original Windows binaries. AMD64 execution
 requires Win64 ABI bridges; x86 requires software execution because the tested
-LDT compatibility-mode route is refused on FW 12.02. The first game target is
-original Space Cadet Pinball, without recompilation; DRM and anti-cheat are out
-of scope.
+LDT compatibility-mode route is refused on FW 12.02. The first compatibility
+target is original Space Cadet Pinball, without recompilation; it validates the
+general runtime rather than defining its architecture. DRM and anti-cheat are
+out of scope.
 
-### Current P5/P6 checkpoint
+### Current first-playable checkpoint
 
 The original PE32 now executes continuously through the project DBT on FW
 12.02. Its complete animated GDI table is composed correctly, transferred by
@@ -368,9 +369,10 @@ abort/signal/read/profile error. The exact current source also passed a finite
 18-second launch with 473 state bytes loaded, 878 audio blocks, all cleanup
 results successful and a matching `BYE`. The owner then accepted Cross launch,
 both shoulder flippers, scoring, ball loss, Options pause/resume and Square
-new-game restart on the post-fix production candidate. P5/P6 are complete.
-MIDI music is optional and off by default; general Win32 compatibility and
-D3D8/9 remain later milestones.
+new-game restart on the post-fix production candidate. This is the first
+playable title, with intermittent pacing and presentation polish still open.
+MIDI music is optional and off by default; a second independent title, broader
+Win32 compatibility and D3D8/9 remain later milestones.
 
 Canonical current hashes and run IDs are in
 `projects/prospero-win/docs/HARDWARE_VALIDATION.md`.
@@ -379,8 +381,8 @@ Canonical current hashes and run IDs are in
 
 The mapping, static-coverage and incremental startup record remains in the
 project's dated phase documents. Those files are evidence history, not the
-operational status; the P5/P6 checkpoint above and the project roadmap govern
-current work.
+operational status; the first-playable checkpoint above and the project
+roadmap govern current work.
 
 
 ## Development policy
