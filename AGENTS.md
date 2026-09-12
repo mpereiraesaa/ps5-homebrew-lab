@@ -49,3 +49,15 @@
 - Both the lab and public projects use topic branches and pull requests; never
   push changes directly to `main`.
 - Keep third-party source and generated artifacts out of the lab repository.
+
+## Multi-agent coordination
+
+- Agents that cannot exchange Codex messages use the append-only mailbox and
+  lifecycle in `docs/AGENT_COORDINATION.md` through
+  `tools/agent_coordination.py`; never edit the JSONL directly.
+- Read the mailbox before edits, console operations and completion. Claim
+  source paths and `console:PPSA99994` independently, and report progress,
+  blockers, decision requests and completion explicitly.
+- File coordination is pull-driven: writing does not wake another agent and
+  silence is not approval. It does not broaden authorization or replace
+  separate worktrees, branches, PRs and review.
