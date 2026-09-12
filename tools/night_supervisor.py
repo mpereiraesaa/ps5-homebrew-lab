@@ -12,6 +12,7 @@ import argparse
 import ftplib
 import hashlib
 import json
+import os
 import re
 import socket
 import struct
@@ -24,7 +25,26 @@ from pathlib import Path
 from ps5_ftp import is_self_container, verify_remote_file
 
 
-ROOT = Path(__file__).resolve().parents[2]
+def _lab_root() -> Path:
+    """Directory holding `elf-arsenal`, `rehd_mods` and the lab checkout.
+
+    In a normal checkout that is two levels above this file. A git worktree
+    lives beside the checkout rather than inside it, so the shared payload
+    directory is located by walking up instead of assuming a depth, and
+    PS5_LAB_ROOT overrides both. Getting this wrong makes the supervisor
+    report a missing payload while pointing at a path that never existed.
+    """
+    override = os.environ.get("PS5_LAB_ROOT")
+    if override:
+        return Path(override).resolve()
+    here = Path(__file__).resolve()
+    for candidate in here.parents:
+        if (candidate / "elf-arsenal").is_dir():
+            return candidate
+    return here.parents[2]
+
+
+ROOT = _lab_root()
 sys.path.insert(0, str(ROOT / "rehd_mods"))
 sys.path.insert(0, str(ROOT / "homebrew_ps5" / "research" / "gpu" / "tools"))
 try:
@@ -42,7 +62,8 @@ from ps5log_evidence import EvidenceError, validate_manifest  # noqa: E402
 
 
 ALLOWED_TITLES = {"FAKE00000", "PPSA03524", "AGCP12002", "AGCP12003",
-                  "PPSA99996", "PPSA99997", "PPSA99998", "PPSA99999"}
+                  "PPSA99995", "PPSA99996", "PPSA99997", "PPSA99998",
+                  "PPSA99999"}
 REQUIRED_PORTS = {"ps5debug": 744, "ftp": 2121, "shsrv": 2323,
                   "elfldr": 9021}
 HELPERS = Path(__file__).resolve().parent / "bigapp-control"
@@ -555,6 +576,7 @@ class Supervisor:
             "PPSA03524": "close-san-andreas.elf",
             "AGCP12002": "close-agc-phase0.elf",
             "AGCP12003": "close-agc-phase0-v2.elf",
+            "PPSA99995": "close-prospero-win.elf",
             "PPSA99996": "close-xash3d.elf",
             "PPSA99997": "close-agc-gears.elf",
             "PPSA99998": "close-agc-native-sce.elf",
@@ -938,6 +960,7 @@ class Supervisor:
             )
         helpers = {
             "PPSA03524": "launch-san-andreas.elf",
+            "PPSA99995": "launch-prospero-win.elf",
             "PPSA99996": "launch-xash3d.elf",
             "PPSA99997": "launch-agc-gears.elf",
             "PPSA99998": "launch-agc-native-sce.elf",
@@ -958,6 +981,29 @@ class Supervisor:
                 self.record("launch_verified", title_id=title_id)
                 return
         raise SafetyStop(f"{title_id} launch was not observed")
+
+    def checked_launch_transient(self, title_id: str) -> None:
+        """Launch a title that runs a bounded gate and exits on its own.
+
+        checked_launch() waits to observe the title as the active BigApp,
+        which a gate finishing in about a second never satisfies. The safety
+        preconditions are identical — health, and no BigApp already active —
+        but completion evidence comes from the ps5log manifest instead of
+        from catching the process alive. Nothing here infers success from the
+        launch call itself.
+        """
+        helpers = {"PPSA99995": "launch-prospero-win.elf"}
+        if title_id not in helpers:
+            raise SafetyStop(
+                f"title is not transient-launch-allowlisted: {title_id}")
+        self.require_bigapp(None)
+        output = self.run_elfldr(HELPERS / helpers[title_id])
+        match = re.search(r"launch rc=0x([0-9a-fA-F]{8})", output)
+        if not match or int(match.group(1), 16) >= 0x80000000:
+            raise SafetyStop("launch helper did not report success")
+        self.record("launch_requested_transient", title_id=title_id,
+                    rc=match.group(1),
+                    note="completion is proven by the ps5log manifest")
 
     def checked_restart_shadowmount(self) -> None:
         """Restart ShadowMountPlus through its supported single-instance path.
@@ -1650,6 +1696,8 @@ def main() -> int:
                                            "operator-close-agc-native-sce",
                                            "launch-agc-native-sce",
                                            "launch-xash3d", "close-xash3d",
+                                           "launch-prospero-win",
+                                           "close-prospero-win",
                                            "cleanup",
                                            "restart-shadowmount",
                                            "run-dma-buildonly",
@@ -1691,6 +1739,10 @@ def main() -> int:
             sup.operator_close_agc_native_sce(args.operator_present)
         elif args.action == "launch-agc-native-sce":
             sup.checked_launch("PPSA99998")
+        elif args.action == "launch-prospero-win":
+            sup.checked_launch_transient("PPSA99995")
+        elif args.action == "close-prospero-win":
+            sup.checked_close("PPSA99995")
         elif args.action == "launch-xash3d":
             sup.checked_launch("PPSA99996")
         elif args.action == "close-xash3d":

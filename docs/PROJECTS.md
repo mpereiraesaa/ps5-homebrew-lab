@@ -2,6 +2,13 @@
 
 ## Port Xash3D sobre AGC — activo
 
+Pin actual: `a1cd517`, [PR #34 fusionado](https://github.com/mpereiraesaa/ps5-xash3d/pull/34).
+
+Checkpoint actual: primera versión PLAYABLE de Half-Life 1. Motor y módulos del
+juego, renderer AGC, DualSense, audio, transiciones de mapa y save/load funcionan
+juntos en FW 12.02; `valve_hd` tiene aceptación separada. Quedan pulido de
+release y cobertura más amplia de gameplay y rendimiento.
+
 Implementación canónica: `projects/ps5-xash3d` (`mpereiraesaa/ps5-xash3d`,
 repositorio público), bifurcado de `ps5-agc-gears` en
 `cbff264` con toda la historia el 2026-09-06. Ahí vive el renderer AGC, el
@@ -38,8 +45,15 @@ traduce las listas 2D vivas en orden: 61.316 quads, 367.896 índices y 610
 batches pasaron 1.044 frames emparejados con evidencia visual. El checkpoint
 `a975b86` presenta MainUI por AGC durante 223 frames y luego carga `c1a0`
 mediante el command buffer del engine; el serial de mapa 1 aparece en el serial
-renderer 224 y el vídeo muestra ambos estados. Siguen entidades, viewmodel,
-gameplay, rendimiento, transiciones, soaks y release.
+renderer 224 y el vídeo muestra ambos estados. El checkpoint posterior añade
+brush transforms, primeros NPCs Studio, mipmaps y movimiento STEP fluido. Quedan
+Studio completo, viewmodel, audio del juego, gameplay y soaks. La mezcla HUD,
+fuentes y fades ya está aceptada e integrada mediante PR #27 (`4726bd3`).
+El checkpoint rev 46 añade iluminación/chrome de NPCs y corrección NPOT
+aceptadas, retorno entre mapas y viewmodel básico probado con pistola/palanca.
+El perfil DualSense v5 usa R2 para ataque y apuntado radial a 140/105 grados/s.
+Quedan efectos/eventos y cobertura restante del viewmodel/Studio; no está
+cerrada la Fase 7. El mapeo vigente está en `docs/SCEPAD_PHASE5.md` del port.
 
 Identidades instaladas: Xash3D usa `PPSA99996` y la demo Gears usa
 `PPSA99997`, cada una con helpers exactos independientes. El host histórico
@@ -58,6 +72,36 @@ La primera capa reutilizable ya existe en `sdk/agc`: headers sanitizados,
 facades de enlace para `libSceAgc`/`libSceAgcDriver`, manifiesto de NIDs y test
 host. Los builds del laboratorio consumen esa capa en vez de depender del stub
 copiado desde un proyecto tercero.
+
+## Capa de compatibilidad Win32 — activa
+
+`projects/prospero-win` (PPSA99995) busca ejecutar binarios Windows originales.
+PE64 necesita puentes ABI Win64; PE32 requiere ejecución por software. La ruta
+LDT probada está rechazada en FW 12.02. El primer objetivo de compatibilidad,
+el Space Cadet Pinball original PE32, ya ejecuta sin recompilación mediante el
+DBT propio; sirve para validar el runtime general y no define su arquitectura.
+
+El primer título jugable muestra la mesa completa animada a 1920×1080 mediante GDI,
+AGC DMA y VideoOut, y reproduce los efectos WaveMix originales mediante
+SceAudioOut. Abre DualSense con la ABI medida de ScePad, traduce flippers,
+plunger, nudges, pausa y nueva partida a mensajes Win32, y reserva `Create`
+para `WM_QUIT` y teardown ordenado. Estado de registro checksummed, parsing de
+`wavemix.inf`, pacing de la cola y cierre de todos los recursos tienen pruebas
+host y evidencia FW 12.02. La ruta continua superó diez minutos sin abortos;
+una build finita cargó 473 bytes persistentes, emitió 878 bloques PCM y cerró
+con `BYE`. El propietario confirmó lanzamiento, ambos flippers, puntuación,
+pérdida de bola, pausa/reanudación y nueva partida. Quedan detalles de pacing y
+presentación por pulir, por lo que el resultado se clasifica como **first
+playable**, no como runtime terminado ni compatibilidad general.
+
+La música MIDI, desactivada por defecto por el juego, sigue fuera del target:
+el único `MCI_OPEN` se rechaza honestamente mientras el audio PCM requerido
+permanece activo. El siguiente hito es ejecutar un segundo título independiente
+y eliminar supuestos específicos del primer caso; después siguen la expansión
+Win32 y el bring-up de D3D8/9. Licencia LGPL-2.1-or-later.
+
+Estado y evidencias: `projects/prospero-win/docs/PINBALL_TARGET.md`.
+Plan vigente: `projects/prospero-win/docs/ROADMAP.md`.
 
 ## Observabilidad Remote Play — activa
 
@@ -103,7 +147,9 @@ engine conserva su identidad `PPSA99996` y carga filesystem, servidor, MainUI,
 cliente y renderer como PRXs propios, con lifecycle explícito, callbacks ABI
 probados y teardown ordenado. La Fase 7 ya presenta el mundo, texturas base,
 lightmaps, skybox, superficies turbulentas, listas 2D y MainUI vivos, con
-transición nativa al mapa; el trabajo inmediato es entidades y viewmodel.
+transición nativa al mapa, brush transforms y primeros NPCs Studio. El trabajo
+inmediato es completar efectos y cobertura restante de Studio/viewmodel y después validar audio
+del juego; la mezcla HUD ya tiene aceptación visual y teardown exacto.
 
 Half-Life requiere datos originales que no forman parte del código del engine
 y nunca deben incorporarse a repositorios ni artefactos públicos.

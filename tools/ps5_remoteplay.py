@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import signal
@@ -596,6 +597,7 @@ def demo_output_path(value: str | None, name: str) -> Path:
 def recording_command(
     path: Path, fps: int, window: str, display: str,
     seconds: float | None = None, title: str | None = None,
+    audio_source: str | None = None,
 ) -> list[str]:
     if fps <= 0:
         raise SystemExit("fps must be greater than zero")
@@ -603,19 +605,65 @@ def recording_command(
         raise SystemExit("seconds must be greater than zero")
     command = [
         require_program("ffmpeg"), "-hide_banner", "-loglevel", "warning",
-        "-y", "-f", "x11grab", "-framerate", str(fps),
+        "-y", "-thread_queue_size", "1024", "-f", "x11grab", "-framerate", str(fps),
         "-window_id", window, "-i", display,
     ]
+    if audio_source:
+        command.extend([
+            "-thread_queue_size", "1024", "-f", "pulse", "-i", audio_source,
+        ])
     if seconds is not None:
         command.extend(["-t", str(seconds)])
     command.extend([
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
-        "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+        "-pix_fmt", "yuv420p",
     ])
+    if audio_source:
+        command.extend(["-c:a", "aac", "-b:a", "192k"])
+    command.extend(["-movflags", "+faststart"])
     if title:
         command.extend(["-metadata", f"title={title}"])
     command.append(str(path))
     return command
+
+
+def chiaki_audio_monitor(pid: int) -> str:
+    """Resolve the Pulse monitor carrying one verified Chiaki process."""
+    pactl = require_program("pactl")
+    try:
+        inputs = json.loads(subprocess.check_output(
+            [pactl, "-f", "json", "list", "sink-inputs"], text=True,
+        ))
+        sinks = json.loads(subprocess.check_output(
+            [pactl, "-f", "json", "list", "sinks"], text=True,
+        ))
+        sources = json.loads(subprocess.check_output(
+            [pactl, "-f", "json", "list", "sources"], text=True,
+        ))
+    except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
+        raise SystemExit("could not inspect PulseAudio routing") from exc
+    matches = []
+    for stream in inputs:
+        properties = stream.get("properties", {})
+        if properties.get("application.process.id") == str(pid) and \
+                properties.get("application.process.binary") == "chiaki":
+            matches.append(stream)
+    if len(matches) != 1:
+        raise SystemExit(
+            f"expected one Chiaki audio stream for pid={pid}, found {len(matches)}"
+        )
+    target = matches[0].get("properties", {}).get("target.object")
+    if not target:
+        sink_index = matches[0].get("sink")
+        candidates = [sink.get("name") for sink in sinks
+                      if sink.get("index") == sink_index]
+        if len(candidates) != 1 or not candidates[0]:
+            raise SystemExit("could not resolve Chiaki audio sink")
+        target = candidates[0]
+    monitor = f"{target}.monitor"
+    if monitor not in {source.get("name") for source in sources}:
+        raise SystemExit(f"Chiaki audio monitor is unavailable: {monitor}")
+    return monitor
 
 
 def capture_window(window: str, path: Path) -> None:
@@ -681,8 +729,10 @@ def record(args: argparse.Namespace) -> None:
     display = os.environ.get("DISPLAY")
     if not display:
         raise SystemExit("DISPLAY is not set; X11 capture is unavailable")
+    window = stream_window()
     subprocess.run(recording_command(
-        path, args.fps, stream_window(), display, seconds=args.seconds,
+        path, args.fps, window, display, seconds=args.seconds,
+        audio_source=chiaki_audio_monitor(window_pid(window)),
     ), check=True)
     print(path)
 
@@ -723,9 +773,11 @@ def record_demo(args: argparse.Namespace) -> None:
     display = os.environ.get("DISPLAY")
     if not display:
         raise SystemExit("DISPLAY is not set; X11 capture is unavailable")
+    window = stream_window()
     command = recording_command(
-        path, args.fps, stream_window(), display,
+        path, args.fps, window, display,
         seconds=args.seconds, title=f"PS5 homebrew demo: {args.name}",
+        audio_source=chiaki_audio_monitor(window_pid(window)),
     )
     # Keep ffmpeg's stdin private so both Enter and Ctrl+C can send its
     # graceful ``q`` command.  Delivering SIGINT directly can interrupt the

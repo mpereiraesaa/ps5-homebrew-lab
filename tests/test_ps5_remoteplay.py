@@ -53,9 +53,39 @@ def main() -> int:
         assert command[command.index("-movflags") + 1] == "+faststart"
         assert command[-1] == "/tmp/demo.mp4"
         bounded = MODULE.recording_command(
-            Path("/tmp/demo.mp4"), 30, "4242", ":0", seconds=12.5
+            Path("/tmp/demo.mp4"), 30, "4242", ":0", seconds=12.5,
+            audio_source="ps5.monitor",
         )
         assert bounded[bounded.index("-t") + 1] == "12.5"
+        assert bounded[bounded.index("-f", 8) + 1] == "pulse"
+        assert bounded[bounded.index("-c:a") + 1] == "aac"
+    pulse_inputs = ('[{"sink":7,"properties":{'
+                    '"application.process.id":"31337",'
+                    '"application.process.binary":"chiaki",'
+                    '"target.object":"ps5-sink"}}]')
+    with mock.patch.object(MODULE, "require_program", return_value="/usr/bin/pactl"), \
+            mock.patch.object(MODULE.subprocess, "check_output",
+                              side_effect=[pulse_inputs, "[]",
+                                           '[{"name":"ps5-sink.monitor"}]']):
+        assert MODULE.chiaki_audio_monitor(31337) == "ps5-sink.monitor"
+    fallback_inputs = ('[{"sink":7,"properties":{'
+                       '"application.process.id":"31337",'
+                       '"application.process.binary":"chiaki"}}]')
+    with mock.patch.object(MODULE, "require_program", return_value="/usr/bin/pactl"), \
+            mock.patch.object(MODULE.subprocess, "check_output",
+                              side_effect=[fallback_inputs,
+                                           '[{"index":7,"name":"fallback"}]',
+                                           '[{"name":"fallback.monitor"}]']):
+        assert MODULE.chiaki_audio_monitor(31337) == "fallback.monitor"
+    with mock.patch.object(MODULE, "require_program", return_value="/usr/bin/pactl"), \
+            mock.patch.object(MODULE.subprocess, "check_output",
+                              side_effect=["[]", "[]", "[]"]):
+        try:
+            MODULE.chiaki_audio_monitor(31337)
+        except SystemExit as exc:
+            assert "found 0" in str(exc)
+        else:
+            raise AssertionError("missing Chiaki audio routing was accepted")
     with tempfile.TemporaryDirectory() as directory:
         decoded = Path(directory) / "decoded.png"
         with mock.patch.object(MODULE, "capture_window") as capture, \

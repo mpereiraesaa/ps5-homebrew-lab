@@ -1,6 +1,6 @@
 # Xash3D on PS5 checkpoint
 
-Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
+Reconciled: 2026-09-11. Hardware boundary: one PS5 on firmware 12.02.
 
 ## Current position
 
@@ -13,15 +13,144 @@ Reconciled: 2026-09-09. Hardware boundary: one PS5 on firmware 12.02.
 | 4 — GoldSrc render states | Complete, 8 gates plus final soak | Full state matrix, viewport/scissor, 2D, lighting, transient effects, Studio, brush entities and world visibility are hardware-proven; the integrated scene passed 60,000 frames with zero errors. |
 | 5 — Platform layer | Complete | Engine/bootstrap, retail filesystem, ScePad, SceAudioOut, direct memory, threads/time, GPU/flip timing and project-owned libc shims all have accepted FW 12.02 evidence. |
 | 6 — Engine integration | Complete, 6 gates closed | Hybrid `COM_*` loader plus dynamic filesystem, server, MainUI, GoldSrc client and RefAPI 18 `ref_agc` are hardware-proven with exact teardown. |
-| 7 — Playable and release | Active, native MainUI closed | Live `c1a0` world/special surfaces/2D and MainUI are native AGC output with exact ownership; the menu transitions to `c1a0` in-process. Entities/viewmodel, fixed-camera comparison, gameplay/performance, transition soaks and release remain open. |
+| 7 — Playable and release | First playable release complete | Native graphics/input/audio, map transitions and save/load are integrated and hardware accepted. Broader gameplay/performance coverage and presentation polish continue. |
+
+## Latest checkpoint — first playable, 2026-09-11
+
+Integrated through [port PR #34](https://github.com/mpereiraesaa/ps5-xash3d/pull/34),
+squashed as `a1cd5175b490278f3b160d7f1257d460623f41dd`, now the laboratory pin.
+Half-Life 1 is playable through the native PS5 engine/module stack with the AGC
+renderer, DualSense input, audio, transitions and save/load. The port README
+and hardware-validation documents define the exact accepted evidence; the
+remaining work is release polish and broader gameplay/performance coverage.
+
+## Previous checkpoint — plan rev 49, 2026-09-09
+
+Integrated through [port PR #31](https://github.com/mpereiraesaa/ps5-xash3d/pull/31),
+squashed as `3e78c1a645fbafbc0e345cdd13c4166c9b694b05`, the preceding lab pin.
+
+The combined Studio run was visually accepted for controller interpolation,
+crossfade, two-blend routing and glowshell. Mode 4 found no visible model with
+four real blends; this remains an explicit hardware coverage gap, not a failed
+implementation claim. The live-game audio run was audible to the operator and
+closed exactly: 18,179 frames, zero output errors, no discarded frames and one
+worker-owned drain/close/join. Six startup underruns were recorded (four before
+the active-map timer and two just after, none later); they remain polish work.
+The subsequent run mounted 115 `valve_hd` files (8.65 MiB), was visually
+accepted and closed with paired renderer validation: 18,165 frames, zero
+errors, nine reclaims and exact teardown. The top diagnostic logger text still
+needs a presentation-only cleanup; external `ps5log/1` telemetry stays on.
+
+These are first-pass hardware acceptances, not full release coverage: map
+transition/long-session audio and HD performance soaks remain open. Title IDs
+remain `PPSA99996`/`PPSA99997`; `PPSA99998` is not installed and Prospero Win is
+untouched.
+
+## Previous checkpoint — plan rev 48, 2026-09-09
+
+Integrated through [port PR #30](https://github.com/mpereiraesaa/ps5-xash3d/pull/30),
+commit `2caa49e59f274e3cdd249d560e6fe23210fda039`, pinned by the lab submodule.
+
+The unchanged accepted `c1a0 -> c1a0d -> c1a0` pair now passes the explicit
+multi-map contract: 10,810 frames, three ordered engine captures/GPU publications.
+Single-map mode remains strict and no longer confuses map-name prefixes.
+
+Controlled recovery is separately hardware/operator accepted. Engine
+`20260909T185435450Z_PPSA99996_xash3d-engine_0x15de625771803` and renderer
+`20260909T185435571Z_PPSA99996_ps5-xash3d_0x15de62b04835c` pass 10,825 frames,
+one named expected Host_Error, zero renderer errors, nine reclaims, intact guards
+and exact teardown. World clear serial 1099/revision 2 has zero resident bytes,
+2D presentation continues, and the map reloads at serial 1700/revision 3.
+Operator confirmed visible recovery and working movement/look. The first
+diagnostic attempt had an unavailable command and does not count as recovery.
+
+Diagnostic SELF: `2690f0ceca419a7025b6a6326144b652d277d00e0bc20f3f885a9d279f9def3c`.
+Normal SELF `6445127bd600a19b4af405ef9eeda12de6c95a7ce1a5ad479ac184baa774f16b`
+was restored by exact FTP hashes at 18:58 UTC without relaunch. Renderer remains
+`d7003f1c56e84cc91bcc78d7f7e7e300b8e612b42881d2fbed7ddc23c3c89386`.
+The build remains timed/audio-off and no-grant; this is not a release package.
+Remaining Studio/effects parity, audio, optional HD packs, gameplay/performance,
+longer transition soaks and release remain open. This proves the named recovery
+path, not arbitrary failures. Full detail is in the port's Studio checkpoint.
+
+## Previous checkpoint — plan rev 47, 2026-09-09
+
+Integrated through [port PR #29](https://github.com/mpereiraesaa/ps5-xash3d/pull/29),
+commit `47f331516d98e9dc94744b7ca1dbff85f0ccb0aa`, the preceding lab pin.
+
+Tested live effects are accepted: viewmodel events/reload, muzzleflash, wall
+marks, particles/tracers, blood and sprite lighting. The operator accepted
+more splatter/presence and blood marks on wall/floor. Default
+`ps5_blood_amount=1.5` is reversible; 1 restores original presentation.
+Damage, lifetimes and DualSense v5 remain unchanged.
+
+Engine run `20260909T181705427Z_PPSA99996_xash3d-engine_0x15bda477abfcd`
+and renderer `20260909T181705519Z_PPSA99996_ps5-xash3d_0x15bda4cecca71`
+pass paired live lightmap/2D/menu/brush/Studio validation: 18,175 frames,
+17,957 world frames, nine exact reclaims, intact guards, zero errors, clean
+BYEs and complete teardown. GPU texture peak: 68,079,104 bytes. The validator
+reconciles the separate viewmodel and anonymous index-zero casings while
+rejecting missing/incoherent viewmodels and duplicate persistent entities.
+No historical logs were modified.
+
+Normal no-grant build restored at 18:26 UTC by exact raw-FTP SHA-256, without
+relaunch: SELF `6445127bd600a19b4af405ef9eeda12de6c95a7ce1a5ad479ac184baa774f16b`,
+renderer PRX `d7003f1c56e84cc91bcc78d7f7e7e300b8e612b42881d2fbed7ddc23c3c89386`.
+The 180-second/audio-off graphics harness remains; this is not a new normal
+hardware run or a finished release package. Full identities, limits and
+evidence are in the port's `docs/PHASE7_STUDIO_LIGHTING.md`.
+
+Next: transition-aware validation and Host_Error hardware recovery; remaining
+Studio/effects parity, live audio, optional HD packs, gameplay/performance,
+soaks and release remain open. Phase 7 is not complete. Title IDs remain
+PPSA99996/PPSA99997; PPSA99998 is not installed. Prospero Win is untouched.
+
+## Previous checkpoint — plan rev 46, 2026-09-09
+
+Xash3D [PR #28](https://github.com/mpereiraesaa/ps5-xash3d/pull/28) merged
+with green CI as `3cebf5611d1b615ec83642319a4c8cd0232ef2e6`; this is the
+lab's previous `projects/ps5-xash3d` pin. Host CI now explicitly initializes
+the pinned library_suffix header dependency required by the shared-light test.
+
+The port integrates owner-thread Studio lighting, corrected NPOT mip storage,
+ordinary camera-relative chrome, separate viewmodel pose/draw ownership and
+complete compiled C++ callback names in the server PRX descriptor. Normal
+lighting/NPOT runs `20260909T154242843Z` / `20260909T154242941Z` and chrome
+runs `20260909T155503025Z` / `20260909T155503120Z` each pass paired validation
+with 10,990 frames, nine exact reclaims and zero renderer errors. The operator
+accepted NPC appearance and the return `c1a0d -> c1a0`; the latter has manual
+and structured evidence but is rejected by the single-map validator, which
+still needs an explicit transition-aware contract. Host_Error recovery remains
+host-tested, not hardware accepted.
+
+The viewmodel is actually drawn; operator QA covers pistol fire, crowbar attack
+and immediate weapon cycling. DualSense v5 is accepted for now: R2 primary,
+R1 secondary, D-pad cycling without confirmation; radial right-stick deadzone
+10%, exponent 1.6, horizontal/vertical rates 140/105 degrees/s. Movement is
+unchanged. Port `docs/SCEPAD_PHASE5.md` is the maintained controls/install guide.
+V5 run: `20260909T164158161Z_PPSA99996_xash3d-engine_0x156a978a27888`;
+profile SHA-256 `1fb70cc9172a82136e69e0a780869d1e437880d468524fdfa03a004adc13b9db`.
+
+Native build, host suite/publication audit and targeted sanitizer tests pass.
+Normal no-grant/no-A-B build restored at 16:48 UTC via verified raw FTP, no
+relaunch: SELF `8c4b1fcd951c6583a3fd4bd3e38487ef5370f70190cab01c4edc6285e462fe38`.
+This restoration is not a new hardware gate. Full exact identities and historical
+failed/rejected runs remain in port `docs/PHASE7_STUDIO_LIGHTING.md`.
+
+Remaining order: finish viewmodel events/effects/reload and controller/sequence
+coverage, explicit transition evidence and final integrated resource QA; then
+live game audio and optional valve_hd, followed by the remaining Phase 7
+gameplay/performance/release gates. No global Phase 7 closure, no cheats in the
+release input profile, no PPSA99998 and no Prospero Win changes.
 
 The Phase 1/2 implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. The complete Phase 3 texture
 path was merged through `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264` after
 all host and security checks passed. On 2026-09-06 the port moved to its own
 repository, `mpereiraesaa/ps5-xash3d`, forked from `cbff264` with full history;
-the laboratory submodule `projects/ps5-xash3d` now pins merged Phase 7
-native-menu checkpoint `a975b86`; the preceding live-2D checkpoint is
+the laboratory previously pinned merged Phase 7
+Studio/input checkpoint `3cebf56`; earlier native-menu checkpoint was
+`a975b86`, and the preceding live-2D checkpoint is
 `0bdcbfb`, and the preceding live-special-surface checkpoint is
 `77c742a`, the preceding live-lightmap checkpoint is `4f9d38d`, the preceding
 compositor-visible world checkpoint is `cdcce91`, the preceding live-world
@@ -803,6 +932,131 @@ visibly shows MainUI at 23 seconds and `c1a0` at 25 seconds after a non-black
 Home preflight. This closes native menu presentation and the in-process map
 transition; entities, viewmodel, camera comparison, gameplay, performance,
 soaks and release remain.
+
+## Live NPC and visual corrections checkpoint (2026-09-09)
+
+Xash3D PR #25 is merged as `3167fc60c8c038507f088a8194b25cd8473590e0`;
+the lab pins this exact commit. Port host contracts and publication checks pass.
+
+The port's `docs/PHASE7_BASELINE_REGRESSION.md` records the complete sequence of
+accepted and failed runs: coherent menu/map deployment, brush transforms,
+animated Studio NPCs, runtime ScePad, camera-relative black occlusion corrected
+by color-only background depth, Studio mip/trilinear minification and restored
+MOVETYPE_STEP movement interpolation. Operator confirms distant visibility,
+reduced shimmer and fluid walking. None of this closes all of Phase 7.
+
+The live GPU texture budget is now 80 MiB; measured residency is 67,717,120
+bytes. The first 64-MiB mip candidate correctly parked on exhaustion and remains
+documented as a failure. Interactive 30-minute runs were externally closed for
+iteration. The final three-minute natural-exit run now closes resource teardown:
+engine `20260909T113637960Z_PPSA99996_xash3d-engine_0x1460005826042` and renderer
+`20260909T113638013Z_PPSA99996_ps5-xash3d_0x14600097ae176` passed 10,997 frames,
+nine exact reclaims, zero errors, all five PRX unloads and empty engine memory.
+Post-run status confirmed no BigApp and four healthy services. Renderer PRX
+SHA-256: `192ec1ffd401720ecc6f108c58f5844b00c146a92c9ddb3ca87f856a4bd4b9d2`.
+The paired validator checks live lightmaps/2D/menu/brush/Studio; this scene has
+no sky/turbulent draws and does not supersede their earlier dedicated proof.
+The port document preserves full artifact/log hashes and rejected iterations.
+
+Known next work: full Studio lighting/chrome/controllers/sequence transitions,
+viewmodel, chapter-title blend-state propagation (black rectangle), integrated
+game audio (`XASH_AUDIO=0` in these graphics runs), gameplay, performance and
+soaks. Dedicated Phase 5 audio proof is not proof of an audible live client.
+QA uses direct operator observations; no Remote Play/capture was required.
+
+## Phase 7 texture-memory policy (2026-09-09)
+
+Accepted and merged: Xash3D PR #26, `70ebea8d40e24d6642034abeb3721b251e00df17`.
+The lab pins this exact commit; memory acceptance was recorded in revision 43.
+
+The fixed 80-MiB texture test budget is replaced by measured, configurable
+capacity. XASH_TEXTURE_MIB selects explicit MiB (zero means automatic),
+XASH_TEXTURE_RESERVE_MIB defaults to 512 MiB outside the renderer heap, and
+XASH_TEXTURE_AUTO_PERCENT defaults to 10% of eligible capacity. These are
+configurable policies, not PS5 hardware limits. A single returned free block
+is used conservatively; it is not mislabeled as total free memory.
+
+The explicit 256-MiB run passed 1,999 frames, nine reclaims and exact teardown.
+Automatic runs `20260909T122547724Z` / `20260909T122547781Z` pass 10,994 frames,
+nine exact reclaims, zero errors, five PRX unloads and clean BYEs. Selected
+texture capacity is 1,204,158,464 bytes, with 67,717,120 bytes of texture data
+resident inside that physically allocated arena. The independent paired
+validator and post-run status pass. This is startup sizing, not sparse
+allocation, runtime growth, eviction or performance-budget acceptance.
+Host tests and ASan/UBSan cover mapping-failure rollback, retained ownership
+when release fails, and create/replacement exhaustion without corruption.
+The paired validator independently recomputes budget arithmetic and matches
+the actual cache allocation. Full identities and automatic-run evidence live
+in the port's docs/PHASE7_TEXTURE_MEMORY_POLICY.md.
+
+Next gates remain ordered: chapter-title/HUD blending, Studio lighting/viewmodel
+fidelity, real game audio, then valve_hd mounting and resource validation.
+None of these or the rest of Phase 7 is closed by the memory gate.
+
+## Phase 7 HUD/font correction — hardware accepted (2026-09-09)
+
+Xash3D PR #27 merged with all checks green as
+`4726bd3301aba5dba7659da22f9e82d6fead7105`, now the lab submodule pin.
+
+Plan revision 44 records draft Xash3D PR #27 at
+`f99929d69d345be7028afc10a71087cf870105ff`. Requested render modes now reach
+the compositor, with independent alpha test and correct FillRGBA/current-color
+side effects. The eight 2D pipelines preserve the 96 existing 3D permutations;
+a dedicated screen shader discards only final alpha zero. Full host tests,
+ASan/UBSan compositor coverage, gfx1013 shader validation, the native
+client/AGC build and both GitHub host-contracts jobs pass.
+
+Renderer ELF SHA-256:
+`88ca05fbf445e532fa91e92c5d420b43dc9b90fbb73a0cd07fe0821f669e66b4`.
+Renderer PRX SHA-256:
+`23672468d2920dc78096a7224744d254be1a82c590038b974252084ba9864ad9`.
+Exact compiled pixel shader bytes were located in the ELF, rather than
+assuming the source change reached the artifact.
+
+The initial candidate above was superseded by the native opaque-blend reset:
+the base world and background clear must not inherit additive HUD state.
+The operator accepted the transparent chapter title and removal of the
+white-scene flash. Corrected renderer ELF SHA-256 is
+`72b77e924283b3f9c5452ec63d63593a570fc90895e715e33d8e6073f3e6ab5a`;
+renderer PRX SHA-256 is
+`1037c7fc64a0a95d7cec55540b14835c56d28769856fe40ee3dcc5e6b126e6bf`.
+Paired engine run `20260909T134011789Z_PPSA99996_xash3d-engine_0x14cbe2b57d1b9`
+and renderer run `20260909T134011848Z_PPSA99996_ps5-xash3d_0x14cbe2ed915f6`
+passed 10,992 frames, nine exact reclaims, intact guards, zero errors and clean
+BYEs. The validator passes live lightmaps, 2D, menu, brush and Studio evidence;
+independent post-run status confirms no BigApp and four healthy services.
+Manual-close sessions are not teardown evidence.
+
+The subsequent opt-in exercise uses real engine console-font notifications
+(additive/masked/alpha) and `CL_DrawScreenFade` (alpha/multiplicative), with
+six 15-second observation stages and state restoration. The operator confirmed
+everything looked correct, including letters without rectangles. Paired runs
+`20260909T140302704Z_PPSA99996_xash3d-engine_0x14dfd5b292543` and
+`20260909T140302761Z_PPSA99996_ps5-xash3d_0x14dfd5e51453b` pass 10,993 frames,
+nine exact reclaims, intact guards, zero errors and clean BYEs. All stages and
+renderer masked/additive/alpha/modulate batches are recorded. The strict paired
+validator passes menu, lightmaps, 2D, brush and Studio requirements; independent
+post-run status confirms no BigApp and four healthy services.
+Diagnostic ELF: `d16d9d7ad8efe535b5e4d84310fe1a592cec6f3e00c1dafd0dde65cce32e6b33`;
+SELF: `3a639cd0343c2a0da1f4dea1e5c4a6b15eb0b3f1aee8ac71e8b87e090298ae71`.
+The renderer is unchanged from the corrected normal candidate above.
+The default-off normal build was restored without launching, using verified
+raw FTP hashes: ELF `878232f31299066486c1e3b4d8678c3f20d54a286bad2f7acc1e2a65f9724de2`,
+SELF `48395ac510aa1fb1acf2216962005c81a89a7aa50e774e75551429e843809854`.
+The port's `docs/PHASE7_HUD_FONT_BLEND.md` contains the full evidence.
+
+### Current five-task order — revision 45
+
+1. Measured/configurable texture memory policy — complete.
+2. HUD/fonts/fades — complete, accepted PR #27 integrated at `4726bd3`.
+3. Studio lighting/viewmodel — lighting, chrome, controllers, animation
+   transitions and viewmodel; preserve accepted smooth NPC walking.
+4. Real game audio — enable `XASH_AUDIO=1`, verify ambience, NPC voices and
+   effects with audible evidence, ring-buffer telemetry and exact teardown.
+5. Optional `valve_hd` — mount precedence, fallback, resources and performance.
+
+Studio is next at the owner's request; audio follows Studio. This changes
+priority, not scope. Phase 7 remains open.
 
 ## Remote Play operating contract
 

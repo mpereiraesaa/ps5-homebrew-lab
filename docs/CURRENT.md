@@ -1,6 +1,6 @@
 # Current development boundary
 
-Last reconciled: 2026-09-09. Tested console firmware: PS5 12.02.
+Last reconciled: 2026-09-11. Tested console firmware: PS5 12.02.
 
 ## Canonical implementation
 
@@ -21,14 +21,25 @@ the frozen tree at `8f035b7`.
 
 ## Xash3D checkpoint
 
+Current port pin: `a1cd517`, merged [PR #34](https://github.com/mpereiraesaa/ps5-xash3d/pull/34).
+
+The first playable Half-Life 1 release is hardware accepted: the native engine,
+game modules, AGC renderer, DualSense input, audio, map transitions and
+save/load operate together on FW 12.02. Optional `valve_hd` content also has
+separate operator acceptance. Remaining work is release polish and broader
+gameplay/performance coverage. See
+`XASH3D_CHECKPOINT.md` for current integration identity and proof boundaries.
+Older checkpoint descriptions below are historical.
+
 The active engineering target is now Xash3D on PS5. Phases 0, 1 and 2 of
 `XASH3D_PS5_PLAN.html` are complete on the canonical public branch, and Phase 3
 completed all six hardware gates before merging through
 `mpereiraesaa/ps5-agc-gears#9` as commit `cbff264`. The
 consolidated resource-foundation implementation was merged through
 `mpereiraesaa/ps5-agc-gears#8` as commit `642d348`. Both commits are now
-history of `projects/ps5-xash3d`. This laboratory now pins the merged Phase 7
-native-menu checkpoint `a975b86`; its preceding live-2D checkpoint is
+history of `projects/ps5-xash3d`. This laboratory now pins the first playable
+release checkpoint `a1cd517`; the earlier Phase 7 native-menu checkpoint is
+`a975b86`, and its preceding live-2D checkpoint is
 `0bdcbfb`, and the preceding live-special-surface checkpoint is
 `77c742a`, the preceding live-lightmap checkpoint is `4f9d38d`, the preceding
 compositor-visible world checkpoint is `cdcce91`, the preceding live-world
@@ -327,6 +338,51 @@ local definitions plus the accepted hardware probe. Raw lists, the evidence
 ledger and reproduction scripts live under
 `research/xash3d/` and the pinned `ps5-xash3d` submodule.
 
+## Win32 compatibility layer
+
+prospero-win (PPSA99995) targets original Windows binaries. AMD64 execution
+requires Win64 ABI bridges; x86 requires software execution because the tested
+LDT compatibility-mode route is refused on FW 12.02. The first compatibility
+target is original Space Cadet Pinball, without recompilation; it validates the
+general runtime rather than defining its architecture. DRM and anti-cheat are
+out of scope.
+
+### Current first-playable checkpoint
+
+The original PE32 now executes continuously through the project DBT on FW
+12.02. Its complete animated GDI table is composed correctly, transferred by
+AGC DMA and presented through VideoOut; its WaveMix path feeds original PCM to
+SceAudioOut. The reusable ScePad adapter maps plunger, both flippers, nudges,
+pause and new game into Win32 messages, neutralizes every ownership boundary
+and maps the raw Create edge to orderly `WM_QUIT`. Persistent registry state,
+bounded `wavemix.inf` parsing, idle pacing and exhaustive teardown are covered
+by host regressions and structured `ps5log/1` evidence.
+
+The post-commit production deployment passed a strict soak beyond ten minutes
+as run `20260911T012402917Z_PPSA99995_prospero-win_0x1c1bb08616b67`: at the
+acceptance point it had retired 649,958,605 guest instructions, completed
+3,001,738 adapter calls, presented 7,122 changing frames, emitted 901 audio
+blocks and consumed 2,975 connected pad samples with no
+abort/signal/read/profile error. The exact current source also passed a finite
+18-second launch with 473 state bytes loaded, 878 audio blocks, all cleanup
+results successful and a matching `BYE`. The owner then accepted Cross launch,
+both shoulder flippers, scoring, ball loss, Options pause/resume and Square
+new-game restart on the post-fix production candidate. This is the first
+playable title, with intermittent pacing and presentation polish still open.
+MIDI music is optional and off by default; a second independent title, broader
+Win32 compatibility and D3D8/9 remain later milestones.
+
+Canonical current hashes and run IDs are in
+`projects/prospero-win/docs/HARDWARE_VALIDATION.md`.
+
+### Historical foundation
+
+The mapping, static-coverage and incremental startup record remains in the
+project's dated phase documents. Those files are evidence history, not the
+operational status; the first-playable checkpoint above and the project
+roadmap govern current work.
+
+
 ## Development policy
 
 - `main` is protected and receives changes only through pull requests.
@@ -374,7 +430,64 @@ pins the native-foundation fork's `exp/prx-module` tooling and uses
 `sceKernelDlsym` are not available for these modules; symbol resolution goes
 through each module's range-checked `PRXDESC1` export descriptor.
 
-## Historical boundary
+## Phase 7 live NPC checkpoint — 2026-09-09
+
+Pinned Xash3D `3167fc6` (merged PR #25); plan revision 42.
+
+Final resource validation passed 10,997 frames / 180 active-map seconds, nine
+exact reclaims, zero errors and five-PRX teardown. The engine root is empty;
+post-run status confirms no BigApp. Full run IDs and hashes are in the port's
+`docs/PHASE7_BASELINE_REGRESSION.md` and the lab checkpoint below.
+
+Brush transforms and first live Studio NPCs now have direct operator evidence.
+The background color pass no longer writes scene depth; opaque Studio textures
+use GPU mip/trilinear filtering; STEP origin/angle interpolation restores fluid
+walking. Runtime DualSense exploration is active. See XASH3D_CHECKPOINT and the
+port's PHASE7_BASELINE_REGRESSION for artifact/run identities and resource proof.
+Full Studio fidelity, viewmodel, chapter-title blending and live-client audio
+remain open: graphics runs use XASH_AUDIO=0. This does not close Phase 7.
+
+## Phase 7 texture-memory policy — 2026-09-09
+
+Pinned Xash3D `70ebea8` (merged PR #26), memory task accepted.
+
+Plan revision 43 replaces the fixed texture test budget with measured explicit
+or automatic startup capacity. The explicit 256-MiB run passes 1,999 frames;
+the automatic run passes 10,994 frames and exact resource teardown. Host tests
+cover allocation rollback and cache exhaustion. See XASH3D_CHECKPOINT and the
+port's PHASE7_TEXTURE_MEMORY_POLICY for full evidence and limitations.
+Historical rev 45 order: Studio lighting/viewmodel, then game audio, then optional
+valve_hd QA. Texture memory policy and HUD are done. Xash3D PR #27 merged
+as `4726bd3`; that was the rev 45 port pin, superseded by rev 46 below.
+
+The operator accepted the corrected chapter title and removal of the white-scene
+flash. Corrected paired runs `20260909T134011789Z` / `20260909T134011848Z`
+passed 10,992 frames, nine exact reclaims, intact guards, zero errors and clean
+BYEs. The final controlled three-font/two-fade exercise was also accepted by
+the operator. Paired runs `20260909T140302704Z` / `20260909T140302761Z` pass
+10,993 frames, nine exact reclaims, zero errors and clean BYEs. The normal
+non-probe build was restored by exact FTP hashes without relaunching.
+Studio scope is lighting, chrome, controllers, animation transitions and
+viewmodel, preserving accepted smooth NPC walking. Audio remains a separate
+fourth task; this focused acceptance does not close Phase 7.
+
+## Phase 7 Studio/input integration — plan rev 46
+
+Xash3D PR #28 merged with green CI as `3cebf56`, the previous lab pin. It integrates
+accepted NPC lighting, NPOT texture correction and
+ordinary chrome, callback save/restore coverage, separate viewmodel drawing
+and the DualSense v5 profile. Operator QA confirms pistol/crowbar use,
+immediate weapon cycling and preferred aim at 140/105 degrees/s with radial
+deadzone 10% and exponent 1.6. R2 is primary attack, R1 secondary. Use the
+port's SCEPAD_PHASE5 guide for the current profile rather than engine defaults.
+
+Lighting/NPOT and chrome normal runs each passed 10,990 frames and exact
+teardown. Viewmodel effects/events/reload and remaining Studio coverage,
+transition-aware evidence, game audio, valve_hd and release gates remain open.
+The normal no-grant build is restored without relaunch; graphics audio remains
+disabled. Full evidence and limitations are in XASH3D_CHECKPOINT rev 46.
+
+## Historical renderer boundary
 
 The former Phase 0 and Stages A–I proved the path from direct memory and simple
 DCBs through triangle, cube and early Gears rendering. Their source now lives
