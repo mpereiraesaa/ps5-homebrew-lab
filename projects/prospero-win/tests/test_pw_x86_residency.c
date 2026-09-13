@@ -543,6 +543,6 @@ int main(void)
     test_matching_chain_preserves_inherited_dirty_value();
 
     assert(vm.release(vm.context, &stack_region) == PW_OK);
-    printf("all 11 tranche B register residency tests passed successfully\n");
+    printf("all 11 register residency tests passed successfully\n");
     return 0;
 }

@@ -1032,6 +1032,6 @@ int main(void)
     test_parity_lazy_flags_switch();
 
     assert(vm.release(vm.context, &stack_region) == PW_OK);
-    printf("all 11 tranche C lazy arithmetic flags tests passed successfully\n");
+    printf("all 11 lazy arithmetic flags tests passed successfully\n");
     return 0;
 }
