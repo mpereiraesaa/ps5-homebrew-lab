@@ -173,10 +173,23 @@ static int branch_condition(PwX86State *s,unsigned condition)
 }
 static void condition_value(Emitter *e,unsigned condition)
 {
-    byte(e,0xbe);word(e,condition);byte(e,0x57);byte(e,0x48);byte(e,0xb8);
+    /* branch_condition is an ordinary SysV call.  Keep every host register
+     * that may carry a resident guest value alive across it.  Five pushes
+     * also preserve the required call-site stack alignment. */
+    byte(e,0x57); /* push rdi */
+    byte(e,0x41);byte(e,0x50); /* push r8 */
+    byte(e,0x41);byte(e,0x51); /* push r9 */
+    byte(e,0x41);byte(e,0x52); /* push r10 */
+    byte(e,0x41);byte(e,0x53); /* push r11 */
+    byte(e,0xbe);word(e,condition);byte(e,0x48);byte(e,0xb8);
     uint64_t fn=(uint64_t)(uintptr_t)&branch_condition;
     word(e,(uint32_t)fn);word(e,(uint32_t)(fn>>32));
-    byte(e,0xff);byte(e,0xd0);byte(e,0x5f);
+    byte(e,0xff);byte(e,0xd0); /* call rax */
+    byte(e,0x41);byte(e,0x5b); /* pop r11 */
+    byte(e,0x41);byte(e,0x5a); /* pop r10 */
+    byte(e,0x41);byte(e,0x59); /* pop r9 */
+    byte(e,0x41);byte(e,0x58); /* pop r8 */
+    byte(e,0x5f); /* pop rdi */
 }
 static inline int get_resident_host_reg(const PwX86RegContract *c, unsigned gpr)
 {
@@ -1119,6 +1132,13 @@ analyze_and_emit:
         }
     }
     block->exit_contract = block->entry_contract;
+    /* A matching chain entry can inherit resident values that are newer than
+     * canonical state.  The block has multiple possible predecessors, so a
+     * static contract cannot know their per-register dirty masks.  Treat all
+     * resident values as dirty until the first emitted spill barrier.  A
+     * canonical entry may perform harmless redundant stores; a chain entry
+     * must never lose a predecessor's update. */
+    block->exit_contract.dirty_mask = block->entry_contract.resident_mask;
 
     /* Pass 2: Machine code emission */
     block->canonical_entry_offset = e.n;

@@ -436,6 +436,90 @@ static void test_parity_residency_switch(void)
     assert(pw_x86_engine_destroy(&engine_no_res) == PW_OK);
 }
 
+/* 10. A condition helper must preserve a resident ESP before a push. */
+static void test_setcc_helper_preserves_resident_stack(void)
+{
+    /*
+     *   cmp eax, ebx
+     *   setne al          (calls the condition helper)
+     *   push 2            (must use the original resident ESP)
+     *   ret
+     */
+    uint8_t code[] = {0x39, 0xd8, 0x0f, 0x95, 0xc0, 0x6a, 0x02, 0xc3};
+    TestSource src = {0x1000, code, sizeof(code)};
+    PwVmBackend vm;
+    PwX86Engine engine;
+    PwX86CacheEntry entries[16];
+    PwX86State state = {.eip = 0x1000, .stack_low = 0x03000000, .stack_high = 0x03010000};
+    state.gpr[0] = 1;
+    state.gpr[3] = 2;
+    state.gpr[4] = 0x0300ff00;
+    *(uint32_t *)(uintptr_t)state.gpr[4] = 0x99999999;
+
+    assert(pw_vm_posix_backend(&vm) == PW_OK);
+    assert(pw_x86_engine_init(&engine, &vm, entries, 16, 65536, 1,
+                              test_source_view, &src) == PW_OK);
+    assert(pw_x86_engine_set_residency(&engine, 1) == PW_OK);
+
+    PwX86StepReport step;
+    assert(pw_x86_engine_step(&engine, &state, &step) == PW_OK);
+    assert(state.eip == 2);
+    assert(state.gpr[4] == 0x0300ff00);
+    assert(*(uint32_t *)(uintptr_t)0x0300fefc == 2);
+
+    const PwX86CacheEntry *entry = NULL;
+    assert(pw_x86_cache_lookup(&engine.cache, 0x1000, &entry) == PW_OK);
+    assert(entry->entry_contract.resident_mask & (1 << 4));
+
+    assert(pw_x86_engine_destroy(&engine) == PW_OK);
+}
+
+/* 11. A matching successor must eventually spill inherited dirty values. */
+static void test_matching_chain_preserves_inherited_dirty_value(void)
+{
+    uint8_t code[320];
+    memset(code,0x90,sizeof(code));
+    /* Block A: make EAX resident and dirty, then chain to 0x1080. */
+    size_t a=0;
+    code[a++]=0xb8;code[a++]=10;code[a++]=0;code[a++]=0;code[a++]=0;
+    code[a++]=0x83;code[a++]=0xc0;code[a++]=1;
+    code[a++]=0x83;code[a++]=0xc0;code[a++]=2;
+    code[a++]=0xe9;
+    int32_t delta=(int32_t)(0x1080-(0x1000+a+4));
+    memcpy(code+a,&delta,4);a+=4;
+    /* Block B: use but do not modify EAX.  Thirty-two CMPs terminate the
+     * translated block through the bounded dynamic exit. */
+    for(unsigned i=0;i<32;i++) {
+        size_t p=0x80+i*5;
+        code[p]=0x3d;code[p+1]=13;
+    }
+
+    TestSource src={0x1000,code,sizeof(code)};
+    PwVmBackend vm;
+    PwX86Engine engine;
+    PwX86CacheEntry entries[32];
+    PwX86State state={.eip=0x1080,.stack_low=0x03000000,.stack_high=0x03010000};
+    state.gpr[4]=0x0300ff00;
+
+    assert(pw_vm_posix_backend(&vm)==PW_OK);
+    assert(pw_x86_engine_init(&engine,&vm,entries,32,131072,1,
+                              test_source_view,&src)==PW_OK);
+    assert(pw_x86_engine_set_chaining(&engine,1)==PW_OK);
+    assert(pw_x86_engine_set_quantum(&engine,2)==PW_OK);
+
+    /* Compile B first so A's forward edge is linked immediately. */
+    PwX86StepReport step;
+    assert(pw_x86_engine_step(&engine,&state,&step)==PW_OK);
+    state.eip=0x1000;state.gpr[0]=0;
+    assert(pw_x86_engine_step(&engine,&state,&step)==PW_OK);
+    assert(state.eip==0x1120);
+    assert(state.gpr[0]==13);
+    assert(step.retired==36);
+    assert(state.step_transitions==1);
+
+    assert(pw_x86_engine_destroy(&engine)==PW_OK);
+}
+
 int main(void)
 {
     PwVmBackend vm;
@@ -453,8 +537,10 @@ int main(void)
     test_chain_invalidation_canonical_fallback();
     test_deterministic_allocation_output();
     test_parity_residency_switch();
+    test_setcc_helper_preserves_resident_stack();
+    test_matching_chain_preserves_inherited_dirty_value();
 
     assert(vm.release(vm.context, &stack_region) == PW_OK);
-    printf("all 9 tranche B register residency tests passed successfully\n");
+    printf("all 11 tranche B register residency tests passed successfully\n");
     return 0;
 }
