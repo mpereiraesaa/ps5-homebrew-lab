@@ -21,6 +21,8 @@ typedef struct PwX86CacheEntry {
     uint16_t instruction_ends[32];
     PwX86RegContract entry_contract;
     PwX86RegContract exit_contract;
+    PwX86FlagsContract entry_flags;
+    PwX86FlagsContract exit_flags;
     PwX86ExitDesc exit;
     PwX86LinkSlot link_slots[2]; /* 0: target, 1: fallthrough */
     unsigned used;

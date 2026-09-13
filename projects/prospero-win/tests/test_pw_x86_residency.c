@@ -378,8 +378,8 @@ static void test_deterministic_allocation_output(void)
     uint8_t out1[256], out2[256];
     PwX86Block b1 = {0}, b2 = {0};
 
-    assert(pw_x86_translate_ext(code, sizeof(code), 0x1000, out1, sizeof(out1), &b1, 1) == PW_OK);
-    assert(pw_x86_translate_ext(code, sizeof(code), 0x1000, out2, sizeof(out2), &b2, 1) == PW_OK);
+    assert(pw_x86_translate_ext(code, sizeof(code), 0x1000, out1, sizeof(out1), &b1, 1, 1) == PW_OK);
+    assert(pw_x86_translate_ext(code, sizeof(code), 0x1000, out2, sizeof(out2), &b2, 1, 1) == PW_OK);
 
     assert(b1.code_bytes == b2.code_bytes);
     assert(b1.canonical_entry_offset == b2.canonical_entry_offset);

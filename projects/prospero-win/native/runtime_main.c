@@ -528,6 +528,7 @@ int main(int argc,char **argv)
                 "dbt_lookup_probes=%llu dbt_max_probe=%u dbt_protect_calls=%llu dbt_protect_bytes=%llu "
                 "dbt_links=%llu dbt_linked_transitions=%llu dbt_safepoints=%llu "
                 "dbt_reg_loads=%llu dbt_reg_stores=%llu dbt_reg_reconciliations=%llu dbt_reg_spills=%llu "
+                "dbt_flags_deferred=%llu dbt_flags_bits=%llu dbt_flags_materializations=%llu dbt_flags_reconciliations=%llu "
                 "windows=%u targets=%u visible_source=%u flips=%llu audio_blocks=%llu "
                 "audio_bytes=%llu audio_frames=%llu audio_hash=0x%08x "
                 "audio_enqueues=%llu audio_completions=%llu audio_queue=%u "
@@ -552,6 +553,10 @@ int main(int argc,char **argv)
                 (unsigned long long)engine.reg_stores,
                 (unsigned long long)engine.reg_reconciliations,
                 (unsigned long long)engine.reg_spills,
+                (unsigned long long)engine.flags_deferred_producers,
+                (unsigned long long)engine.flags_bits_materialized,
+                (unsigned long long)engine.flags_full_materializations,
+                (unsigned long long)engine.flags_reconciliations,
                 window_count,
                 counts.target_surfaces,presented,(unsigned long long)video.flips,
                 (unsigned long long)audio_stats.blocks,
