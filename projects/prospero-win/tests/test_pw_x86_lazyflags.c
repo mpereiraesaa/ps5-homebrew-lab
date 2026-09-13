@@ -21,7 +21,7 @@ static int test_source_view(void *opaque, uint32_t pc, const uint8_t **data, siz
     return PW_OK;
 }
 
-/* 1. Producer chains where all flags die without materialization */
+/* 1. Producer chains defer canonical EFLAGS until the engine safepoint */
 static void test_producer_chains_dead_flags(void)
 {
     /*
@@ -86,13 +86,13 @@ static void test_producer_chains_dead_flags(void)
     state.gpr[4] = 0x0300ff00;
     *(uint32_t *)(uintptr_t)state.gpr[4] = 0x99999999;
 
-    uint64_t prev_deferred = engine.flags_deferred_producers;
+    uint64_t prev_commits = engine.flags_safepoint_commits;
     assert(pw_x86_engine_step(&engine, &state, &step) == PW_OK);
     assert(state.eip == 0x99999999);
     assert(state.gpr[0] == 15);
     assert(state.gpr[3] == 35);
     assert(state.gpr[2] == 30);
-    assert(engine.flags_deferred_producers - prev_deferred >= 2);
+    assert(engine.flags_safepoint_commits - prev_commits == 1);
 
     assert(pw_x86_engine_destroy(&engine) == PW_OK);
 }
@@ -676,6 +676,33 @@ static void test_shift_zero_one_multibit_cl(void)
 
         assert(pw_x86_engine_destroy(&engine) == PW_OK);
     }
+
+    /* 6.4: An eager shift supersedes a pending arithmetic descriptor. */
+    {
+        uint8_t code[] = {
+            0xb8, 0xff, 0xff, 0xff, 0xff, /* mov eax, -1 */
+            0x83, 0xc0, 1,                /* add eax, 1: CF=1 */
+            0xd1, 0xe8,                   /* shr eax, 1: CF=0, ZF=1 */
+            0xc3
+        };
+        TestSource src = {0x1000, code, sizeof(code)};
+        PwX86Engine engine;
+        PwX86CacheEntry entries[4];
+        PwX86State state = {
+            .eip=0x1000,.stack_low=0x03000000,.stack_high=0x03010000
+        };
+        state.gpr[4]=0x0300ff00;
+        *(uint32_t *)(uintptr_t)state.gpr[4]=0x99999999;
+        assert(pw_x86_engine_init(&engine,&vm,entries,4,65536,1,
+                                  test_source_view,&src)==PW_OK);
+        assert(pw_x86_engine_set_lazy_flags(&engine,1)==PW_OK);
+        PwX86StepReport step;
+        assert(pw_x86_engine_step(&engine,&state,&step)==PW_OK);
+        assert(state.gpr[0]==0);
+        assert((state.eflags&1)==0);
+        assert((state.eflags&0x40)!=0);
+        assert(pw_x86_engine_destroy(&engine)==PW_OK);
+    }
 }
 
 /* 7. Memory faults between a producer and would-be consumer */
@@ -881,7 +908,58 @@ static void test_reconciliation_with_residency_and_invalidation(void)
     assert(pw_x86_engine_destroy(&engine) == PW_OK);
 }
 
-/* 10. Parity with lazy flags disabled through test/runtime switch */
+/* 10. Byte-memory and 16-bit register ADC import pending guest CF. */
+static void test_adc_width_and_address_temporaries(void)
+{
+    uint8_t code[] = {
+        0xb8, 0xff, 0xff, 0xff, 0xff, /* mov eax, -1 */
+        0x83, 0xc0, 1,                /* add eax, 1: CF=1 */
+        0x80, 0x54, 0x24, 0x04, 0,   /* adc byte [esp+4], 0 */
+        0xb8, 0xff, 0xff, 0xff, 0xff, /* mov eax, -1 */
+        0x83, 0xc0, 1,                /* add eax, 1: CF=1 */
+        0xb9, 0, 0, 0, 0,             /* mov ecx, 0 */
+        0xbb, 0, 0, 0, 0,             /* mov ebx, 0 */
+        0x66, 0x11, 0xd9,             /* adc cx, bx */
+        0xb8, 0xff, 0xff, 0xff, 0xff, /* mov eax, -1 */
+        0x83, 0xc0, 1,                /* add eax, 1: CF=1 */
+        0xb8, 0, 0, 0, 0,             /* mov eax, 0 (flags unchanged) */
+        0x14, 0,                      /* adc al, 0 */
+        0xc3
+    };
+    TestSource src = {0x1000, code, sizeof(code)};
+    PwVmBackend vm;
+    assert(pw_vm_posix_backend(&vm) == PW_OK);
+
+    for(unsigned lazy=0;lazy<=1;lazy++) {
+        PwX86Engine engine;
+        PwX86CacheEntry entries[8];
+        PwX86State state = {
+            .eip=0x1000,.stack_low=0x03000000,.stack_high=0x03010000
+        };
+        state.gpr[4]=0x0300ff00;
+        *(uint32_t *)(uintptr_t)state.gpr[4]=0x99999999;
+        *(uint32_t *)(uintptr_t)(state.gpr[4]+4)=0;
+        assert(pw_x86_engine_init(&engine,&vm,entries,8,65536,1,
+                                  test_source_view,&src)==PW_OK);
+        assert(pw_x86_engine_set_lazy_flags(&engine,lazy)==PW_OK);
+        PwX86StepReport step;
+        for(unsigned steps=0;state.eip>=0x1000 && state.eip<0x1000+sizeof(code);steps++) {
+            assert(steps<8);
+            int status=pw_x86_engine_step(&engine,&state,&step);
+            if(status!=PW_OK)
+                fprintf(stderr,"adc width debug lazy=%u eip=0x%08x status=%d\n",
+                        lazy,state.eip,status);
+            assert(status==PW_OK);
+        }
+        assert(state.eip==0x99999999);
+        assert(*(uint8_t *)(uintptr_t)(0x0300ff04)==1);
+        assert((state.gpr[1]&0xffff)==1);
+        assert(state.gpr[0]==1);
+        assert(pw_x86_engine_destroy(&engine)==PW_OK);
+    }
+}
+
+/* 11. Parity with lazy flags disabled through test/runtime switch */
 static void test_parity_lazy_flags_switch(void)
 {
     /*
@@ -950,9 +1028,10 @@ int main(void)
     test_memory_fault_preserves_prefault_flags();
     test_unmasked_exits_commit_canonical_flags();
     test_reconciliation_with_residency_and_invalidation();
+    test_adc_width_and_address_temporaries();
     test_parity_lazy_flags_switch();
 
     assert(vm.release(vm.context, &stack_region) == PW_OK);
-    printf("all 10 tranche C lazy arithmetic flags tests passed successfully\n");
+    printf("all 11 tranche C lazy arithmetic flags tests passed successfully\n");
     return 0;
 }

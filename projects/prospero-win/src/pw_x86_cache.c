@@ -77,8 +77,6 @@ int pw_x86_cache_publish(PwX86Cache *cache,uint32_t guest_pc,const PwX86Block *b
         .instructions=block->instructions,
         .entry_contract=block->entry_contract,
         .exit_contract=block->exit_contract,
-        .entry_flags=block->entry_flags,
-        .exit_flags=block->exit_flags,
         .exit=block->exit,.used=1};
     cache->entries[slot].link_slots[0]=(PwX86LinkSlot){
         .target_pc=block->exit.target_pc,.source_pc=guest_pc,.target_code=NULL,.canonical_code=NULL,.is_linked=0,.is_reconciled=0};

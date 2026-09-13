@@ -6,6 +6,8 @@
 /* Context accesses below use signed disp8 encodings. Fail at build time if
  * future state-layout changes would silently address the wrong field. */
 _Static_assert(offsetof(PwX86State,eflags)<=127,"context exceeds disp8 layout");
+_Static_assert(offsetof(PwX86State,memory[0].permissions)<=127,
+               "generated memory fast path exceeds disp8 layout");
 
 typedef struct Emitter { uint8_t *p; size_t n, cap; int failed; } Emitter;
 static void byte(Emitter *e, uint8_t value)
@@ -427,8 +429,6 @@ static void emit_chain_exit(Emitter *e, uint32_t count, uint32_t target_pc,
     }
     /* inc dword ptr [rdi + reg_reconciliations] */
     byte(e, 0xff); byte(e, 0x47); byte(e, offsetof(PwX86State, reg_reconciliations));
-    /* inc dword ptr [rdi + flags_reconciliations] */
-    byte(e, 0xff); byte(e, 0x47); byte(e, offsetof(PwX86State, flags_reconciliations));
     /* movabs $link_slot->canonical_code, %r11 */
     byte(e, 0x49); byte(e, 0xbb);
     *reconcile_patch_offset = e->n;
@@ -437,47 +437,40 @@ static void emit_chain_exit(Emitter *e, uint32_t count, uint32_t target_pc,
     byte(e, 0x41); byte(e, 0xff); byte(e, 0x23);
 }
 
-static void save_arithmetic_flags(Emitter *e, uint32_t mask);
+static void emit_materialize_flags(Emitter *e, uint32_t mask);
+static uint32_t branch_condition_flags(unsigned condition);
 
 static void conditional_target(Emitter *e, unsigned condition, uint32_t next, uint32_t target,
-                               PwX86Block *block, uint32_t count, int host_rflags_valid, uint32_t last_flags_mask)
+                               PwX86Block *block, uint32_t count)
 {
     unsigned c = condition >> 1;
     unsigned invert = condition & 1;
     uint8_t jump_op = invert ? 0x84 : 0x85;
     size_t branch_patch = 0;
-    if (host_rflags_valid) {
-        byte(e, 0x0f);
-        byte(e, (uint8_t)(0x80 | condition));
-        branch_patch = e->n;
-        word(e, 0);
-        save_arithmetic_flags(e, last_flags_mask);
+    emit_materialize_flags(e,branch_condition_flags(condition));
+    if (c == 0) { /* OF: bit 11 in eflags (bit 3 of byte [rdi+53]) */
+        byte(e,0xf6);byte(e,0x47);byte(e,offsetof(PwX86State,eflags)+1);byte(e,0x08);
+        byte(e,0x0f);byte(e,jump_op); branch_patch = e->n; word(e, 0);
+    } else if (c == 1) { /* CF: bit 0 in eflags (byte [rdi+52]) */
+        byte(e,0xf6);byte(e,0x47);byte(e,offsetof(PwX86State,eflags));byte(e,0x01);
+        byte(e,0x0f);byte(e,jump_op); branch_patch = e->n; word(e, 0);
+    } else if (c == 2) { /* ZF: bit 6 in eflags (byte [rdi+52]) */
+        byte(e,0xf6);byte(e,0x47);byte(e,offsetof(PwX86State,eflags));byte(e,0x40);
+        byte(e,0x0f);byte(e,jump_op); branch_patch = e->n; word(e, 0);
+    } else if (c == 3) { /* CF || ZF: bits 0, 6 in eflags (byte [rdi+52]) */
+        byte(e,0xf6);byte(e,0x47);byte(e,offsetof(PwX86State,eflags));byte(e,0x41);
+        byte(e,0x0f);byte(e,jump_op); branch_patch = e->n; word(e, 0);
+    } else if (c == 4) { /* SF: bit 7 in eflags (byte [rdi+52]) */
+        byte(e,0xf6);byte(e,0x47);byte(e,offsetof(PwX86State,eflags));byte(e,0x80);
+        byte(e,0x0f);byte(e,jump_op); branch_patch = e->n; word(e, 0);
+    } else if (c == 5) { /* PF: bit 2 in eflags (byte [rdi+52]) */
+        byte(e,0xf6);byte(e,0x47);byte(e,offsetof(PwX86State,eflags));byte(e,0x04);
+        byte(e,0x0f);byte(e,jump_op); branch_patch = e->n; word(e, 0);
     } else {
-        if (c == 0) { /* OF: bit 11 in eflags (bit 3 of byte [rdi+53]) */
-            byte(e,0xf6);byte(e,0x47);byte(e,offsetof(PwX86State,eflags)+1);byte(e,0x08);
-            byte(e,0x0f);byte(e,jump_op); branch_patch = e->n; word(e, 0);
-        } else if (c == 1) { /* CF: bit 0 in eflags (byte [rdi+52]) */
-            byte(e,0xf6);byte(e,0x47);byte(e,offsetof(PwX86State,eflags));byte(e,0x01);
-            byte(e,0x0f);byte(e,jump_op); branch_patch = e->n; word(e, 0);
-        } else if (c == 2) { /* ZF: bit 6 in eflags (byte [rdi+52]) */
-            byte(e,0xf6);byte(e,0x47);byte(e,offsetof(PwX86State,eflags));byte(e,0x40);
-            byte(e,0x0f);byte(e,jump_op); branch_patch = e->n; word(e, 0);
-        } else if (c == 3) { /* CF || ZF: bits 0, 6 in eflags (byte [rdi+52]) */
-            byte(e,0xf6);byte(e,0x47);byte(e,offsetof(PwX86State,eflags));byte(e,0x41);
-            byte(e,0x0f);byte(e,jump_op); branch_patch = e->n; word(e, 0);
-        } else if (c == 4) { /* SF: bit 7 in eflags (byte [rdi+52]) */
-            byte(e,0xf6);byte(e,0x47);byte(e,offsetof(PwX86State,eflags));byte(e,0x80);
-            byte(e,0x0f);byte(e,jump_op); branch_patch = e->n; word(e, 0);
-        } else if (c == 5) { /* PF: bit 2 in eflags (byte [rdi+52]) */
-            byte(e,0xf6);byte(e,0x47);byte(e,offsetof(PwX86State,eflags));byte(e,0x04);
-            byte(e,0x0f);byte(e,jump_op); branch_patch = e->n; word(e, 0);
-        } else {
-            condition_value(e,condition);
-            byte(e,0x85);byte(e,0xc0);
-            byte(e,0x0f);byte(e,0x85); branch_patch = e->n; word(e, 0);
-        }
+        condition_value(e,condition);
+        byte(e,0x85);byte(e,0xc0);
+        byte(e,0x0f);byte(e,0x85); branch_patch = e->n; word(e, 0);
     }
-    byte(e, 0xff); byte(e, 0x47); byte(e, offsetof(PwX86State, flags_bits_materialized));
     emit_chain_exit(e, count, next, &block->exit_contract,
                     &block->exit.fallthrough_patch_offset, &block->exit.fallthrough_stub_offset,
                     &block->exit.fallthrough_reconcile_offset, &block->exit.fallthrough_reconcile_patch_offset);
@@ -486,10 +479,6 @@ static void conditional_target(Emitter *e, unsigned condition, uint32_t next, ui
     e->p[branch_patch+1] = (uint8_t)(disp >> 8);
     e->p[branch_patch+2] = (uint8_t)(disp >> 16);
     e->p[branch_patch+3] = (uint8_t)(disp >> 24);
-    if (host_rflags_valid) {
-        save_arithmetic_flags(e, last_flags_mask);
-    }
-    byte(e, 0xff); byte(e, 0x47); byte(e, offsetof(PwX86State, flags_bits_materialized));
     emit_chain_exit(e, count, target, &block->exit_contract,
                     &block->exit.target_patch_offset, &block->exit.target_stub_offset,
                     &block->exit.target_reconcile_offset, &block->exit.target_reconcile_patch_offset);
@@ -568,163 +557,46 @@ static void success(Emitter *e)
 }
 uint32_t pw_x86_compute_canonical_flags(const PwX86DeferredFlags *df, uint32_t prev_eflags)
 {
-    if (!df || df->op == PW_X86_DEFERRED_NONE) return prev_eflags;
-
-    uint32_t wmask;
-    uint32_t sign_bit;
-    if (df->width == 1) {
-        wmask = 0xffu;
-        sign_bit = 0x80u;
-    } else if (df->width == 2) {
-        wmask = 0xffffu;
-        sign_bit = 0x8000u;
-    } else {
-        wmask = 0xffffffffu;
-        sign_bit = 0x80000000u;
-    }
-
-    uint32_t s1 = df->src1 & wmask;
-    uint32_t s2 = df->src2 & wmask;
-    uint32_t r = df->res & wmask;
-
-    uint32_t cf = 0, of = 0, zf = 0, sf = 0, af = 0, pf = 0;
-
-    /* Parity flag: bit 2 in eflags. Even number of set bits in lowest 8 bits. */
-    uint8_t low8 = (uint8_t)(r & 0xff);
-    low8 ^= (low8 >> 4);
-    low8 ^= (low8 >> 2);
-    low8 ^= (low8 >> 1);
-    if (!(low8 & 1)) pf = 0x004;
-
-    /* Zero flag: bit 6 in eflags */
-    if (r == 0) zf = 0x040;
-
-    /* Sign flag: bit 7 in eflags */
-    if (r & sign_bit) sf = 0x080;
-
-    switch (df->op) {
-    case PW_X86_DEFERRED_ADD:
-        if (r < s1) cf = 0x001;
-        if (((s1 ^ r) & (s2 ^ r) & sign_bit) != 0) of = 0x800;
-        if (((s1 ^ s2 ^ r) & 0x10) != 0) af = 0x010;
-        break;
-
-    case PW_X86_DEFERRED_SUB:
-        if (s1 < s2) cf = 0x001;
-        if (((s1 ^ s2) & (s1 ^ r) & sign_bit) != 0) of = 0x800;
-        if (((s1 ^ s2 ^ r) & 0x10) != 0) af = 0x010;
-        break;
-
-    case PW_X86_DEFERRED_LOGIC:
-        cf = 0;
-        of = 0;
-        af = prev_eflags & 0x010; /* preserved per runtime policy */
-        break;
-
-    case PW_X86_DEFERRED_INC:
-        cf = prev_eflags & 0x001; /* INC preserves CF */
-        if (r == sign_bit) of = 0x800;
-        if (((s1 ^ 1 ^ r) & 0x10) != 0) af = 0x010;
-        break;
-
-    case PW_X86_DEFERRED_DEC:
-        cf = prev_eflags & 0x001; /* DEC preserves CF */
-        if (s1 == sign_bit) of = 0x800;
-        if (((s1 ^ 1 ^ r) & 0x10) != 0) af = 0x010;
-        break;
-
-    case PW_X86_DEFERRED_NEG:
-        if (s2 != 0) cf = 0x001;
-        if (s2 == sign_bit) of = 0x800;
-        if (((0 ^ s2 ^ r) & 0x10) != 0) af = 0x010;
-        break;
-
-    case PW_X86_DEFERRED_SHL: {
-        uint32_t cnt = s2 & 0x1f;
-        if (cnt == 0) return prev_eflags;
-        uint32_t total_bits = df->width * 8;
-        if (cnt <= total_bits) {
-            if ((s1 >> (total_bits - cnt)) & 1) cf = 0x001;
-        }
-        if (cnt == 1) {
-            if (((r ^ (r << 1)) & sign_bit) != 0) of = 0x800;
-        } else {
-            of = prev_eflags & 0x800;
-        }
-        af = prev_eflags & 0x010;
-        break;
-    }
-
-    case PW_X86_DEFERRED_SHR: {
-        uint32_t cnt = s2 & 0x1f;
-        if (cnt == 0) return prev_eflags;
-        if ((s1 >> (cnt - 1)) & 1) cf = 0x001;
-        if (cnt == 1) {
-            if (s1 & sign_bit) of = 0x800;
-        } else {
-            of = prev_eflags & 0x800;
-        }
-        af = prev_eflags & 0x010;
-        break;
-    }
-
-    case PW_X86_DEFERRED_SAR: {
-        uint32_t cnt = s2 & 0x1f;
-        if (cnt == 0) return prev_eflags;
-        uint32_t total_bits = df->width * 8;
-        uint32_t effective_cnt = (cnt >= total_bits) ? total_bits : cnt;
-        if ((s1 >> (effective_cnt - 1)) & 1) cf = 0x001;
-        if (cnt == 1) {
-            of = 0;
-        } else {
-            of = prev_eflags & 0x800;
-        }
-        af = prev_eflags & 0x010;
-        break;
-    }
-
-    case PW_X86_DEFERRED_MUL:
-        if (df->src1 != 0) cf = 0x001;
-        if (cf) of = 0x800;
-        zf = prev_eflags & 0x040;
-        sf = prev_eflags & 0x080;
-        af = prev_eflags & 0x010;
-        pf = prev_eflags & 0x004;
-        break;
-
-    default:
-        return prev_eflags;
-    }
-
-    uint32_t mask = df->known_mask ? df->known_mask : 0x8d5;
-    uint32_t result_flags = (prev_eflags & ~mask) | ((cf | of | zf | sf | af | pf) & mask);
-    return result_flags;
+    if (!df) return prev_eflags;
+    return (prev_eflags & ~df->known_mask) |
+           (df->raw_flags & df->known_mask);
 }
 
 void pw_x86_materialize_flag_bits(PwX86State *state, uint32_t demand_mask)
 {
-    if (state->deferred_flags.op == PW_X86_DEFERRED_NONE) return;
-    uint32_t bits = demand_mask & state->deferred_flags.known_mask & ~state->deferred_flags.materialized_mask;
-    while (bits) {
-        state->flags_bits_materialized++;
-        bits &= bits - 1;
-    }
-    uint32_t full = pw_x86_compute_canonical_flags(&state->deferred_flags, state->eflags);
-    state->eflags = (state->eflags & ~demand_mask) | (full & demand_mask);
-    state->deferred_flags.materialized_mask |= demand_mask;
-    if ((state->deferred_flags.known_mask & ~state->deferred_flags.materialized_mask) == 0) {
-        state->deferred_flags.op = PW_X86_DEFERRED_NONE;
-        state->flags_full_materializations++;
-    }
+    uint32_t mask = demand_mask & state->deferred_flags.known_mask;
+    state->eflags = (state->eflags & ~mask) |
+                    (state->deferred_flags.raw_flags & mask);
 }
 
 void pw_x86_commit_canonical_flags(PwX86State *state)
 {
-    if (state->deferred_flags.op == PW_X86_DEFERRED_NONE) return;
+    if (!state->deferred_flags.known_mask) return;
     state->eflags = pw_x86_compute_canonical_flags(&state->deferred_flags, state->eflags);
-    state->deferred_flags.op = PW_X86_DEFERRED_NONE;
-    state->deferred_flags.materialized_mask = 0;
-    state->flags_full_materializations++;
+    state->deferred_flags.known_mask = 0;
+}
+
+static void emit_materialize_flags(Emitter *e,uint32_t mask)
+{
+    if(!mask)return;
+    /* Merge only demanded pending bits into canonical guest EFLAGS.  This is
+     * branch-free and does not cross the C ABI, so resident r8-r10 survive. */
+    load_eax(e,offsetof(PwX86State,eflags));
+    byte(e,0x8b);byte(e,0x97);
+    word(e,(uint32_t)offsetof(PwX86State,deferred_flags.known_mask));
+    byte(e,0x81);byte(e,0xe2);word(e,mask);
+    byte(e,0x8b);byte(e,0x8f);word(e,(uint32_t)offsetof(PwX86State,deferred_flags.raw_flags));
+    byte(e,0x31);byte(e,0xc1); /* ecx = raw ^ canonical */
+    byte(e,0x21);byte(e,0xd1); /* retain changed demanded bits */
+    byte(e,0x31);byte(e,0xc8); /* merge into eax */
+    store_eax(e,offsetof(PwX86State,eflags));
+}
+
+static void emit_commit_flags(Emitter *e)
+{
+    emit_materialize_flags(e,0x8d5);
+    byte(e,0xc7);byte(e,0x87);
+    word(e,(uint32_t)offsetof(PwX86State,deferred_flags.known_mask));word(e,0);
 }
 
 static void save_arithmetic_flags(Emitter *e,uint32_t mask)
@@ -739,20 +611,49 @@ static void save_arithmetic_flags(Emitter *e,uint32_t mask)
     byte(e,0x89); byte(e,0x57); byte(e,offsetof(PwX86State,eflags));
 }
 
-static void emit_save_flags(Emitter *e, uint32_t mask, unsigned lazy_flags_enabled,
-                            int *host_rflags_valid, uint32_t *last_flags_mask, int flags_dead)
+static void load_edx_disp32(Emitter *e,size_t offset)
 {
-    if (flags_dead) {
-        *host_rflags_valid = 0;
-        return;
-    }
-    if (!lazy_flags_enabled) {
-        save_arithmetic_flags(e, mask);
-        *host_rflags_valid = 0;
+    byte(e,0x8b);byte(e,0x97);word(e,(uint32_t)offset);
+}
+
+static void store_edx_disp32(Emitter *e,size_t offset)
+{
+    byte(e,0x89);byte(e,0x97);word(e,(uint32_t)offset);
+}
+
+static void store_imm_disp32(Emitter *e,size_t offset,uint32_t value)
+{
+    byte(e,0xc7);byte(e,0x87);word(e,(uint32_t)offset);word(e,value);
+}
+
+static void defer_arithmetic_flags(Emitter *e,uint32_t mask)
+{
+    const size_t result_offset=offsetof(PwX86State,deferred_flags.raw_flags);
+    const size_t known_offset=offsetof(PwX86State,deferred_flags.known_mask);
+
+    byte(e,0x9c);byte(e,0x59);                 /* pushfq; pop rcx */
+    if(mask==0x8d5) {
+        /* Every deferred arithmetic bit is replaced, so no merge is needed. */
+        byte(e,0x89);byte(e,0x8f);word(e,(uint32_t)result_offset);
+        store_imm_disp32(e,known_offset,mask);
     } else {
-        *host_rflags_valid = 1;
-        *last_flags_mask = mask;
+        byte(e,0x81);byte(e,0xe1);word(e,mask); /* and ecx, mask */
+        load_edx_disp32(e,result_offset);
+        byte(e,0x81);byte(e,0xe2);word(e,~mask);
+        byte(e,0x09);byte(e,0xca);
+        store_edx_disp32(e,result_offset);
+        byte(e,0x81);byte(e,0x8f);word(e,(uint32_t)known_offset);word(e,mask);
     }
+}
+
+static void emit_save_flags(Emitter *e, uint32_t mask, unsigned lazy_flags_enabled,
+                            int flags_dead)
+{
+    if (flags_dead) return;
+    if (!lazy_flags_enabled)
+        save_arithmetic_flags(e, mask);
+    else
+        defer_arithmetic_flags(e,mask);
 }
 static void fs_address(Emitter *e, uint32_t offset)
 {
@@ -1002,6 +903,8 @@ int pw_x86_translate_ext(const uint8_t *source, size_t bytes, uint32_t pc,
         } else if(op==0x66 && bytes-cursor>=2 &&
                   (source[cursor+1]==0x01 || source[cursor+1]==0x03 ||
                    source[cursor+1]==0x09 || source[cursor+1]==0x0b ||
+                   source[cursor+1]==0x11 || source[cursor+1]==0x13 ||
+                   source[cursor+1]==0x19 || source[cursor+1]==0x1b ||
                    source[cursor+1]==0x21 || source[cursor+1]==0x23 ||
                    source[cursor+1]==0x29 || source[cursor+1]==0x2b ||
                    source[cursor+1]==0x31 || source[cursor+1]==0x33 ||
@@ -1119,9 +1022,7 @@ int pw_x86_translate_ext(const uint8_t *source, size_t bytes, uint32_t pc,
         } else if(op==0x80 || op==0x88 || op==0x8a || op==0xc6 || op==0x38 || op==0x3a || op==0x84 || op==0xf6) {
             int result=decode_operand(source+cursor+1,bytes-cursor-1,&operand);
             if(result!=PW_OK)DECODE_FAIL(result);
-            if((op==0x80 && operand.reg!=0 && operand.reg!=1 && operand.reg!=4 &&
-                              operand.reg!=5 && operand.reg!=6 && operand.reg!=7) ||
-               ((op==0xc6 || op==0xf6) && operand.reg!=0))DECODE_FAIL(PW_ERR_UNSUPPORTED);
+            if((op==0xc6 || op==0xf6) && operand.reg!=0)DECODE_FAIL(PW_ERR_UNSUPPORTED);
             length=1+operand.bytes+(op==0x80 || op==0xc6 || op==0xf6);
             can_fault=(operand.mod!=3);
             if(op==0x80) {
@@ -1130,7 +1031,6 @@ int pw_x86_translate_ext(const uint8_t *source, size_t bytes, uint32_t pc,
             } else if(op==0x38||op==0x3a) flags_def=0x8d5;
             else if(op==0x84||op==0xf6) flags_def=0x8c5;
         } else if((op<=0x3c && (op&7)==4) || op==0xa8 || (op>=0xb0 && op<=0xb7)) {
-            if(op==0x14 || op==0x1c)DECODE_FAIL(PW_ERR_UNSUPPORTED);
             length=2;
             if(op==0xa8) flags_def=0x8c5;
             else if(op<=0x3c && (op&7)==4) {
@@ -1348,18 +1248,6 @@ analyze_and_emit:
     }
     block->chain_entry_offset = e.n;
 
-    unsigned deferred_producers_count = 0;
-    if (lazy_flags_enabled) {
-        for (unsigned i = 0; i < count; i++) {
-            if (insts[i].flags_def) deferred_producers_count++;
-        }
-    }
-    if (lazy_flags_enabled && deferred_producers_count) {
-        byte(&e, 0x81); byte(&e, 0x47); byte(&e, offsetof(PwX86State, flags_deferred_producers));
-        word(&e, deferred_producers_count);
-    }
-    int host_rflags_valid = 0;
-    uint32_t last_flags_mask = 0;
 
     for (unsigned i = 0; i < count; i++) {
         DecodedInst *d = &insts[i];
@@ -1392,14 +1280,13 @@ analyze_and_emit:
         /* Fault exits preserve the PC of the faulting guest instruction. */
         store(&e,offsetof(PwX86State,eip),pc+(uint32_t)cursor);
         if (d->can_fault || string_op || x87) {
-            if (host_rflags_valid) {
-                save_arithmetic_flags(&e, last_flags_mask);
-                host_rflags_valid = 0;
-            }
             emit_spill_dirty(&e, &block->exit_contract);
             block->exit_contract.dirty_mask = 0;
         }
         if(string_op) {
+            /* The helper can consume and replace arithmetic EFLAGS (CMPS/REP),
+             * so it is a descriptor ownership boundary. */
+            emit_commit_flags(&e);
             string_call(&e,string_op,string_width,string_repeat);
             emit_load_all_resident(&e, &block->exit_contract);
         }
@@ -1407,6 +1294,11 @@ analyze_and_emit:
             unsigned operation=byte_alu-1;
             unsigned rm=(operand.rm&3)*4+(operand.rm>>2);
             unsigned reg=(operand.reg&3)*4+(operand.reg>>2);
+            /* Materialization calls C and may clobber operand temporaries.  Do it
+             * before loading either byte operand, then import CF immediately
+             * before the native ADC/SBB instruction. */
+            if(operation==2 || operation==3)
+                emit_materialize_flags(&e,0x001);
             if(operand.mod!=3) {
                 effective_address(&e,&operand,&block->exit_contract);
                 memory_address_width(&e,!byte_direction && operation!=7?2:0,1);
@@ -1427,13 +1319,8 @@ analyze_and_emit:
                 byte(&e,0x41);byte(&e,0x0f);byte(&e,0xb6);byte(&e,0x00);
             }
             if(operation==2 || operation==3) {
-                if (host_rflags_valid) {
-                    save_arithmetic_flags(&e, last_flags_mask);
-                    host_rflags_valid = 0;
-                }
                 byte(&e,0x0f);byte(&e,0xba);byte(&e,0x67);
                 byte(&e,offsetof(PwX86State,eflags));byte(&e,0);
-                byte(&e,0xff);byte(&e,0x47);byte(&e,offsetof(PwX86State,flags_bits_materialized));
             }
             if(!byte_direction && operand.mod!=3) {
                 byte(&e,(uint8_t)(operation*8+2));byte(&e,0x47);byte(&e,reg);
@@ -1451,7 +1338,7 @@ analyze_and_emit:
                 }
             }
             emit_save_flags(&e, (operation==1 || operation==4 || operation==6)?0x8c5:0x8d5,
-                            lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+                            lazy_flags_enabled, d->flags_dead);
         }
         else if(imul_general) {
             if(operand.mod==3)load_guest_reg(&e, &block->exit_contract, operand.rm);
@@ -1463,7 +1350,7 @@ analyze_and_emit:
                 byte(&e,0x0f);byte(&e,0xaf);byte(&e,0x47);byte(&e,operand.reg*4);
             }
             store_guest_reg(&e, &block->exit_contract, operand.reg);
-            emit_save_flags(&e, 0x801, lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+            emit_save_flags(&e, 0x801, lazy_flags_enabled, d->flags_dead);
         }
         else if(op==0x69 || op==0x6b) {
             if(operand.mod==3)load_guest_reg(&e, &block->exit_contract, operand.rm);
@@ -1472,7 +1359,7 @@ analyze_and_emit:
             if(op==0x69)word(&e,read32(source+cursor+length-4));
             else byte(&e,source[cursor+length-1]);
             store_guest_reg(&e, &block->exit_contract, operand.reg);
-            emit_save_flags(&e, 0x801, lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+            emit_save_flags(&e, 0x801, lazy_flags_enabled, d->flags_dead);
         }
         else if(word_general) {
             unsigned load=word_general==0x8b;
@@ -1501,12 +1388,18 @@ analyze_and_emit:
                 unsigned memory_destination=(word_general&7)==1;
                 unsigned operation=word_general>>3;
                 unsigned logical=operation==1 || operation==4 || operation==6;
+                if(operation==2 || operation==3)
+                    emit_materialize_flags(&e,0x001);
                 if(operand.mod==3) {
                     unsigned destination=memory_destination?operand.rm:operand.reg;
                     unsigned source_register=memory_destination?operand.reg:operand.rm;
                     emit_spill_single(&e, &block->exit_contract, destination);
                     emit_spill_single(&e, &block->exit_contract, source_register);
                     load_guest_reg(&e,&block->exit_contract,destination);byte(&e,0x66);
+                    if(operation==2 || operation==3) {
+                        byte(&e,0x0f);byte(&e,0xba);byte(&e,0x67);
+                        byte(&e,offsetof(PwX86State,eflags));byte(&e,0);
+                    }
                     byte(&e,(uint8_t)(operation*8+3));byte(&e,0x47);
                     byte(&e,source_register*4);
                     byte(&e,0x66);byte(&e,0x89);byte(&e,0x47);byte(&e,destination*4);
@@ -1518,10 +1411,18 @@ analyze_and_emit:
                     effective_address(&e,&operand,&block->exit_contract);memory_address_width(&e,memory_destination,2);
                     if(memory_destination) {
                         byte(&e,0x8b);byte(&e,0x4f);byte(&e,operand.reg*4);
+                        if(operation==2 || operation==3) {
+                            byte(&e,0x0f);byte(&e,0xba);byte(&e,0x67);
+                            byte(&e,offsetof(PwX86State,eflags));byte(&e,0);
+                        }
                         byte(&e,0x66);byte(&e,word_general);byte(&e,0x08);
                     } else {
                         byte(&e,0x0f);byte(&e,0xb7);byte(&e,0x08);
                         load_guest_reg(&e,&block->exit_contract,operand.reg);byte(&e,0x66);
+                        if(operation==2 || operation==3) {
+                            byte(&e,0x0f);byte(&e,0xba);byte(&e,0x67);
+                            byte(&e,offsetof(PwX86State,eflags));byte(&e,0);
+                        }
                         byte(&e,word_general);byte(&e,0xc8);
                         byte(&e,0x66);byte(&e,0x89);byte(&e,0x47);byte(&e,operand.reg*4);
                         if (get_resident_host_reg(&block->exit_contract, operand.reg) >= 0) {
@@ -1530,7 +1431,7 @@ analyze_and_emit:
                         }
                     }
                 }
-                emit_save_flags(&e, logical?0x8c5:0x8d5, lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+                emit_save_flags(&e, logical?0x8c5:0x8d5, lazy_flags_enabled, d->flags_dead);
             } else if(operand.mod==3) {
                 emit_spill_single(&e, &block->exit_contract, operand.rm);
                 emit_spill_single(&e, &block->exit_contract, operand.reg);
@@ -1580,7 +1481,7 @@ analyze_and_emit:
                     byte(&e,0x66);byte(&e,0x85);byte(&e,0x47);byte(&e,operand.reg*4);
                 }
             }
-            if(compare_word || test_word) emit_save_flags(&e, test_word?0x8c5:0x8d5, lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+            if(compare_word || test_word) emit_save_flags(&e, test_word?0x8c5:0x8d5, lazy_flags_enabled, d->flags_dead);
         }
         else if(x87) {
             if(operand.mod!=3){effective_address(&e,&operand,&block->exit_contract);memory_address_width(&e,x87_write,x87_width);}
@@ -1589,10 +1490,10 @@ analyze_and_emit:
             x87_call(&e,x87-1,x87_register);
             emit_load_all_resident(&e, &block->exit_contract);
         } else if(op==0xc1 || op==0xd1 || op==0xd3) {
-            if (host_rflags_valid) {
-                save_arithmetic_flags(&e, last_flags_mask);
-                host_rflags_valid = 0;
-            }
+            /* A zero-count shift preserves all arithmetic flags and wider
+             * counts retain implementation-policy bits. Canonicalize the
+             * previous producer before this eager variable-mask path. */
+            emit_commit_flags(&e);
             if(operand.mod==3)load_guest_reg(&e, &block->exit_contract, operand.rm);
             else {effective_address(&e,&operand,&block->exit_contract);memory_address_width(&e,2,4);}
             if(op==0xd3){load_guest_reg_ecx(&e, &block->exit_contract, 1);}
@@ -1617,15 +1518,10 @@ analyze_and_emit:
                 byte(&e,0x09);byte(&e,0xf2); /* or edx, esi */
                 byte(&e,0x89);byte(&e,0x57);byte(&e,offsetof(PwX86State,eflags));
             }
-            host_rflags_valid = 0;
         } else if(op>=0x40 && op<=0x4f) {
-            if (host_rflags_valid) {
-                save_arithmetic_flags(&e, last_flags_mask);
-                host_rflags_valid = 0;
-            }
             unsigned reg=op&7;load_guest_reg(&e, &block->exit_contract, reg);
             byte(&e,0xff);byte(&e,op<0x48?0xc0:0xc8);store_guest_reg(&e, &block->exit_contract, reg);
-            emit_save_flags(&e, 0x8d4, lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead); /* INC/DEC preserve guest CF. */
+            emit_save_flags(&e, 0x8d4, lazy_flags_enabled, d->flags_dead); /* INC/DEC preserve guest CF. */
         } else if(op>=0xb0 && op<=0xb7) {
             unsigned reg=op&7;
             emit_spill_single(&e, &block->exit_contract, reg & 3);
@@ -1635,18 +1531,33 @@ analyze_and_emit:
                 block->exit_contract.dirty_mask |= (1 << (reg & 3));
             }
         } else if((op<=0x3c && (op&7)==4) || op==0xa8) {
-            load_guest_reg(&e, &block->exit_contract, 0);byte(&e,op);byte(&e,source[cursor+1]);
+            unsigned operation=op>>3;
+            if(op!=0xa8 && (operation==2 || operation==3))
+                emit_materialize_flags(&e,0x001);
+            load_guest_reg(&e, &block->exit_contract, 0);
+            if(op!=0xa8 && (operation==2 || operation==3)) {
+                /* Reload native CF after operand setup and before ADC/SBB AL. */
+                byte(&e,0x0f);byte(&e,0xba);byte(&e,0x67);
+                byte(&e,offsetof(PwX86State,eflags));byte(&e,0);
+            }
+            byte(&e,op);byte(&e,source[cursor+1]);
             if(op!=0x3c && op!=0xa8)store_guest_reg(&e, &block->exit_contract, 0);
             emit_save_flags(&e, (op==0x0c || op==0x24 || op==0x34 || op==0xa8)?0x8c5:0x8d5,
-                            lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+                            lazy_flags_enabled, d->flags_dead);
         } else if(op==0x80 || op==0x88 || op==0x8a || op==0xc6 || op==0x38 || op==0x3a || op==0x84 || op==0xf6) {
             unsigned dest=(operand.rm&3)*4+(operand.rm>>2),reg=(operand.reg&3)*4+(operand.reg>>2);
             unsigned immediate_alu=op==0x80;
             unsigned write=op==0x88 || op==0xc6 || (immediate_alu && operand.reg!=7);
+            if(immediate_alu && (operand.reg==2 || operand.reg==3))
+                emit_materialize_flags(&e,0x001);
             if(operand.mod!=3){effective_address(&e,&operand,&block->exit_contract);memory_address_width(&e,write,1);}
             else emit_spill_single(&e, &block->exit_contract, operand.rm & 3);
             emit_spill_single(&e, &block->exit_contract, operand.reg & 3);
             if(immediate_alu) {
+                    if(operand.reg==2 || operand.reg==3) {
+                        byte(&e,0x0f);byte(&e,0xba);byte(&e,0x67);
+                        byte(&e,offsetof(PwX86State,eflags));byte(&e,0);
+                    }
                     byte(&e,0x80);byte(&e,operand.mod==3?
                         (uint8_t)(0x47|(operand.reg<<3)):(uint8_t)(operand.reg<<3));
                     if(operand.mod==3)byte(&e,dest);
@@ -1658,7 +1569,7 @@ analyze_and_emit:
                         }
                     }
                     emit_save_flags(&e, (operand.reg==1 || operand.reg==4 || operand.reg==6)?0x8c5:0x8d5,
-                                    lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+                                    lazy_flags_enabled, d->flags_dead);
             } else if(write) {
                 if(op==0xc6) {
                     byte(&e,0xc6);byte(&e,operand.mod==3?0x47:0x00);
@@ -1699,7 +1610,7 @@ analyze_and_emit:
                         byte(&e,0x38);byte(&e,0xc8);
                     } else {byte(&e,op==0x84?0x84:0x3a);byte(&e,0x47);byte(&e,reg);}
                     emit_save_flags(&e, (op==0x84 || op==0xf6)?0x8c5:0x8d5,
-                                    lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+                                    lazy_flags_enabled, d->flags_dead);
                 }
             }
         } else if(op==0x99) {
@@ -1728,7 +1639,7 @@ analyze_and_emit:
             else {effective_address(&e,&operand,&block->exit_contract);memory_address_width(&e,2,4);}
             byte(&e,0xf7);byte(&e,(operand.mod==3?0xc0:0)|(operand.reg<<3));
             if(operand.mod==3)store_guest_reg(&e, &block->exit_contract, operand.rm);
-            if(operand.reg==3) emit_save_flags(&e, 0x8d5, lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+            if(operand.reg==3) emit_save_flags(&e, 0x8d5, lazy_flags_enabled, d->flags_dead);
         } else if(op==0x85 || op==0xf7 || op==0xa9) {
             if(operand.mod==3)load_guest_reg(&e, &block->exit_contract, operand.rm);
             else {effective_address(&e,&operand,&block->exit_contract);memory_address(&e,0);byte(&e,0x8b);byte(&e,0x00);}
@@ -1741,17 +1652,10 @@ analyze_and_emit:
                 }
             }
             else {byte(&e,0xa9);word(&e,read32(source+cursor+length-4));}
-            emit_save_flags(&e, 0x8c5, lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead); /* TEST leaves AF undefined; retain it. */
+            emit_save_flags(&e, 0x8c5, lazy_flags_enabled, d->flags_dead); /* TEST leaves AF undefined; retain it. */
         } else if(setcc) {
-            if (host_rflags_valid) {
-                byte(&e, 0x0f); byte(&e, (uint8_t)(0x90 | (source[cursor+1] & 15))); byte(&e, 0xc0); /* setcc al */
-                byte(&e, 0x0f); byte(&e, 0xb6); byte(&e, 0xc0); /* movzx eax, al */
-                save_arithmetic_flags(&e, last_flags_mask);
-                host_rflags_valid = 0;
-            } else {
-                condition_value(&e,source[cursor+1]&15);
-            }
-            byte(&e, 0xff); byte(&e, 0x47); byte(&e, offsetof(PwX86State, flags_bits_materialized));
+            emit_materialize_flags(&e,branch_condition_flags(source[cursor+1]&15));
+            condition_value(&e,source[cursor+1]&15);
             unsigned reg=operand.rm&3,high=operand.rm>=4;
             if(high){byte(&e,0xc1);byte(&e,0xe0);byte(&e,8);}
             byte(&e,0x8b);byte(&e,0x57);byte(&e,reg*4);
@@ -1777,7 +1681,7 @@ analyze_and_emit:
                 byte(&e,0x89);byte(&e,0xc1);load_guest_reg(&e, &block->exit_contract, operand.reg);
                 byte(&e,0x39);byte(&e,0xc8);
             }
-            emit_save_flags(&e, 0x8d5, lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+            emit_save_flags(&e, 0x8d5, lazy_flags_enabled, d->flags_dead);
         } else if(extend) {
             unsigned opcode=source[cursor+(extend_word_destination?2:1)],width=(opcode&1)?2:1;
             if(operand.mod!=3){effective_address(&e,&operand,&block->exit_contract);memory_address_width(&e,0,width);}
@@ -1793,6 +1697,10 @@ analyze_and_emit:
                 }
             } else store_guest_reg(&e, &block->exit_contract, operand.reg);
         } else if(compare) {
+            /* A helper call cannot run after EAX contains the destination or
+             * effective address.  Resolve pending guest CF first. */
+            if(alu==2 || alu==3)
+                emit_materialize_flags(&e,0x001);
             if(operand.mod==3)load_guest_reg(&e, &block->exit_contract, operand.rm);
             else {
                 effective_address(&e,&operand,&block->exit_contract);memory_address_width(&e,alu!=7?2:0,word_operand?2:4);
@@ -1803,13 +1711,8 @@ analyze_and_emit:
                     word_operand?(uint32_t)imm[0]|(uint32_t)imm[1]<<8:read32(imm);
                 /* Import only guest CF for ADC/SBB, never guest control flags. */
                 if(alu==2 || alu==3) {
-                    if (host_rflags_valid) {
-                        save_arithmetic_flags(&e, last_flags_mask);
-                        host_rflags_valid = 0;
-                    }
                     byte(&e,0x0f);byte(&e,0xba);byte(&e,0x67);
                     byte(&e,offsetof(PwX86State,eflags));byte(&e,0);
-                    byte(&e,0xff);byte(&e,0x47);byte(&e,offsetof(PwX86State,flags_bits_materialized));
                 }
                 if(word_operand)byte(&e,0x66);
                 if(operand.mod==3)byte(&e,(uint8_t)(5+alu*8));
@@ -1828,7 +1731,7 @@ analyze_and_emit:
                     }
                 }
                 emit_save_flags(&e, (alu==1 || alu==4 || alu==6)?0x8c5:0x8d5,
-                                lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+                                lazy_flags_enabled, d->flags_dead);
             }
         } else if(conditional) {
             unsigned condition=(op==0x0f?source[cursor+1]:op)&15;
@@ -1837,17 +1740,13 @@ analyze_and_emit:
             block->exit.chainable = 1;
             block->exit.target_pc = next + delta;
             block->exit.fallthrough_pc = next;
-            conditional_target(&e,condition,next,next+delta,block,count,host_rflags_valid,last_flags_mask);terminal=1;host_rflags_valid=0;
+            conditional_target(&e,condition,next,next+delta,block,count);terminal=1;
         } else if(op==0xff && operand.reg<2) {
-            if (host_rflags_valid) {
-                save_arithmetic_flags(&e, last_flags_mask);
-                host_rflags_valid = 0;
-            }
             if(operand.mod==3)load_guest_reg(&e, &block->exit_contract, operand.rm);
             else {effective_address(&e,&operand,&block->exit_contract);memory_address_width(&e,2,4);}
             byte(&e,0xff);byte(&e,(operand.mod==3?0xc0:0)|(operand.reg<<3));
             if(operand.mod==3)store_guest_reg(&e, &block->exit_contract, operand.rm);
-            emit_save_flags(&e, 0x8d4, lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+            emit_save_flags(&e, 0x8d4, lazy_flags_enabled, d->flags_dead);
             store(&e,offsetof(PwX86State,eip),next);
         } else if (op==0xff) {
             if(operand.mod==3)load_guest_reg(&e, &block->exit_contract, operand.rm);
@@ -1874,6 +1773,8 @@ analyze_and_emit:
             unsigned logical=operation==1 || operation==4 || operation==6;
             unsigned dest=reverse?operand.rm:operand.reg;
             unsigned src=reverse?operand.reg:operand.rm;
+            if(operation==2 || operation==3)
+                emit_materialize_flags(&e,0x001);
             if(operand.mod==3) {
                 if(operation==6 && dest==src) {
                     /* Strength reduction: xor reg, reg clears register without memory load */
@@ -1882,13 +1783,8 @@ analyze_and_emit:
                 } else {
                     load_guest_reg(&e, &block->exit_contract, dest);
                     if(operation==2 || operation==3) {
-                        if (host_rflags_valid) {
-                            save_arithmetic_flags(&e, last_flags_mask);
-                            host_rflags_valid = 0;
-                        }
                         byte(&e,0x0f);byte(&e,0xba);byte(&e,0x67);
                         byte(&e,offsetof(PwX86State,eflags));byte(&e,0);
-                        byte(&e,0xff);byte(&e,0x47);byte(&e,offsetof(PwX86State,flags_bits_materialized));
                     }
                     int h_src = get_resident_host_reg(&block->exit_contract, src);
                     if (h_src >= 0) {
@@ -1903,33 +1799,23 @@ analyze_and_emit:
                 if(reverse) {
                     load_guest_reg_ecx(&e, &block->exit_contract, operand.reg);
                     if(operation==2 || operation==3) {
-                        if (host_rflags_valid) {
-                            save_arithmetic_flags(&e, last_flags_mask);
-                            host_rflags_valid = 0;
-                        }
                         byte(&e,0x0f);byte(&e,0xba);byte(&e,0x67);
                         byte(&e,offsetof(PwX86State,eflags));byte(&e,0);
-                        byte(&e,0xff);byte(&e,0x47);byte(&e,offsetof(PwX86State,flags_bits_materialized));
                     }
                     byte(&e,op);byte(&e,0x08); /* [rax] op ecx */
                 } else {
                     byte(&e,0x8b);byte(&e,0x08); /* read memory before changing its address register */
                     load_guest_reg(&e, &block->exit_contract, operand.reg);
                     if(operation==2 || operation==3) {
-                        if (host_rflags_valid) {
-                            save_arithmetic_flags(&e, last_flags_mask);
-                            host_rflags_valid = 0;
-                        }
                         byte(&e,0x0f);byte(&e,0xba);byte(&e,0x67);
                         byte(&e,offsetof(PwX86State,eflags));byte(&e,0);
-                        byte(&e,0xff);byte(&e,0x47);byte(&e,offsetof(PwX86State,flags_bits_materialized));
                     }
                     byte(&e,(uint8_t)(operation*8+3));byte(&e,0xc1);
                     store_guest_reg(&e, &block->exit_contract, operand.reg);
                 }
             }
             /* Logical AF is undefined: retain guest AF deterministically. */
-            emit_save_flags(&e, logical?0x8c5:0x8d5, lazy_flags_enabled, &host_rflags_valid, &last_flags_mask, d->flags_dead);
+            emit_save_flags(&e, logical?0x8c5:0x8d5, lazy_flags_enabled, d->flags_dead);
         } else if (op==0xc7) {
             uint32_t value=read32(source+cursor+length-4);
             if (operand.mod==3) store_guest_imm(&e, &block->exit_contract, operand.rm, value);
@@ -1985,10 +1871,6 @@ analyze_and_emit:
         else if (op >= 0xb8 && op <= 0xbf)
             store_guest_imm(&e, &block->exit_contract, op-0xb8, read32(source+cursor+1));
         else if (op == 0xe8 || op == 0xe9 || op == 0xeb) {
-            if (host_rflags_valid) {
-                save_arithmetic_flags(&e, last_flags_mask);
-                host_rflags_valid = 0;
-            }
             if (op == 0xe8) push_imm(&e,next,&block->exit_contract);
             uint32_t delta = op == 0xeb ? (uint32_t)(int32_t)(int8_t)source[cursor+1]
                                       : read32(source+cursor+1);
@@ -2003,10 +1885,6 @@ analyze_and_emit:
                                 &block->exit.target_reconcile_offset, &block->exit.target_reconcile_patch_offset);
             }
         } else if (op == 0xc3 || op==0xc2) {
-            if (host_rflags_valid) {
-                save_arithmetic_flags(&e, last_flags_mask);
-                host_rflags_valid = 0;
-            }
             stack_address(&e,0,&block->exit_contract);
             byte(&e,0x8b); byte(&e,0x08); /* ecx = guest return */
             uint32_t pop=4+(op==0xc2?((uint32_t)source[cursor+1]|(uint32_t)source[cursor+2]<<8):0);
@@ -2020,10 +1898,6 @@ analyze_and_emit:
         }
         if (op != 0xc3 && op!=0xc2 && op!=0xff && !conditional && op != 0xeb && op != 0xe9) store(&e,offsetof(PwX86State,eip),next);
         block->instruction_ends[i]=(uint16_t)(cursor + length);
-    }
-    if (host_rflags_valid) {
-        save_arithmetic_flags(&e, last_flags_mask);
-        host_rflags_valid = 0;
     }
     if (!block->exit.chainable) {
         block->exit.kind = PW_X86_EXIT_DYNAMIC;
@@ -2048,5 +1922,7 @@ analyze_and_emit:
 int pw_x86_translate(const uint8_t *source, size_t bytes, uint32_t pc,
                      uint8_t *output, size_t capacity, PwX86Block *block)
 {
-    return pw_x86_translate_ext(source, bytes, pc, output, capacity, block, 1, 1);
+    /* The standalone translator has no engine safepoint at which to commit a
+     * pending descriptor, so retain its historical eager-EFLAGS contract. */
+    return pw_x86_translate_ext(source, bytes, pc, output, capacity, block, 1, 0);
 }

@@ -375,7 +375,9 @@ static void test_deterministic_allocation_output(void)
         0x89, 0xc3,
         0xc3
     };
-    uint8_t out1[256], out2[256];
+    /* Lazy-flag capture is deliberately explicit and can make even a small
+     * block exceed the old 256-byte deterministic-output fixture. */
+    uint8_t out1[1024], out2[1024];
     PwX86Block b1 = {0}, b2 = {0};
 
     assert(pw_x86_translate_ext(code, sizeof(code), 0x1000, out1, sizeof(out1), &b1, 1, 1) == PW_OK);

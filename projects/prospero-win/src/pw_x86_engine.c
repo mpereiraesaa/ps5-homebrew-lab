@@ -159,8 +159,7 @@ static int compile(PwX86Engine *engine,uint32_t pc,const PwX86CacheEntry **entry
             PwX86CacheEntry *tgt = NULL;
             if(pw_x86_cache_lookup_mut(&engine->cache, best.exit.target_pc, &tgt) == PW_OK) {
                 engine->attempted_links++;
-                if(pw_x86_contracts_match(&e_mut->exit_contract, &tgt->entry_contract) &&
-                   pw_x86_flags_contracts_match(&e_mut->exit_flags, &tgt->entry_flags)) {
+                if(pw_x86_contracts_match(&e_mut->exit_contract, &tgt->entry_contract)) {
                     e_mut->link_slots[0].target_code = exec_base + tgt->code_offset + tgt->chain_entry_offset;
                     e_mut->link_slots[0].canonical_code = exec_base + tgt->code_offset + tgt->canonical_entry_offset;
                     e_mut->link_slots[0].is_reconciled = 0;
@@ -175,8 +174,7 @@ static int compile(PwX86Engine *engine,uint32_t pc,const PwX86CacheEntry **entry
             if(best.exit.kind == PW_X86_EXIT_CONDITIONAL) {
                 if(pw_x86_cache_lookup_mut(&engine->cache, best.exit.fallthrough_pc, &tgt) == PW_OK) {
                     engine->attempted_links++;
-                    if(pw_x86_contracts_match(&e_mut->exit_contract, &tgt->entry_contract) &&
-                       pw_x86_flags_contracts_match(&e_mut->exit_flags, &tgt->entry_flags)) {
+                    if(pw_x86_contracts_match(&e_mut->exit_contract, &tgt->entry_contract)) {
                         e_mut->link_slots[1].target_code = exec_base + tgt->code_offset + tgt->chain_entry_offset;
                         e_mut->link_slots[1].canonical_code = exec_base + tgt->code_offset + tgt->canonical_entry_offset;
                         e_mut->link_slots[1].is_reconciled = 0;
@@ -199,8 +197,7 @@ static int compile(PwX86Engine *engine,uint32_t pc,const PwX86CacheEntry **entry
             if(cand->used && cand->generation == engine->cache.generation && cand->exit.chainable) {
                 if(cand->link_slots[0].target_pc == pc && !cand->link_slots[0].is_linked) {
                     engine->attempted_links++;
-                    if(pw_x86_contracts_match(&cand->exit_contract, &e_mut->entry_contract) &&
-                       pw_x86_flags_contracts_match(&cand->exit_flags, &e_mut->entry_flags)) {
+                    if(pw_x86_contracts_match(&cand->exit_contract, &e_mut->entry_contract)) {
                         cand->link_slots[0].target_code = exec_base + e_mut->code_offset + e_mut->chain_entry_offset;
                         cand->link_slots[0].canonical_code = exec_base + e_mut->code_offset + e_mut->canonical_entry_offset;
                         cand->link_slots[0].is_reconciled = 0;
@@ -215,8 +212,7 @@ static int compile(PwX86Engine *engine,uint32_t pc,const PwX86CacheEntry **entry
                 if(cand->exit.kind == PW_X86_EXIT_CONDITIONAL &&
                    cand->link_slots[1].target_pc == pc && !cand->link_slots[1].is_linked) {
                     engine->attempted_links++;
-                    if(pw_x86_contracts_match(&cand->exit_contract, &e_mut->entry_contract) &&
-                       pw_x86_flags_contracts_match(&cand->exit_flags, &e_mut->entry_flags)) {
+                    if(pw_x86_contracts_match(&cand->exit_contract, &e_mut->entry_contract)) {
                         cand->link_slots[1].target_code = exec_base + e_mut->code_offset + e_mut->chain_entry_offset;
                         cand->link_slots[1].canonical_code = exec_base + e_mut->code_offset + e_mut->canonical_entry_offset;
                         cand->link_slots[1].is_reconciled = 0;
@@ -256,8 +252,7 @@ int pw_x86_engine_step(PwX86Engine *engine,PwX86State *state,PwX86StepReport *re
                     }
                 }
                 engine->attempted_links++;
-                if(source_entry && pw_x86_contracts_match(&source_entry->exit_contract, &target_entry->entry_contract) &&
-                   pw_x86_flags_contracts_match(&source_entry->exit_flags, &target_entry->entry_flags)) {
+                if(source_entry && pw_x86_contracts_match(&source_entry->exit_contract, &target_entry->entry_contract)) {
                     last_slot->target_code = (uint8_t *)engine->code.exec_base + target_entry->code_offset + target_entry->chain_entry_offset;
                     last_slot->canonical_code = (uint8_t *)engine->code.exec_base + target_entry->code_offset + target_entry->canonical_entry_offset;
                     last_slot->is_reconciled = 0;
@@ -295,10 +290,6 @@ int pw_x86_engine_step(PwX86Engine *engine,PwX86State *state,PwX86StepReport *re
     state->reg_stores = 0;
     state->reg_reconciliations = 0;
     state->reg_spills = 0;
-    state->flags_deferred_producers = 0;
-    state->flags_bits_materialized = 0;
-    state->flags_full_materializations = 0;
-    state->flags_reconciliations = 0;
 
     int invoked=invoke((uint8_t *)engine->code.exec_base+entry->code_offset+entry->canonical_entry_offset,state);
 
@@ -307,11 +298,8 @@ int pw_x86_engine_step(PwX86Engine *engine,PwX86State *state,PwX86StepReport *re
     engine->reg_stores += state->reg_stores;
     engine->reg_reconciliations += state->reg_reconciliations;
     engine->reg_spills += state->reg_spills;
-    engine->flags_deferred_producers += state->flags_deferred_producers;
-    engine->flags_bits_materialized += state->flags_bits_materialized;
-    engine->flags_full_materializations += state->flags_full_materializations;
-    engine->flags_reconciliations += state->flags_reconciliations;
-
+    if(state->deferred_flags.known_mask)
+        engine->flags_safepoint_commits++;
     pw_x86_commit_canonical_flags(state);
 
     if(!invoked) {

@@ -31,8 +31,7 @@ typedef struct PwX86Engine {
     uint64_t unlinks, safepoint_returns;
     uint64_t reg_loads, reg_stores;
     uint64_t reg_reconciliations, reg_spills;
-    uint64_t flags_deferred_producers, flags_bits_materialized;
-    uint64_t flags_full_materializations, flags_reconciliations;
+    uint64_t flags_safepoint_commits;
     uint32_t quantum;
     unsigned chaining_enabled;
     unsigned residency_enabled;

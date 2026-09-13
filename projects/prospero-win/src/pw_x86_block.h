@@ -29,47 +29,10 @@ static inline int pw_x86_contracts_match(const PwX86RegContract *a, const PwX86R
     return 1;
 }
 
-typedef enum PwX86DeferredOp {
-    PW_X86_DEFERRED_NONE = 0,
-    PW_X86_DEFERRED_ADD,
-    PW_X86_DEFERRED_SUB,
-    PW_X86_DEFERRED_LOGIC,
-    PW_X86_DEFERRED_INC,
-    PW_X86_DEFERRED_DEC,
-    PW_X86_DEFERRED_NEG,
-    PW_X86_DEFERRED_SHL,
-    PW_X86_DEFERRED_SHR,
-    PW_X86_DEFERRED_SAR,
-    PW_X86_DEFERRED_MUL,
-} PwX86DeferredOp;
-
 typedef struct PwX86DeferredFlags {
-    uint32_t op;               /* PwX86DeferredOp */
-    uint32_t width;            /* 1, 2, 4 bytes */
-    uint32_t src1;             /* operand 1 / accumulator */
-    uint32_t src2;             /* operand 2 / immediate / count */
-    uint32_t res;              /* result */
-    uint32_t known_mask;       /* flags defined by operation */
-    uint32_t preserved_mask;   /* flags preserved from previous state */
-    uint32_t undefined_mask;   /* flags left undefined */
-    uint32_t materialized_mask;/* flags already calculated and committed to eflags */
+    uint32_t raw_flags; /* most recent native arithmetic flags, merged by known_mask */
+    uint32_t known_mask;/* deferred subset of CF/PF/AF/ZF/SF/OF; zero means empty */
 } PwX86DeferredFlags;
-
-typedef struct PwX86FlagsContract {
-    uint32_t op;               /* PwX86DeferredOp */
-    uint32_t width;            /* 1, 2, 4 */
-    uint32_t known_mask;
-    uint32_t preserved_mask;
-    uint32_t materialized_mask;
-} PwX86FlagsContract;
-
-static inline int pw_x86_flags_contracts_match(const PwX86FlagsContract *a, const PwX86FlagsContract *b)
-{
-    if (a->op != b->op) return 0;
-    if (a->op == PW_X86_DEFERRED_NONE) return 1;
-    return (a->width == b->width && a->known_mask == b->known_mask &&
-            a->preserved_mask == b->preserved_mask);
-}
 
 typedef struct PwX86State {
     uint32_t gpr[8]; /* eax ecx edx ebx esp ebp esi edi */
@@ -86,13 +49,12 @@ typedef struct PwX86State {
     uint32_t reg_stores;         /* guest-state stores performed in step */
     uint32_t reg_reconciliations;/* cross-block reconciliations in step */
     uint32_t reg_spills;         /* register spills performed in step */
-    uint32_t flags_deferred_producers;    /* deferred flag operations produced */
-    uint32_t flags_bits_materialized;     /* individual flag bits demanded and materialized */
-    uint32_t flags_full_materializations; /* full canonical eflags commits */
-    uint32_t flags_reconciliations;       /* reconciliations due to flags contract mismatch */
-    PwX86DeferredFlags deferred_flags;    /* active deferred flags descriptor */
     PwX86Memory memory[PW_X86_MEMORY_REGIONS]; /* live identity-mapped ranges */
     PwGuestFp fp;
+    /* Keep lazy-flag state after the compact generated-code ABI above.  The
+     * emitter addresses these fields with disp32, so adding observability
+     * cannot silently move memory[] beyond a signed disp8. */
+    PwX86DeferredFlags deferred_flags;    /* active deferred flags descriptor */
 } PwX86State;
 
 uint32_t pw_x86_compute_canonical_flags(const PwX86DeferredFlags *df, uint32_t prev_eflags);
@@ -131,8 +93,6 @@ typedef struct PwX86Block {
     size_t chain_entry_offset;
     PwX86RegContract entry_contract;
     PwX86RegContract exit_contract;
-    PwX86FlagsContract entry_flags;
-    PwX86FlagsContract exit_flags;
     PwX86ExitDesc exit;
 } PwX86Block;
 
