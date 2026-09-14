@@ -52,4 +52,9 @@
   audit rejects any tracked file that begins with a DOS header.
 - Both the lab and public projects use topic branches and pull requests; never
   push changes directly to `main`.
+- Keep pull requests small and single-purpose. Target 3–7 changed files total,
+  including tests and documentation. If a change would exceed seven files,
+  split it into dependency-ordered, independently reviewable PRs; exceed that
+  limit only for a genuinely indivisible mechanical/generated change, and
+  document the reason before opening the PR.
 - Keep third-party source and generated artifacts out of the lab repository.
